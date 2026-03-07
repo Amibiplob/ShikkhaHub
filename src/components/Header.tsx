@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageSquare, X } from "lucide-react";
 import { useState } from "react";
 
 const Header = () => {
