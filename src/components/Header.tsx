@@ -42,6 +42,11 @@ const Header = () => {
               <BookOpen className="mr-1.5 h-4 w-4" /> Courses
             </Button>
           </Link>
+          <Link to="/community">
+            <Button variant="ghost" size="sm">
+              <MessageSquare className="mr-1.5 h-4 w-4" /> Community
+            </Button>
+          </Link>
           {user && (
             <Link to="/dashboard">
               <Button variant="ghost" size="sm">
