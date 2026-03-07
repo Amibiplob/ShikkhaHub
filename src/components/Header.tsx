@@ -113,6 +113,11 @@ const Header = () => {
                 <BookOpen className="mr-2 h-4 w-4" /> Courses
               </Button>
             </Link>
+            <Link to="/community" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <MessageSquare className="mr-2 h-4 w-4" /> Community
+              </Button>
+            </Link>
             {user ? (
               <>
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
