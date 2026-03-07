@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageSquare, X } from "lucide-react";
 import { useState } from "react";
 
 const Header = () => {
@@ -40,6 +40,11 @@ const Header = () => {
           <Link to="/courses">
             <Button variant="ghost" size="sm">
               <BookOpen className="mr-1.5 h-4 w-4" /> Courses
+            </Button>
+          </Link>
+          <Link to="/community">
+            <Button variant="ghost" size="sm">
+              <MessageSquare className="mr-1.5 h-4 w-4" /> Community
             </Button>
           </Link>
           {user && (
@@ -106,6 +111,11 @@ const Header = () => {
             <Link to="/courses" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
                 <BookOpen className="mr-2 h-4 w-4" /> Courses
+              </Button>
+            </Link>
+            <Link to="/community" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <MessageSquare className="mr-2 h-4 w-4" /> Community
               </Button>
             </Link>
             {user ? (
