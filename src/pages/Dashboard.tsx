@@ -1,0 +1,211 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import Header from "@/components/Header";
+import CourseCard from "@/components/CourseCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BookOpen, GraduationCap, Loader2, Plus, Users } from "lucide-react";
+import { toast } from "sonner";
+
+const Dashboard = () => {
+  const { user, loading: authLoading, hasRole, profile } = useAuth();
+  const navigate = useNavigate();
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [teacherCourses, setTeacherCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  // Create course form
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && !user) navigate("/auth");
+  }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchData = async () => {
+      // Enrolled courses
+      const { data: enrollments } = await supabase
+        .from("enrollments")
+        .select("course_id, courses(*, profiles!courses_teacher_id_fkey(full_name))")
+        .eq("user_id", user.id);
+      setEnrolledCourses(enrollments?.map((e) => e.courses).filter(Boolean) || []);
+
+      // Teacher courses
+      if (hasRole("teacher")) {
+        const { data } = await supabase.from("courses").select("*").eq("teacher_id", user.id).order("created_at", { ascending: false });
+        setTeacherCourses(data || []);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [user, hasRole]);
+
+  const handleCreateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setCreating(true);
+    const { data, error } = await supabase.from("courses").insert({
+      teacher_id: user.id,
+      title,
+      description,
+      category: category || null,
+      difficulty: difficulty || null,
+    }).select().single();
+
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Course created!");
+      setTeacherCourses((prev) => [data, ...prev]);
+      setCreateOpen(false);
+      setTitle("");
+      setDescription("");
+      setCategory("");
+      setDifficulty("");
+    }
+    setCreating(false);
+  };
+
+  if (authLoading || loading) return (
+    <div className="min-h-screen flex flex-col"><Header /><div className="flex flex-1 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></div>
+  );
+
+  const isTeacher = hasRole("teacher");
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || "there"}!</h1>
+          <p className="text-muted-foreground mt-1">
+            {isTeacher ? "Manage your courses and track student progress" : "Continue learning where you left off"}
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-border bg-card p-5">
+            <BookOpen className="mb-2 h-5 w-5 text-primary" />
+            <p className="text-2xl font-bold">{enrolledCourses.length}</p>
+            <p className="text-sm text-muted-foreground">Enrolled Courses</p>
+          </div>
+          {isTeacher && (
+            <>
+              <div className="rounded-xl border border-border bg-card p-5">
+                <GraduationCap className="mb-2 h-5 w-5 text-accent" />
+                <p className="text-2xl font-bold">{teacherCourses.length}</p>
+                <p className="text-sm text-muted-foreground">Your Courses</p>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-5">
+                <Users className="mb-2 h-5 w-5 text-success" />
+                <p className="text-2xl font-bold">—</p>
+                <p className="text-sm text-muted-foreground">Total Students</p>
+              </div>
+            </>
+          )}
+        </div>
+
+        <Tabs defaultValue={isTeacher ? "teaching" : "learning"}>
+          <TabsList>
+            {isTeacher && <TabsTrigger value="teaching">My Courses</TabsTrigger>}
+            <TabsTrigger value="learning">Enrolled</TabsTrigger>
+          </TabsList>
+
+          {isTeacher && (
+            <TabsContent value="teaching">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Your Courses</h2>
+                <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
+                      <Plus className="h-4 w-4" /> New Course
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create New Course</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateCourse} className="space-y-4">
+                      <div>
+                        <Label>Title</Label>
+                        <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+                      </div>
+                      <div>
+                        <Label>Description</Label>
+                        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Category</Label>
+                          <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Web Development" />
+                        </div>
+                        <div>
+                          <Label>Difficulty</Label>
+                          <Select value={difficulty} onValueChange={setDifficulty}>
+                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="beginner">Beginner</SelectItem>
+                              <SelectItem value="intermediate">Intermediate</SelectItem>
+                              <SelectItem value="advanced">Advanced</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creating}>
+                        {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create Course
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {teacherCourses.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                  <GraduationCap className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                  <p className="text-muted-foreground">You haven't created any courses yet</p>
+                </div>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {teacherCourses.map((course) => (
+                    <CourseCard key={course.id} {...course} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          )}
+
+          <TabsContent value="learning">
+            {enrolledCourses.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                <BookOpen className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground mb-3">You're not enrolled in any courses yet</p>
+                <Button variant="outline" onClick={() => navigate("/courses")}>Browse Courses</Button>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {enrolledCourses.map((course: any) => (
+                  <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+};
+
+export default Dashboard;
