@@ -5,27 +5,33 @@ import Footer from "@/components/Footer";
 import CourseCard from "@/components/CourseCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Loader2, SlidersHorizontal } from "lucide-react";
 
 const categories = ["All", "Programming", "Web Development", "Data Science", "Mobile", "DevOps", "AI"];
+const difficulties = ["All", "beginner", "intermediate", "advanced"];
 
 const Courses = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [difficulty, setDifficulty] = useState("All");
 
   useEffect(() => {
     const fetchCourses = async () => {
+      setLoading(true);
       let query = supabase.from("courses").select("*, profiles!courses_teacher_id_fkey(full_name)").eq("is_published", true);
       if (category !== "All") query = query.eq("category", category);
+      if (difficulty !== "All") query = query.eq("difficulty", difficulty);
       if (search) query = query.ilike("title", `%${search}%`);
       const { data } = await query.order("created_at", { ascending: false });
       setCourses(data || []);
       setLoading(false);
     };
     fetchCourses();
-  }, [search, category]);
+  }, [search, category, difficulty]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -36,7 +42,7 @@ const Courses = () => {
             <h1 className="mb-2 text-3xl font-bold md:text-4xl">Browse Courses</h1>
             <p className="text-muted-foreground">Find the perfect course to advance your skills</p>
 
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -46,6 +52,19 @@ const Courses = () => {
                   className="pl-10"
                 />
               </div>
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger className="w-[160px]">
+                  <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
+                  <SelectValue placeholder="Difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  {difficulties.map((d) => (
+                    <SelectItem key={d} value={d} className="capitalize">
+                      {d === "All" ? "All Levels" : d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -65,6 +84,9 @@ const Courses = () => {
         </div>
 
         <div className="container mx-auto px-4 py-10">
+          {!loading && courses.length > 0 && (
+            <p className="mb-4 text-sm text-muted-foreground">{courses.length} course{courses.length !== 1 ? "s" : ""} found</p>
+          )}
           {loading ? (
             <div className="flex justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
