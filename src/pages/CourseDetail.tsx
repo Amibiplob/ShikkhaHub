@@ -8,6 +8,7 @@ import CourseReviews from "@/components/CourseReviews";
 import CertificateCard from "@/components/CertificateCard";
 import CourseContentEditor from "@/components/CourseContentEditor";
 import CourseDiscussions from "@/components/CourseDiscussions";
+import StudentProgressTracker from "@/components/StudentProgressTracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
