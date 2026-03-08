@@ -22,7 +22,7 @@ const Courses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
-      let query = supabase.from("courses").select("*, profiles!courses_teacher_id_fkey(full_name)").eq("is_published", true);
+      let query = supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name)").eq("is_published", true);
       if (category !== "All") query = query.eq("category", category);
       if (difficulty !== "All") query = query.eq("difficulty", difficulty);
       if (search) query = query.ilike("title", `%${search}%`);
