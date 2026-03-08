@@ -40,6 +40,8 @@ const LiveClass = () => {
     fetchClass();
   }, [roomName]);
 
+  const meetingUrl = roomName ? `https://meet.jit.si/CodeCampus_${roomName}` : "";
+
   const joinMeeting = () => {
     if (!jitsiContainerRef.current || !roomName || !user) return;
 
@@ -54,7 +56,8 @@ const LiveClass = () => {
     script.async = true;
     script.onload = () => initJitsi();
     script.onerror = () => {
-      toast.error("Failed to load video meeting. Please try again.");
+      toast.error("Embedded meeting failed. Opening in a new tab...");
+      if (meetingUrl) window.open(meetingUrl, "_blank", "noopener,noreferrer");
     };
     scriptRef.current = script;
     document.head.appendChild(script);
