@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -80,7 +81,7 @@ const CourseDetail = () => {
     setEnrolling(true);
     const { error } = await supabase.from("enrollments").insert({ user_id: user.id, course_id: id! });
     if (error) toast.error("Failed to enroll");
-    else { setEnrolled(true); toast.success("Enrolled successfully!"); }
+    else { setEnrolled(true); toast.success("Enrolled successfully!"); checkAndAwardBadges(user.id); }
     setEnrolling(false);
   };
 
@@ -93,6 +94,7 @@ const CourseDetail = () => {
     } else {
       await supabase.from("lesson_progress").upsert({ user_id: user.id, lesson_id: lessonId, completed: true, completed_at: new Date().toISOString() });
       setProgress((p) => ({ ...p, [lessonId]: true }));
+      checkAndAwardBadges(user.id);
     }
   };
 
