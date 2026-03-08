@@ -40,124 +40,22 @@ const LiveClass = () => {
     fetchClass();
   }, [roomName]);
 
-  const meetingUrl = roomName ? `https://meet.jit.si/CodeCampus_${roomName}` : "";
+  const meetingUrl = roomName
+    ? `https://meet.jit.si/CodeCampus_${roomName}#userInfo.displayName="${encodeURIComponent(profile?.full_name || user?.user_metadata?.full_name || user?.email || "Student")}"&config.startWithAudioMuted=true&config.prejoinPageEnabled=false`
+    : "";
 
   const joinMeeting = () => {
-    if (!jitsiContainerRef.current || !roomName || !user) return;
+    if (!user || !meetingUrl) return;
 
-    // Check if script already loaded
-    if ((window as any).JitsiMeetExternalAPI) {
-      initJitsi();
-      return;
+    // Update status to live if teacher
+    if (liveClass && liveClass.teacher_id === user.id) {
+      supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
     }
 
-    const script = document.createElement("script");
-    script.src = "https://meet.jit.si/external_api.js";
-    script.async = true;
-    script.onload = () => initJitsi();
-    script.onerror = () => {
-      toast.error("Embedded meeting failed. Opening in a new tab...");
-      if (meetingUrl) window.open(meetingUrl, "_blank", "noopener,noreferrer");
-    };
-    scriptRef.current = script;
-    document.head.appendChild(script);
+    window.open(meetingUrl, "_blank", "noopener,noreferrer");
+    setJoined(true);
+    toast.success("Meeting opened in a new tab!");
   };
-
-  const initJitsi = () => {
-    if (!jitsiContainerRef.current || !roomName || !user) return;
-
-    // Dispose any existing instance first
-    if (apiRef.current) {
-      apiRef.current.dispose();
-      apiRef.current = null;
-    }
-
-    // Clear container
-    jitsiContainerRef.current.innerHTML = "";
-
-    const domain = "meet.jit.si";
-    const options = {
-      roomName: `CodeCampus_${roomName}`,
-      parentNode: jitsiContainerRef.current,
-      width: "100%",
-      height: "100%",
-      userInfo: {
-        displayName: profile?.full_name || user.user_metadata?.full_name || user.email || "Student",
-        email: user.email || "",
-      },
-      configOverwrite: {
-        startWithAudioMuted: true,
-        startWithVideoMuted: false,
-        prejoinPageEnabled: false,
-        disableDeepLinking: true,
-        enableClosePage: false,
-      },
-      interfaceConfigOverwrite: {
-        SHOW_JITSI_WATERMARK: false,
-        SHOW_WATERMARK_FOR_GUESTS: false,
-        DEFAULT_BACKGROUND: "#0a0a0a",
-        TOOLBAR_BUTTONS: [
-          "microphone", "camera", "desktop", "chat",
-          "raisehand", "participants-pane", "tileview",
-          "fullscreen", "hangup", "settings",
-        ],
-      },
-    };
-
-    try {
-      const api = new (window as any).JitsiMeetExternalAPI(domain, options);
-      apiRef.current = api;
-
-      // Ensure iframe has proper permissions for camera/mic
-      const iframe = api.getIFrame();
-      if (iframe) {
-        iframe.setAttribute("allow", "camera *; microphone *; display-capture *; autoplay *; clipboard-write *; encrypted-media *");
-        iframe.style.border = "none";
-      }
-
-      setJoined(true);
-
-      // Update status to live if teacher
-      if (liveClass && liveClass.teacher_id === user.id) {
-        supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
-      }
-
-      api.addListener("videoConferenceJoined", () => {
-        toast.success("Connected to live class!");
-      });
-      api.addListener("participantJoined", () => {
-        setParticipants((p) => p + 1);
-      });
-      api.addListener("participantLeft", () => {
-        setParticipants((p) => Math.max(0, p - 1));
-      });
-      api.addListener("videoConferenceLeft", () => {
-        // Only update state, don't dispose again (user already left)
-        apiRef.current = null;
-        setJoined(false);
-        if (liveClass && user && liveClass.teacher_id === user.id) {
-          supabase.from("live_classes").update({ status: "completed" }).eq("id", liveClass.id);
-        }
-      });
-    } catch (err) {
-      console.error("Jitsi init error:", err);
-      toast.error("Embedded meeting failed. Opening in a new tab...");
-      if (meetingUrl) window.open(meetingUrl, "_blank", "noopener,noreferrer");
-    }
-  };
-
-  const leaveMeeting = () => {
-    if (apiRef.current) {
-      apiRef.current.executeCommand("hangup");
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      apiRef.current?.dispose();
-      scriptRef.current?.remove();
-    };
-  }, []);
 
   if (authLoading || loading) {
     return (
