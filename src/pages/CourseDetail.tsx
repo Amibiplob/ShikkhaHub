@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CourseReviews from "@/components/CourseReviews";
+import CertificateCard from "@/components/CertificateCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -154,16 +155,22 @@ const CourseDetail = () => {
 
             <div className="mt-6 flex items-center gap-4">
               {!enrolled ? (
-                <Button onClick={handleEnroll} className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" disabled={enrolling}>
-                  {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <PlayCircle className="h-4 w-4" /> Enroll Now
-                </Button>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Badge className="bg-success/10 text-success border-success/20">Enrolled</Badge>
-                  <span className="text-sm text-muted-foreground">{progressPercent}% complete</span>
-                </div>
-              )}
+                 <Button onClick={handleEnroll} className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" disabled={enrolling}>
+                   {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
+                   <PlayCircle className="h-4 w-4" /> Enroll Now
+                 </Button>
+               ) : (
+                 <div className="flex items-center gap-3">
+                   <Badge className="bg-success/10 text-success border-success/20">Enrolled</Badge>
+                   <span className="text-sm text-muted-foreground">{progressPercent}% complete</span>
+                   <CertificateCard
+                     courseId={id!}
+                     courseTitle={course.title}
+                     progressPercent={progressPercent}
+                     teacherName={course.profiles?.full_name}
+                   />
+                 </div>
+               )}
               <span className="text-sm text-muted-foreground">{totalLessons} lessons • {modules.length} modules</span>
             </div>
           </div>
