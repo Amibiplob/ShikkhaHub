@@ -16,13 +16,6 @@ const LiveClass = () => {
   const [liveClass, setLiveClass] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [joined, setJoined] = useState(false);
-  const [chatOpen, setChatOpen] = useState(true);
-  const [chatMessages, setChatMessages] = useState<any[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [participants, setParticipants] = useState(0);
-  const jitsiContainerRef = useRef<HTMLDivElement>(null);
-  const apiRef = useRef<any>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
 
   useEffect(() => {
     if (!roomName) return;
@@ -112,30 +105,23 @@ const LiveClass = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {joined && (
-              <Badge variant="outline" className="gap-1.5">
-                <Users className="h-3 w-3" /> {participants + 1}
-              </Badge>
-            )}
             {!joined ? (
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={joinMeeting}
-                  className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
-                  disabled={!user}
-                >
-                  <Video className="h-4 w-4" /> {isTeacher ? "Start Class" : "Join Class"}
-                </Button>
-                {meetingUrl && (
-                  <Button variant="outline" asChild>
-                    <a href={meetingUrl} target="_blank" rel="noopener noreferrer">Open in Browser</a>
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <Button variant="destructive" onClick={leaveMeeting} className="gap-2">
-                <VideoOff className="h-4 w-4" /> Leave
+              <Button
+                onClick={joinMeeting}
+                className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
+                disabled={!user}
+              >
+                <Video className="h-4 w-4" /> {isTeacher ? "Start Class" : "Join Class"}
               </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Badge variant="default" className="bg-green-600 animate-pulse">● Meeting Open</Badge>
+                <Button variant="outline" asChild>
+                  <a href={meetingUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" /> Rejoin Tab
+                  </a>
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -180,7 +166,22 @@ const LiveClass = () => {
             </Button>
           </div>
         )}
-        <div ref={jitsiContainerRef} className={joined ? "flex-1 min-h-[600px]" : "hidden"} />
+        {joined && (
+          <div className="flex flex-1 items-center justify-center flex-col gap-4 p-8 bg-muted/30">
+            <div className="rounded-full bg-green-500/10 p-6">
+              <Video className="h-12 w-12 text-green-500" />
+            </div>
+            <h2 className="text-xl font-semibold">Meeting is open in another tab</h2>
+            <p className="text-muted-foreground text-center max-w-md">
+              Your live class is running in a separate browser tab with full camera, microphone, and screen sharing support.
+            </p>
+            <Button variant="outline" asChild>
+              <a href={meetingUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-2" /> Open Meeting Tab
+              </a>
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   );
