@@ -22,6 +22,7 @@ const Dashboard = () => {
   const { user, loading: authLoading, hasRole, profile } = useAuth();
   const navigate = useNavigate();
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [courseProgress, setCourseProgress] = useState<Record<string, number>>({});
   const [teacherCourses, setTeacherCourses] = useState<any[]>([]);
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
   const [studentLiveClasses, setStudentLiveClasses] = useState<any[]>([]);
@@ -47,7 +48,33 @@ const Dashboard = () => {
         .from("enrollments")
         .select("course_id, courses(*, profiles!courses_teacher_id_fkey(full_name))")
         .eq("user_id", user.id);
-      setEnrolledCourses(enrollments?.map((e) => e.courses).filter(Boolean) || []);
+      const courses = enrollments?.map((e) => e.courses).filter(Boolean) || [];
+      setEnrolledCourses(courses);
+
+      // Fetch progress for enrolled courses
+      if (courses.length > 0) {
+        const courseIds = courses.map((c: any) => c.id);
+        const { data: allModules } = await supabase
+          .from("modules")
+          .select("id, course_id, lessons(id)")
+          .in("course_id", courseIds);
+        const { data: completedLessons } = await supabase
+          .from("lesson_progress")
+          .select("lesson_id")
+          .eq("user_id", user.id)
+          .eq("completed", true);
+        const completedSet = new Set(completedLessons?.map((l) => l.lesson_id) || []);
+        const progressMap: Record<string, number> = {};
+        courseIds.forEach((cid: string) => {
+          const mods = allModules?.filter((m) => m.course_id === cid) || [];
+          const totalLessons = mods.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
+          const completed = mods.reduce(
+            (acc, m) => acc + (m.lessons?.filter((l: any) => completedSet.has(l.id)).length || 0), 0
+          );
+          progressMap[cid] = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
+        });
+        setCourseProgress(progressMap);
+      }
 
       // Teacher courses
       if (hasRole("teacher")) {
@@ -226,7 +253,7 @@ const Dashboard = () => {
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {enrolledCourses.map((course: any) => (
-                  <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} />
+                  <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} progressPercent={courseProgress[course.id]} />
                 ))}
               </div>
             )}
