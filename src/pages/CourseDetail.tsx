@@ -10,6 +10,9 @@ import CertificateCard from "@/components/CertificateCard";
 import CourseContentEditor from "@/components/CourseContentEditor";
 import CourseDiscussions from "@/components/CourseDiscussions";
 import StudentProgressTracker from "@/components/StudentProgressTracker";
+import QuizManager from "@/components/QuizManager";
+import BookmarkButton from "@/components/BookmarkButton";
+import CoursePrerequisites from "@/components/CoursePrerequisites";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -17,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download } from "lucide-react";
+import { Bookmark, BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -159,7 +162,10 @@ const CourseDetail = () => {
                 </Badge>
               )}
             </div>
-            <h1 className="mb-2 text-3xl font-bold md:text-4xl">{course.title}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="mb-2 text-3xl font-bold md:text-4xl">{course.title}</h1>
+              <BookmarkButton courseId={id!} />
+            </div>
             {course.description && <p className="max-w-2xl text-muted-foreground">{course.description}</p>}
             <p className="mt-3 text-sm text-muted-foreground">by {course.profiles?.full_name || "Unknown"}</p>
 
@@ -364,6 +370,12 @@ const CourseDetail = () => {
               </div>
             )}
           </div>
+
+          {/* Quizzes */}
+          <QuizManager courseId={id!} isTeacher={course.teacher_id === user?.id} enrolled={enrolled} />
+
+          {/* Prerequisites (teacher management + student view) */}
+          <CoursePrerequisites courseId={id!} isTeacher={course.teacher_id === user?.id} />
 
           {/* Content Editor (teachers only) */}
           <CourseContentEditor courseId={id!} isTeacher={course.teacher_id === user?.id} />

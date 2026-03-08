@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Calendar, GraduationCap, Loader2, Plus, Users, Video } from "lucide-react";
+import { Bookmark, BookOpen, Calendar, GraduationCap, Loader2, Plus, Users, Video } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -27,6 +27,7 @@ const Dashboard = () => {
   const [teacherCourses, setTeacherCourses] = useState<any[]>([]);
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
   const [studentLiveClasses, setStudentLiveClasses] = useState<any[]>([]);
+  const [bookmarkedCourses, setBookmarkedCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -98,6 +99,13 @@ const Dashboard = () => {
           .order("scheduled_at", { ascending: true });
         setStudentLiveClasses(studentLive || []);
       }
+
+      // Bookmarked courses
+      const { data: bookmarks } = await supabase
+        .from("course_bookmarks")
+        .select("course_id, courses(*, profiles!courses_teacher_id_fkey(full_name))")
+        .eq("user_id", user.id);
+      setBookmarkedCourses(bookmarks?.map((b) => b.courses).filter(Boolean) || []);
 
       setLoading(false);
     };
@@ -178,6 +186,9 @@ const Dashboard = () => {
             <TabsTrigger value="learning">Enrolled</TabsTrigger>
             <TabsTrigger value="live">
               <Video className="mr-1.5 h-3.5 w-3.5" /> Live Classes
+            </TabsTrigger>
+            <TabsTrigger value="bookmarks">
+              <Bookmark className="mr-1.5 h-3.5 w-3.5" /> Saved
             </TabsTrigger>
           </TabsList>
 
@@ -351,6 +362,22 @@ const Dashboard = () => {
               <div className="rounded-xl border border-dashed border-border py-16 text-center">
                 <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
                 <p className="text-muted-foreground">No upcoming live classes for your enrolled courses</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="bookmarks">
+            {bookmarkedCourses.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                <Bookmark className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground mb-3">No bookmarked courses yet</p>
+                <Button variant="outline" onClick={() => navigate("/courses")}>Browse Courses</Button>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {bookmarkedCourses.map((course: any) => (
+                  <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} />
+                ))}
               </div>
             )}
           </TabsContent>

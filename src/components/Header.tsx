@@ -13,6 +13,7 @@ import { BarChart3, BookOpen, GraduationCap, LayoutDashboard, LogOut, Medal, Men
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const Header = () => {
   const { user, profile, signOut, hasRole } = useAuth();
@@ -73,6 +74,7 @@ const Header = () => {
         </nav>
 
         <div className="hidden items-center gap-1 md:flex">
+          <GlobalSearch />
           <Link to="/leaderboard">
             <Button variant="ghost" size="icon" className="h-9 w-9">
               <Medal className="h-4 w-4" />
