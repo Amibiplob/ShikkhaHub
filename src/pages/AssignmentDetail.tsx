@@ -458,6 +458,10 @@ const AssignmentDetail = () => {
                                       <a href={sub.content} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                                         {sub.content}
                                       </a>
+                                    ) : sub.submission_type === "file" && sub.file_url ? (
+                                      <a href={sub.file_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                                        <Download className="h-3 w-3" /> {sub.content}
+                                      </a>
                                     ) : (
                                       <span>{sub.content}</span>
                                     )}
