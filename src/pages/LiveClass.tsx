@@ -334,47 +334,60 @@ const LiveClass = () => {
         )}
 
         {!isActive && !student.ended && !isExpired && (
-          <div className="flex flex-1 items-center justify-center flex-col gap-6 p-8">
-            <div className="rounded-full bg-primary/10 p-8">
-              <Video className="h-16 w-16 text-primary" />
-            </div>
-            <div className="text-center max-w-lg">
-              <h2 className="text-2xl font-bold mb-2">
-                {isTeacher ? "Choose how to go live" : "Ready to watch?"}
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                {liveClass.description || (isTeacher
-                  ? "Pick a broadcast mode to start your live class."
-                  : "You'll watch the teacher's live video stream with real-time chat.")}
-              </p>
-              {isUpcoming && (
-                <div className="rounded-lg border border-border bg-muted/50 p-4 mb-4">
-                  <p className="text-sm text-muted-foreground">
-                    Scheduled for <span className="font-medium text-foreground">{format(scheduledTime, "EEEE, MMMM d 'at' h:mm a")}</span>
-                  </p>
-                </div>
-              )}
-            </div>
-            {!user && <p className="text-sm text-destructive">Please sign in to join the class.</p>}
-
-            {isTeacher ? (
-              <div className="flex flex-wrap gap-3 justify-center">
-                <Button onClick={handleStartCamera} size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2 px-6" disabled={!user}>
-                  <Camera className="h-5 w-5" /> Camera + Audio
-                </Button>
-                <Button onClick={handleStartScreen} size="lg" variant="outline" className="gap-2 px-6" disabled={!user}>
-                  <ScreenShare className="h-5 w-5" /> Screen Share
-                </Button>
-                <Button onClick={handleStartAudio} size="lg" variant="outline" className="gap-2 px-6" disabled={!user}>
-                  <AudioLines className="h-5 w-5" /> Audio Only
-                </Button>
+          <>
+            <div className="flex flex-1 items-center justify-center flex-col gap-3 p-8 text-center">
+              <div className="rounded-full bg-primary/10 p-8">
+                <Video className="h-16 w-16 text-primary" />
               </div>
-            ) : (
-              <Button onClick={handleStudentJoin} size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2 px-8 shadow-glow" disabled={!user}>
-                <Video className="h-5 w-5" /> Join Stream
-              </Button>
-            )}
-          </div>
+              <h2 className="text-2xl font-bold">{isTeacher ? "Ready to go live" : "Ready to watch?"}</h2>
+              <p className="text-muted-foreground max-w-lg">
+                {liveClass.description || (isTeacher
+                  ? "Click Join Now to choose your live mode."
+                  : "Click Join Stream in the modal to start watching live.")}
+              </p>
+            </div>
+
+            <Dialog open={entryModalOpen} onOpenChange={setEntryModalOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{isTeacher ? "Choose how to go live" : "Ready to watch?"}</DialogTitle>
+                  <DialogDescription>
+                    {isTeacher
+                      ? "Pick a broadcast mode to start your live class."
+                      : "You'll watch the teacher's live stream with real-time chat."}
+                  </DialogDescription>
+                </DialogHeader>
+
+                {isUpcoming && (
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
+                    <p className="text-sm text-muted-foreground">
+                      Scheduled for <span className="font-medium text-foreground">{format(scheduledTime, "EEEE, MMMM d 'at' h:mm a")}</span>
+                    </p>
+                  </div>
+                )}
+
+                {!user && <p className="text-sm text-destructive">Please sign in to join the class.</p>}
+
+                {isTeacher ? (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Button onClick={handleStartCamera} className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" disabled={!user}>
+                      <Camera className="h-4 w-4" /> Camera + Audio
+                    </Button>
+                    <Button onClick={handleStartScreen} variant="outline" className="gap-2" disabled={!user}>
+                      <ScreenShare className="h-4 w-4" /> Screen Share
+                    </Button>
+                    <Button onClick={handleStartAudio} variant="outline" className="gap-2" disabled={!user}>
+                      <AudioLines className="h-4 w-4" /> Audio Only
+                    </Button>
+                  </div>
+                ) : (
+                  <Button onClick={handleStudentJoin} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" disabled={!user}>
+                    <Video className="h-4 w-4" /> Join Stream
+                  </Button>
+                )}
+              </DialogContent>
+            </Dialog>
+          </>
         )}
 
         {/* Class ended screen */}
