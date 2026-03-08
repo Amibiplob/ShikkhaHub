@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
 import ProfileEditor from "@/components/ProfileEditor";
 import LiveClassScheduler from "@/components/LiveClassScheduler";
+import LiveClassModal from "@/components/LiveClassModal";
 import ThumbnailUpload from "@/components/ThumbnailUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selectedLiveClass, setSelectedLiveClass] = useState<any>(null);
 
   // Create course form
   const [title, setTitle] = useState("");
@@ -310,11 +312,9 @@ const Dashboard = () => {
                           {isExpired ? "expired" : lc.status}
                         </Badge>
                         {!isExpired && (
-                          <Link to={`/live/${lc.room_name}`}>
-                            <Button size="sm" className="gap-1.5">
-                              <Video className="h-3.5 w-3.5" /> Join
-                            </Button>
-                          </Link>
+                          <Button size="sm" className="gap-1.5" onClick={() => setSelectedLiveClass(lc)}>
+                            <Video className="h-3.5 w-3.5" /> Join
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -345,11 +345,9 @@ const Dashboard = () => {
                       {isExpired ? (
                         <Badge variant="destructive">Expired</Badge>
                       ) : (
-                        <Link to={`/live/${lc.room_name}`}>
-                          <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90">
-                            <Video className="h-3.5 w-3.5" /> Join
-                          </Button>
-                        </Link>
+                        <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => setSelectedLiveClass(lc)}>
+                          <Video className="h-3.5 w-3.5" /> Join
+                        </Button>
                       )}
                     </div>
                   );
@@ -392,6 +390,16 @@ const Dashboard = () => {
             <StudentAnalytics />
           </TabsContent>
         </Tabs>
+
+        <LiveClassModal
+          liveClass={selectedLiveClass}
+          open={!!selectedLiveClass}
+          onOpenChange={(open) => { if (!open) setSelectedLiveClass(null); }}
+          onStatusChange={(id, status) => {
+            setLiveClasses((prev) => prev.map((lc) => lc.id === id ? { ...lc, status } : lc));
+            setStudentLiveClasses((prev) => prev.filter((lc) => lc.id !== id));
+          }}
+        />
       </main>
     </div>
   );
