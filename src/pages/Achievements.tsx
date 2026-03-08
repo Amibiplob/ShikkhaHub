@@ -2,18 +2,38 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Award, BookOpen, Download, Loader2, Trophy } from "lucide-react";
+import {
+  Award, BookOpen, Brain, Download, Footprints, GraduationCap, HeartHandshake,
+  Loader2, MessageCircle, Scroll, Star, Target, Trophy, Zap,
+} from "lucide-react";
 import { format } from "date-fns";
 
+const iconMap: Record<string, any> = {
+  footprints: Footprints,
+  zap: Zap,
+  brain: Brain,
+  "graduation-cap": GraduationCap,
+  scroll: Scroll,
+  award: Award,
+  "message-circle": MessageCircle,
+  "heart-handshake": HeartHandshake,
+  star: Star,
+  target: Target,
+};
+
 const Achievements = () => {
-  const { user, loading: authLoading, profile } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [allBadges, setAllBadges] = useState<any[]>([]);
+  const [earnedBadgeIds, setEarnedBadgeIds] = useState<Set<string>>(new Set());
+  const [earnedMap, setEarnedMap] = useState<Record<string, string>>({});
   const [certificates, setCertificates] = useState<any[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [courseProgress, setCourseProgress] = useState<Record<string, number>>({});
@@ -25,12 +45,24 @@ const Achievements = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [certRes, enrollRes] = await Promise.all([
+      // Check & award any new badges
+      await checkAndAwardBadges(user.id);
+
+      const [badgesRes, earnedRes, certRes, enrollRes] = await Promise.all([
+        supabase.from("badges").select("*").order("criteria_value"),
+        supabase.from("user_badges").select("badge_id, earned_at").eq("user_id", user.id),
         supabase.from("certificates").select("*, courses(title, category, difficulty)").eq("user_id", user.id).order("issued_at", { ascending: false }),
         supabase.from("enrollments").select("course_id, courses(*, profiles!courses_teacher_id_fkey(full_name))").eq("user_id", user.id),
       ]);
 
+      setAllBadges(badgesRes.data || []);
+      const eSet = new Set<string>();
+      const eMap: Record<string, string> = {};
+      earnedRes.data?.forEach((e) => { eSet.add(e.badge_id); eMap[e.badge_id] = e.earned_at; });
+      setEarnedBadgeIds(eSet);
+      setEarnedMap(eMap);
       setCertificates(certRes.data || []);
+
       const courses = enrollRes.data?.map((e) => e.courses).filter(Boolean) || [];
       setEnrolledCourses(courses);
 
@@ -56,8 +88,6 @@ const Achievements = () => {
   }, [user]);
 
   const completedCourses = enrolledCourses.filter((c: any) => courseProgress[c.id] === 100);
-  const inProgressCourses = enrolledCourses.filter((c: any) => courseProgress[c.id] > 0 && courseProgress[c.id] < 100);
-  const totalLessonsCompleted = Object.values(courseProgress).reduce((acc, v) => acc, 0);
 
   if (authLoading || loading) {
     return (
@@ -73,7 +103,7 @@ const Achievements = () => {
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Trophy className="h-7 w-7 text-primary" /> My Achievements
           </h1>
-          <p className="text-muted-foreground mt-1">Track your learning journey and earned certificates</p>
+          <p className="text-muted-foreground mt-1">Track your learning journey, badges, and certificates</p>
         </div>
 
         {/* Stats */}
@@ -81,7 +111,7 @@ const Achievements = () => {
           <div className="rounded-xl border border-border bg-card p-5">
             <BookOpen className="mb-2 h-5 w-5 text-primary" />
             <p className="text-2xl font-bold">{enrolledCourses.length}</p>
-            <p className="text-sm text-muted-foreground">Enrolled Courses</p>
+            <p className="text-sm text-muted-foreground">Enrolled</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-5">
             <Trophy className="mb-2 h-5 w-5 text-primary" />
@@ -94,16 +124,57 @@ const Achievements = () => {
             <p className="text-sm text-muted-foreground">Certificates</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-5">
-            <BookOpen className="mb-2 h-5 w-5 text-primary" />
-            <p className="text-2xl font-bold">{inProgressCourses.length}</p>
-            <p className="text-sm text-muted-foreground">In Progress</p>
+            <Star className="mb-2 h-5 w-5 text-primary" />
+            <p className="text-2xl font-bold">{earnedBadgeIds.size}/{allBadges.length}</p>
+            <p className="text-sm text-muted-foreground">Badges</p>
           </div>
         </div>
+
+        {/* Badges */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Award className="h-5 w-5 text-primary" /> Badges
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {allBadges.map((badge) => {
+              const earned = earnedBadgeIds.has(badge.id);
+              const IconComp = iconMap[badge.icon] || Award;
+              return (
+                <div
+                  key={badge.id}
+                  className={`rounded-xl border p-5 transition-colors ${
+                    earned
+                      ? "border-primary/30 bg-primary/5"
+                      : "border-border bg-card opacity-50"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`rounded-lg p-2.5 ${earned ? "bg-primary/10" : "bg-muted"}`}>
+                      <IconComp className={`h-5 w-5 ${earned ? "text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{badge.name}</h3>
+                        {earned && <Badge className="bg-success/10 text-success border-success/20 text-xs">Earned</Badge>}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-0.5">{badge.description}</p>
+                      {earned && earnedMap[badge.id] && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {format(new Date(earnedMap[badge.id]), "MMM d, yyyy")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Certificates */}
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" /> Certificates ({certificates.length})
+            <GraduationCap className="h-5 w-5 text-primary" /> Certificates ({certificates.length})
           </h2>
           {certificates.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border py-12 text-center">
@@ -121,14 +192,6 @@ const Achievements = () => {
                     <Badge variant="outline" className="text-xs">{cert.certificate_number}</Badge>
                   </div>
                   <h3 className="font-semibold mb-1">{cert.courses?.title}</h3>
-                  <div className="flex items-center gap-2 mb-2">
-                    {cert.courses?.category && (
-                      <Badge variant="secondary" className="text-xs">{cert.courses.category}</Badge>
-                    )}
-                    {cert.courses?.difficulty && (
-                      <Badge variant="outline" className="text-xs capitalize">{cert.courses.difficulty}</Badge>
-                    )}
-                  </div>
                   <p className="text-xs text-muted-foreground">
                     Earned on {format(new Date(cert.issued_at), "MMMM d, yyyy")}
                   </p>

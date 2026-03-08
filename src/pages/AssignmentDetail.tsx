@@ -156,6 +156,17 @@ const AssignmentDetail = () => {
     if (error) toast.error(error.message);
     else {
       toast.success("Review saved!");
+      // Send notification to student
+      const sub = submissions.find((s) => s.id === submissionId);
+      if (sub) {
+        await supabase.from("notifications").insert({
+          user_id: sub.student_id,
+          title: "Assignment Graded",
+          message: `Your submission for "${assignment.title}" has been reviewed. ${marks ? `Score: ${marks}/${assignment.max_marks}` : ""}`,
+          type: "grade",
+          link: `/assignments/${assignmentId}`,
+        });
+      }
       setSubmissions((prev) =>
         prev.map((s) =>
           s.id === submissionId

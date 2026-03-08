@@ -18,6 +18,7 @@ import AssignmentDetail from "./pages/AssignmentDetail";
 import TeacherAnalytics from "./pages/TeacherAnalytics";
 import Achievements from "./pages/Achievements";
 import Leaderboard from "./pages/Leaderboard";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/analytics" element={<TeacherAnalytics />} />
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
