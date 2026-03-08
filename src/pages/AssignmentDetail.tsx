@@ -201,6 +201,7 @@ const AssignmentDetail = () => {
     switch (t) {
       case "github": return <Github className="h-4 w-4" />;
       case "url": return <Globe className="h-4 w-4" />;
+      case "file": return <Paperclip className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;
     }
   };
