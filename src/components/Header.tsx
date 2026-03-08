@@ -132,6 +132,13 @@ const Header = () => {
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
+                {hasRole("admin") && (
+                  <Link to="/admin" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <Shield className="mr-2 h-4 w-4" /> Admin
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
                 </Button>
