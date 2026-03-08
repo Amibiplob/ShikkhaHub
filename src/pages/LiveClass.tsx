@@ -212,7 +212,7 @@ const LiveClass = () => {
         </div>
 
         {/* Main content */}
-        {!joined ? (
+        {!joined && (
           <div className="flex flex-1 items-center justify-center flex-col gap-6 p-8">
             <div className="rounded-full bg-primary/10 p-8">
               <Video className="h-16 w-16 text-primary" />
@@ -250,9 +250,8 @@ const LiveClass = () => {
               <Video className="h-5 w-5" /> {isTeacher ? "Start Class Now" : "Join Class Now"}
             </Button>
           </div>
-        ) : (
-          <div ref={jitsiContainerRef} className="flex-1 min-h-[600px]" />
         )}
+        <div ref={jitsiContainerRef} className={joined ? "flex-1 min-h-[600px]" : "hidden"} />
       </main>
     </div>
   );
