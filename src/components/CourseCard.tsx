@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Settings, User } from "lucide-react";
 import BookmarkButton from "@/components/BookmarkButton";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CourseCardProps {
   id: string;
