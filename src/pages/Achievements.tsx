@@ -52,7 +52,7 @@ const Achievements = () => {
         supabase.from("badges").select("*").order("criteria_value"),
         supabase.from("user_badges").select("badge_id, earned_at").eq("user_id", user.id),
         supabase.from("certificates").select("*, courses(title, category, difficulty)").eq("user_id", user.id).order("issued_at", { ascending: false }),
-        supabase.from("enrollments").select("course_id, courses(*, profiles!courses_teacher_id_fkey(full_name))").eq("user_id", user.id),
+        supabase.from("enrollments").select("course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))").eq("user_id", user.id),
       ]);
 
       setAllBadges(badgesRes.data || []);

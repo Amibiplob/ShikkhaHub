@@ -48,7 +48,7 @@ const Dashboard = () => {
       // Enrolled courses
       const { data: enrollments } = await supabase
         .from("enrollments")
-        .select("course_id, courses(*, profiles!courses_teacher_id_fkey(full_name))")
+        .select("course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))")
         .eq("user_id", user.id);
       const courses = enrollments?.map((e) => e.courses).filter(Boolean) || [];
       setEnrolledCourses(courses);
@@ -103,7 +103,7 @@ const Dashboard = () => {
       // Bookmarked courses
       const { data: bookmarks } = await supabase
         .from("course_bookmarks")
-        .select("course_id, courses(*, profiles!courses_teacher_id_fkey(full_name))")
+        .select("course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))")
         .eq("user_id", user.id);
       setBookmarkedCourses(bookmarks?.map((b) => b.courses).filter(Boolean) || []);
 

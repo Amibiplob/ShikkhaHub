@@ -51,7 +51,7 @@ const Admin = () => {
       const [profilesRes, rolesRes, coursesRes, postsRes, enrollRes, liveRes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("*"),
-        supabase.from("courses").select("*, profiles!courses_teacher_id_fkey(full_name)").order("created_at", { ascending: false }),
+        supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name)").order("created_at", { ascending: false }),
         supabase.from("community_posts").select("*, profiles!community_posts_user_id_fkey(full_name)").order("created_at", { ascending: false }),
         supabase.from("enrollments").select("*, courses(title)"),
         supabase.from("live_classes").select("*, courses(title)").order("scheduled_at", { ascending: false }),
