@@ -309,31 +309,36 @@ const Dashboard = () => {
             {/* Teacher's scheduled classes */}
             {isTeacher && liveClasses.length > 0 && (
               <div className="space-y-3 mb-6">
-                {liveClasses.map((lc) => (
-                  <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-primary/10 p-2.5">
-                        <Video className="h-5 w-5 text-primary" />
+                {liveClasses.map((lc) => {
+                  const isExpired = lc.status === "expired" || lc.status === "completed";
+                  return (
+                    <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-primary/10 p-2.5">
+                          <Video className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{lc.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {lc.courses?.title} • {format(new Date(lc.scheduled_at), "MMM d, yyyy 'at' h:mm a")}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{lc.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {lc.courses?.title} • {format(new Date(lc.scheduled_at), "MMM d, yyyy 'at' h:mm a")}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={isExpired ? "destructive" : lc.status === "scheduled" ? "secondary" : "default"}>
+                          {isExpired ? "expired" : lc.status}
+                        </Badge>
+                        {!isExpired && (
+                          <Link to={`/live/${lc.room_name}`}>
+                            <Button size="sm" className="gap-1.5">
+                              <Video className="h-3.5 w-3.5" /> Join
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={lc.status === "scheduled" ? "secondary" : lc.status === "live" ? "default" : "outline"}>
-                        {lc.status}
-                      </Badge>
-                      <Link to={`/live/${lc.room_name}`}>
-                        <Button size="sm" className="gap-1.5">
-                          <Video className="h-3.5 w-3.5" /> {lc.status === "live" ? "Join" : "Open"}
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
