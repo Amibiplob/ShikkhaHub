@@ -143,13 +143,8 @@ const LiveClass = () => {
   };
 
   const leaveMeeting = () => {
-    apiRef.current?.dispose();
-    apiRef.current = null;
-    setJoined(false);
-
-    // Update status back if teacher
-    if (liveClass && user && liveClass.teacher_id === user.id) {
-      supabase.from("live_classes").update({ status: "completed" }).eq("id", liveClass.id);
+    if (apiRef.current) {
+      apiRef.current.executeCommand("hangup");
     }
   };
 
