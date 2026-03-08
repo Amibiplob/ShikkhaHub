@@ -36,6 +36,7 @@ const CourseDetail = () => {
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [assignments, setAssignments] = useState<any[]>([]);
+  const [liveClasses, setLiveClasses] = useState<any[]>([]);
   const [createAssignOpen, setCreateAssignOpen] = useState(false);
   const [creatingAssign, setCreatingAssign] = useState(false);
   const [assignTitle, setAssignTitle] = useState("");
