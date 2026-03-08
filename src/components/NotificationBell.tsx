@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Check, Loader2 } from "lucide-react";
+import { Bell, Check, Loader2, BookOpen, Video, ClipboardList, Award, Users, Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 const NotificationBell = () => {
   const { user } = useAuth();
@@ -41,8 +42,11 @@ const NotificationBell = () => {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
-          setNotifications((prev) => [payload.new as any, ...prev].slice(0, 20));
+          const n = payload.new as any;
+          setNotifications((prev) => [n, ...prev].slice(0, 20));
           setUnreadCount((prev) => prev + 1);
+          // Show toast for new notification
+          toast(n.title, { description: n.message || undefined, duration: 5000 });
         }
       )
       .subscribe();
@@ -114,7 +118,7 @@ const NotificationBell = () => {
                 >
                   <div className="flex items-start gap-2">
                     {!n.is_read && <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />}
-                    <div className="flex-1 min-w-0">
+                    {notificationIcon(n.type)}
                       <p className="font-medium leading-snug">{n.title}</p>
                       {n.message && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>}
                       <p className="text-xs text-muted-foreground mt-1">
