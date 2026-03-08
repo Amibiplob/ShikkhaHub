@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import LessonFileUpload from "@/components/LessonFileUpload";
 import { BookOpen, FileText, GripVertical, Loader2, Pencil, Plus, Trash2, Video } from "lucide-react";
 import { toast } from "sonner";
 
@@ -229,10 +230,22 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
                   <div><Label>Content</Label><Textarea value={lessonContent} onChange={(e) => setLessonContent(e.target.value)} rows={6} placeholder="Write lesson content..." /></div>
                 )}
                 {lessonType === "video" && (
-                  <div><Label>Video URL</Label><Input value={lessonVideoUrl} onChange={(e) => setLessonVideoUrl(e.target.value)} placeholder="https://..." /></div>
+                  <div className="space-y-2">
+                    <Label>Video</Label>
+                    <LessonFileUpload accept="video/*" label="Upload Video" onUploaded={(url) => setLessonVideoUrl(url)} />
+                    {lessonVideoUrl && <p className="text-xs text-muted-foreground truncate">✓ {lessonVideoUrl.split('/').pop()}</p>}
+                    <p className="text-xs text-muted-foreground">Or paste a URL:</p>
+                    <Input value={lessonVideoUrl} onChange={(e) => setLessonVideoUrl(e.target.value)} placeholder="https://..." />
+                  </div>
                 )}
                 {lessonType === "file" && (
-                  <div><Label>File URL</Label><Input value={lessonFileUrl} onChange={(e) => setLessonFileUrl(e.target.value)} placeholder="https://..." /></div>
+                  <div className="space-y-2">
+                    <Label>File</Label>
+                    <LessonFileUpload accept="*/*" label="Upload File" onUploaded={(url) => setLessonFileUrl(url)} />
+                    {lessonFileUrl && <p className="text-xs text-muted-foreground truncate">✓ {lessonFileUrl.split('/').pop()}</p>}
+                    <p className="text-xs text-muted-foreground">Or paste a URL:</p>
+                    <Input value={lessonFileUrl} onChange={(e) => setLessonFileUrl(e.target.value)} placeholder="https://..." />
+                  </div>
                 )}
                 <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground" disabled={creatingLesson || !lessonModuleId}>
                   {creatingLesson && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Lesson
@@ -314,10 +327,20 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
                 <div><Label>Content</Label><Textarea value={editLesson.content || ""} onChange={(e) => setEditLesson({ ...editLesson, content: e.target.value })} rows={6} /></div>
               )}
               {editLesson.type === "video" && (
-                <div><Label>Video URL</Label><Input value={editLesson.video_url || ""} onChange={(e) => setEditLesson({ ...editLesson, video_url: e.target.value })} /></div>
+                <div className="space-y-2">
+                  <Label>Video</Label>
+                  <LessonFileUpload accept="video/*" label="Upload Video" onUploaded={(url) => setEditLesson({ ...editLesson, video_url: url })} />
+                  {editLesson.video_url && <p className="text-xs text-muted-foreground truncate">✓ {editLesson.video_url.split('/').pop()}</p>}
+                  <Input value={editLesson.video_url || ""} onChange={(e) => setEditLesson({ ...editLesson, video_url: e.target.value })} placeholder="https://..." />
+                </div>
               )}
               {editLesson.type === "file" && (
-                <div><Label>File URL</Label><Input value={editLesson.file_url || ""} onChange={(e) => setEditLesson({ ...editLesson, file_url: e.target.value })} /></div>
+                <div className="space-y-2">
+                  <Label>File</Label>
+                  <LessonFileUpload accept="*/*" label="Upload File" onUploaded={(url) => setEditLesson({ ...editLesson, file_url: url })} />
+                  {editLesson.file_url && <p className="text-xs text-muted-foreground truncate">✓ {editLesson.file_url.split('/').pop()}</p>}
+                  <Input value={editLesson.file_url || ""} onChange={(e) => setEditLesson({ ...editLesson, file_url: e.target.value })} placeholder="https://..." />
+                </div>
               )}
               <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground" disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
