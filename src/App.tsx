@@ -13,6 +13,7 @@ import Community from "./pages/Community";
 import CommunityPost from "./pages/CommunityPost";
 import LiveClass from "./pages/LiveClass";
 import Admin from "./pages/Admin";
+import AssignmentDetail from "./pages/AssignmentDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/community/:id" element={<CommunityPost />} />
             <Route path="/live/:roomName" element={<LiveClass />} />
+            <Route path="/assignments/:assignmentId" element={<AssignmentDetail />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
