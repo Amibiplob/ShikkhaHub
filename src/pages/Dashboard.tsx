@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Bookmark, BookOpen, Calendar, GraduationCap, Loader2, Plus, Users, Video } from "lucide-react";
+import { BarChart3, Bookmark, BookOpen, Calendar, GraduationCap, Loader2, Plus, Settings, Users, Video } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -263,6 +263,14 @@ const Dashboard = () => {
                           )
                         }
                       />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={() => navigate(`/courses/${course.id}`)}
+                      >
+                        <Settings className="h-4 w-4" /> Course Settings
+                      </Button>
                       <CourseCard {...course} />
                     </div>
                   ))}
