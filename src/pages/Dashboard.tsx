@@ -144,6 +144,9 @@ const Dashboard = () => {
           <TabsList>
             {isTeacher && <TabsTrigger value="teaching">My Courses</TabsTrigger>}
             <TabsTrigger value="learning">Enrolled</TabsTrigger>
+            <TabsTrigger value="live">
+              <Video className="mr-1.5 h-3.5 w-3.5" /> Live Classes
+            </TabsTrigger>
           </TabsList>
 
           {isTeacher && (
