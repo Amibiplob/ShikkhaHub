@@ -25,6 +25,7 @@ const LiveClass = () => {
   const [loading, setLoading] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [showChat, setShowChat] = useState(true);
+  const [entryModalOpen, setEntryModalOpen] = useState(true);
 
   const teacherVideoRef = useRef<HTMLVideoElement>(null);
   const studentVideoRef = useRef<HTMLVideoElement>(null);
