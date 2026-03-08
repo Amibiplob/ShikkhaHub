@@ -341,7 +341,7 @@ const CourseDetail = () => {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold flex items-center gap-2">
-                <Video className="h-5 w-5 text-primary" /> Live Classes ({liveClasses.filter(lc => lc.status !== "completed").length})
+                <Video className="h-5 w-5 text-primary" /> Live Classes ({liveClasses.filter((lc) => !["completed", "expired"].includes(lc.status)).length})
               </h3>
               {course.teacher_id === user?.id && (
                 <Dialog open={createLiveOpen} onOpenChange={setCreateLiveOpen}>
@@ -393,13 +393,13 @@ const CourseDetail = () => {
               <div className="space-y-3">
                 {liveClasses.map((lc) => {
                   const isLive = lc.status === "live";
-                  const isCompleted = lc.status === "completed";
+                  const isEnded = ["completed", "expired"].includes(lc.status);
                   const scheduledTime = new Date(lc.scheduled_at);
                   return (
-                    <div key={lc.id} className={`flex items-center justify-between rounded-xl border border-border bg-card p-4 ${isCompleted ? "opacity-60" : ""}`}>
+                    <div key={lc.id} className={`flex items-center justify-between rounded-xl border border-border bg-card p-4 ${isEnded ? "opacity-60" : ""}`}>
                       <div className="flex items-center gap-3">
-                        <div className={`rounded-lg p-2.5 ${isLive ? "bg-success/10" : isCompleted ? "bg-muted" : "bg-primary/10"}`}>
-                          <Video className={`h-5 w-5 ${isLive ? "text-success" : isCompleted ? "text-muted-foreground" : "text-primary"}`} />
+                        <div className={`rounded-lg p-2.5 ${isLive ? "bg-success/10" : isEnded ? "bg-muted" : "bg-primary/10"}`}>
+                          <Video className={`h-5 w-5 ${isLive ? "text-success" : isEnded ? "text-muted-foreground" : "text-primary"}`} />
                         </div>
                         <div>
                           <p className="font-medium">{lc.title}</p>
@@ -411,12 +411,12 @@ const CourseDetail = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         {isLive && <Badge className="bg-success text-success-foreground animate-pulse">● Live</Badge>}
-                        {isCompleted ? (
-                          <Badge variant="secondary" className="text-xs">Ended</Badge>
+                        {isEnded ? (
+                          <Badge variant="secondary" className="text-xs">Expired</Badge>
                         ) : (
                           <Link to={`/live/${lc.room_name}`}>
                             <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90">
-                              <Video className="h-3.5 w-3.5" /> {isLive ? "Join Now" : "Open"}
+                              <Video className="h-3.5 w-3.5" /> Join Now
                             </Button>
                           </Link>
                         )}
