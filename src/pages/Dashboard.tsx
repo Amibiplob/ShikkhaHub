@@ -325,10 +325,10 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Student's upcoming live classes */}
+            {/* Student live classes */}
             {!isTeacher && studentLiveClasses.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-xl font-semibold mb-3">Upcoming Live Classes</h2>
+                <h2 className="text-xl font-semibold mb-3">Live Classes</h2>
                 {studentLiveClasses.map((lc) => (
                   <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
                     <div className="flex items-center gap-3">
