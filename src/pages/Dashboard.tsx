@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
+import LiveClassScheduler from "@/components/LiveClassScheduler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, GraduationCap, Loader2, Plus, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, Calendar, GraduationCap, Loader2, Plus, Users, Video } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 const Dashboard = () => {
   const { user, loading: authLoading, hasRole, profile } = useAuth();
