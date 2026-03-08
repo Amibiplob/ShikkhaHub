@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Loader2, MessageSquare, Mic, Monitor, Video, VideoOff, ExternalLink } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Mic, Monitor, Video, VideoOff } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -16,6 +16,8 @@ const LiveClass = () => {
   const [liveClass, setLiveClass] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [joined, setJoined] = useState(false);
+  const jitsiContainerRef = useRef<HTMLDivElement>(null);
+  const apiRef = useRef<any>(null);
 
   useEffect(() => {
     if (!roomName) return;
@@ -31,22 +33,71 @@ const LiveClass = () => {
     fetchClass();
   }, [roomName]);
 
-  const meetingUrl = roomName
-    ? `https://meet.jit.si/CodeCampus_${roomName}#userInfo.displayName="${encodeURIComponent(profile?.full_name || user?.user_metadata?.full_name || user?.email || "Student")}"&config.startWithAudioMuted=true&config.prejoinPageEnabled=false`
-    : "";
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email || "Student";
 
-  const joinMeeting = () => {
-    if (!user || !meetingUrl) return;
+  const startMeeting = () => {
+    if (!user || !roomName || !jitsiContainerRef.current) return;
 
     // Update status to live if teacher
     if (liveClass && liveClass.teacher_id === user.id) {
       supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
     }
 
-    window.open(meetingUrl, "_blank", "noopener,noreferrer");
+    // Load Jitsi external API script
+    const script = document.createElement("script");
+    script.src = "https://meet.jit.si/external_api.js";
+    script.async = true;
+    script.onload = () => {
+      if (!jitsiContainerRef.current) return;
+      const api = new (window as any).JitsiMeetExternalAPI("meet.jit.si", {
+        roomName: `CodeCampus_${roomName}`,
+        parentNode: jitsiContainerRef.current,
+        width: "100%",
+        height: "100%",
+        userInfo: {
+          displayName,
+          email: user.email || "",
+        },
+        configOverwrite: {
+          startWithAudioMuted: true,
+          startWithVideoMuted: false,
+          prejoinPageEnabled: false,
+          disableDeepLinking: true,
+          enableClosePage: false,
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          TOOLBAR_BUTTONS: [
+            "microphone", "camera", "desktop", "chat", "raisehand",
+            "participants-pane", "tileview", "fullscreen", "hangup", "settings",
+          ],
+        },
+      });
+
+      api.addEventListener("readyToClose", () => {
+        setJoined(false);
+        api.dispose();
+        apiRef.current = null;
+      });
+
+      apiRef.current = api;
+    };
+    document.head.appendChild(script);
+
     setJoined(true);
-    toast.success("Meeting opened in a new tab!");
+    toast.success("Joining meeting...");
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (apiRef.current) {
+        apiRef.current.dispose();
+        apiRef.current = null;
+      }
+    };
+  }, []);
 
   if (authLoading || loading) {
     return (
@@ -94,7 +145,7 @@ const LiveClass = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-semibold">{liveClass.title}</h1>
-                <Badge variant={joined ? "default" : isUpcoming ? "secondary" : "outline"} className={joined ? "bg-success text-success-foreground animate-pulse" : ""}>
+                <Badge variant={joined ? "default" : isUpcoming ? "secondary" : "outline"} className={joined ? "bg-green-600 text-white animate-pulse" : ""}>
                   {joined ? "● Live" : isUpcoming ? "Upcoming" : liveClass.status}
                 </Badge>
               </div>
@@ -104,29 +155,18 @@ const LiveClass = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {!joined ? (
-              <Button
-                onClick={joinMeeting}
-                className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
-                disabled={!user}
-              >
-                <Video className="h-4 w-4" /> {isTeacher ? "Start Class" : "Join Class"}
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="bg-green-600 animate-pulse">● Meeting Open</Badge>
-                <Button variant="outline" asChild>
-                  <a href={meetingUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" /> Rejoin Tab
-                  </a>
-                </Button>
-              </div>
-            )}
-          </div>
+          {!joined && (
+            <Button
+              onClick={startMeeting}
+              className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
+              disabled={!user}
+            >
+              <Video className="h-4 w-4" /> {isTeacher ? "Start Class" : "Join Class"}
+            </Button>
+          )}
         </div>
 
-        {/* Main content */}
+        {/* Pre-join screen */}
         {!joined && (
           <div className="flex flex-1 items-center justify-center flex-col gap-6 p-8">
             <div className="rounded-full bg-primary/10 p-8">
@@ -157,7 +197,7 @@ const LiveClass = () => {
               <p className="text-sm text-destructive">Please sign in to join the class.</p>
             )}
             <Button
-              onClick={joinMeeting}
+              onClick={startMeeting}
               size="lg"
               className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2 px-8 shadow-glow"
               disabled={!user}
@@ -166,22 +206,13 @@ const LiveClass = () => {
             </Button>
           </div>
         )}
-        {joined && (
-          <div className="flex flex-1 items-center justify-center flex-col gap-4 p-8 bg-muted/30">
-            <div className="rounded-full bg-green-500/10 p-6">
-              <Video className="h-12 w-12 text-green-500" />
-            </div>
-            <h2 className="text-xl font-semibold">Meeting is open in another tab</h2>
-            <p className="text-muted-foreground text-center max-w-md">
-              Your live class is running in a separate browser tab with full camera, microphone, and screen sharing support.
-            </p>
-            <Button variant="outline" asChild>
-              <a href={meetingUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" /> Open Meeting Tab
-              </a>
-            </Button>
-          </div>
-        )}
+
+        {/* Embedded Jitsi meeting */}
+        <div
+          ref={jitsiContainerRef}
+          className={joined ? "flex-1 w-full" : "hidden"}
+          style={{ minHeight: joined ? "calc(100vh - 120px)" : 0 }}
+        />
       </main>
     </div>
   );
