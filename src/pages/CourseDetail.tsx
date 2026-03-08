@@ -142,6 +142,33 @@ const CourseDetail = () => {
     setCreatingAssign(false);
   };
 
+  const handleCreateLiveClass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !id) return;
+    setCreatingLive(true);
+    const roomName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const { data, error } = await supabase.from("live_classes").insert({
+      course_id: id,
+      teacher_id: user.id,
+      title: liveTitle,
+      description: liveDesc || null,
+      room_name: roomName,
+      scheduled_at: new Date(liveScheduledAt).toISOString(),
+      duration_minutes: parseInt(liveDuration),
+    }).select().single();
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Live class scheduled!");
+      setLiveClasses((prev) => [data, ...prev]);
+      setCreateLiveOpen(false);
+      setLiveTitle("");
+      setLiveDesc("");
+      setLiveScheduledAt("");
+      setLiveDuration("60");
+    }
+    setCreatingLive(false);
+  };
+
   const totalLessons = modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
   const completedCount = Object.keys(progress).length;
   const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
