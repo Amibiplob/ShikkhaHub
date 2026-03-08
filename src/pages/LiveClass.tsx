@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ArrowLeft, Loader2, Mic, MicOff, Monitor, Video, VideoOff,
   Users, PhoneOff, Send, Hand, Camera, ScreenShare,
-  AudioLines, MessageSquare,
+  AudioLines, MessageSquare, Circle, Square, Upload, Film,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -115,13 +115,57 @@ const LiveClass = () => {
     toast.success("Connecting to class...");
   };
 
-  const handleStop = () => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleStop = async () => {
     if (isTeacher) {
+      // If recording, stop and upload first
+      if (teacher.isRecording) {
+        await handleStopRecordingAndUpload();
+      }
       teacher.stopBroadcast();
       supabase.from("live_classes").update({ status: "completed" }).eq("id", liveClass.id);
       toast.info("Broadcast ended.");
     } else {
       student.leaveBroadcast();
+    }
+  };
+
+  const handleStartRecording = () => {
+    teacher.startRecording();
+    toast.success("Recording started!");
+  };
+
+  const handleStopRecordingAndUpload = async () => {
+    setUploading(true);
+    try {
+      const blob = await teacher.stopRecording();
+      const fileName = `${user!.id}/${roomName}-${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from("class-recordings")
+        .upload(fileName, blob, { contentType: "video/webm" });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("class-recordings")
+        .getPublicUrl(fileName);
+
+      await supabase.from("class_recordings").insert({
+        live_class_id: liveClass.id,
+        teacher_id: user!.id,
+        file_url: urlData.publicUrl,
+        file_size: blob.size,
+        duration_seconds: teacher.recordingDuration,
+        title: `${liveClass.title} — ${format(new Date(), "MMM d, h:mm a")}`,
+      });
+
+      toast.success("Recording saved!");
+    } catch (err: any) {
+      console.error("Upload failed:", err);
+      toast.error("Failed to save recording.");
+    } finally {
+      setUploading(false);
     }
   };
 
