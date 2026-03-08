@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { BookOpen, Clock } from "lucide-react";
 
 interface CourseCardProps {
@@ -10,6 +11,7 @@ interface CourseCardProps {
   category: string | null;
   difficulty: string | null;
   teacher_name?: string;
+  progressPercent?: number;
 }
 
 const difficultyColors: Record<string, string> = {
@@ -18,7 +20,7 @@ const difficultyColors: Record<string, string> = {
   advanced: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
-const CourseCard = ({ id, title, description, thumbnail_url, category, difficulty, teacher_name }: CourseCardProps) => (
+const CourseCard = ({ id, title, description, thumbnail_url, category, difficulty, teacher_name, progressPercent }: CourseCardProps) => (
   <Link to={`/courses/${id}`} className="group block">
     <div className="overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/30 hover:shadow-glow">
       <div className="aspect-video bg-muted relative overflow-hidden">
@@ -51,6 +53,15 @@ const CourseCard = ({ id, title, description, thumbnail_url, category, difficult
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
             <span>by {teacher_name}</span>
+          </div>
+        )}
+        {progressPercent !== undefined && (
+          <div className="mt-3 space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Progress</span>
+              <span className="font-medium text-primary">{progressPercent}%</span>
+            </div>
+            <Progress value={progressPercent} className="h-1.5" />
           </div>
         )}
       </div>
