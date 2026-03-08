@@ -37,11 +37,13 @@ const CourseDetail = () => {
   useEffect(() => {
     if (!id) return;
     const fetch = async () => {
-      const [courseRes, modulesRes] = await Promise.all([
+      const [courseRes, modulesRes, assignRes] = await Promise.all([
         supabase.from("courses").select("*, profiles!courses_teacher_id_fkey(full_name)").eq("id", id).single(),
         supabase.from("modules").select("*, lessons(*)").eq("course_id", id).order("sort_order"),
+        supabase.from("assignments").select("*").eq("course_id", id).order("created_at", { ascending: false }),
       ]);
       setCourse(courseRes.data);
+      setAssignments(assignRes.data || []);
       const mods = modulesRes.data || [];
       mods.forEach((m: any) => m.lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order));
       setModules(mods);
