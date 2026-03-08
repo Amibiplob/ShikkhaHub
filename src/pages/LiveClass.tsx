@@ -209,6 +209,7 @@ const LiveClass = () => {
 
   const scheduledTime = new Date(liveClass.scheduled_at);
   const isUpcoming = scheduledTime > new Date();
+  const isExpired = liveClass.status === "expired" || liveClass.status === "completed";
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -224,10 +225,10 @@ const LiveClass = () => {
               <div className="flex items-center gap-2">
                 <h1 className="font-semibold text-sm md:text-base">{liveClass.title}</h1>
                 <Badge
-                  variant={isActive ? "default" : isUpcoming ? "secondary" : "outline"}
+                  variant={isActive ? "default" : isUpcoming ? "secondary" : liveClass.status === "expired" ? "destructive" : "outline"}
                   className={isActive ? "bg-green-600 text-white animate-pulse" : ""}
                 >
-                  {isActive ? "● Live" : isUpcoming ? "Upcoming" : liveClass.status}
+                  {isActive ? "● Live" : isUpcoming ? "Upcoming" : liveClass.status === "expired" ? "Expired" : liveClass.status}
                 </Badge>
                 {isTeacher && teacher.isLive && (
                   <Badge variant="outline" className="gap-1">
@@ -303,7 +304,24 @@ const LiveClass = () => {
         )}
 
         {/* Pre-join screen */}
-        {!isActive && !student.ended && (
+        {!isActive && !student.ended && isExpired && (
+          <div className="flex flex-1 items-center justify-center flex-col gap-4 p-8">
+            <div className="rounded-full bg-muted p-6">
+              <VideoOff className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-semibold">This class has {liveClass.status === "expired" ? "expired" : "ended"}</h2>
+            <p className="text-muted-foreground">
+              {liveClass.status === "expired"
+                ? "Live classes expire 24 hours after creation. Please schedule a new class."
+                : "The teacher has ended this live session."}
+            </p>
+            <Button variant="outline" onClick={() => navigate("/dashboard")}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+            </Button>
+          </div>
+        )}
+
+        {!isActive && !student.ended && !isExpired && (
           <div className="flex flex-1 items-center justify-center flex-col gap-6 p-8">
             <div className="rounded-full bg-primary/10 p-8">
               <Video className="h-16 w-16 text-primary" />
