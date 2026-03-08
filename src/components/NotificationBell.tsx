@@ -71,6 +71,17 @@ const NotificationBell = () => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
+  const notificationIcon = (type: string) => {
+    switch (type) {
+      case "assignment": return <ClipboardList className="h-4 w-4 text-primary shrink-0 mt-0.5" />;
+      case "grade": return <Award className="h-4 w-4 text-warning shrink-0 mt-0.5" />;
+      case "live_class": return <Video className="h-4 w-4 text-success shrink-0 mt-0.5" />;
+      case "enrollment": return <Users className="h-4 w-4 text-info shrink-0 mt-0.5" />;
+      case "badge": return <Award className="h-4 w-4 text-primary shrink-0 mt-0.5" />;
+      default: return <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />;
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -119,6 +130,7 @@ const NotificationBell = () => {
                   <div className="flex items-start gap-2">
                     {!n.is_read && <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />}
                     {notificationIcon(n.type)}
+                    <div className="flex-1 min-w-0">
                       <p className="font-medium leading-snug">{n.title}</p>
                       {n.message && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>}
                       <p className="text-xs text-muted-foreground mt-1">
