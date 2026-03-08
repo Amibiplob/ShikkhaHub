@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
+import ProfileEditor from "@/components/ProfileEditor";
 import LiveClassScheduler from "@/components/LiveClassScheduler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
