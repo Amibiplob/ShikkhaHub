@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Bookmark, BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download } from "lucide-react";
+import { Bookmark, BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download, Film, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -38,25 +38,37 @@ const CourseDetail = () => {
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [assignments, setAssignments] = useState<any[]>([]);
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
+  const [recordings, setRecordings] = useState<any[]>([]);
   const [createAssignOpen, setCreateAssignOpen] = useState(false);
   const [creatingAssign, setCreatingAssign] = useState(false);
   const [assignTitle, setAssignTitle] = useState("");
   const [assignDesc, setAssignDesc] = useState("");
   const [assignDue, setAssignDue] = useState("");
   const [assignMarks, setAssignMarks] = useState("100");
+  // Schedule live class state
+  const [createLiveOpen, setCreateLiveOpen] = useState(false);
+  const [creatingLive, setCreatingLive] = useState(false);
+  const [liveTitle, setLiveTitle] = useState("");
+  const [liveDesc, setLiveDesc] = useState("");
+  const [liveScheduledAt, setLiveScheduledAt] = useState("");
+  const [liveDuration, setLiveDuration] = useState("60");
 
   useEffect(() => {
     if (!id) return;
     const fetch = async () => {
-      const [courseRes, modulesRes, assignRes, liveRes] = await Promise.all([
+      const [courseRes, modulesRes, assignRes, liveRes, recRes] = await Promise.all([
         supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name)").eq("id", id).single(),
         supabase.from("modules").select("*, lessons(*)").eq("course_id", id).order("sort_order"),
         supabase.from("assignments").select("*").eq("course_id", id).order("created_at", { ascending: false }),
-        supabase.from("live_classes").select("*").eq("course_id", id).neq("status", "completed").order("scheduled_at", { ascending: true }),
+        supabase.from("live_classes").select("*").eq("course_id", id).order("scheduled_at", { ascending: false }),
+        supabase.from("class_recordings").select("*, live_classes!class_recordings_live_class_id_fkey(course_id)").order("created_at", { ascending: false }),
       ]);
       setCourse(courseRes.data);
       setAssignments(assignRes.data || []);
       setLiveClasses(liveRes.data || []);
+      // Filter recordings for this course
+      const allRecs = recRes.data || [];
+      setRecordings(allRecs.filter((r: any) => r.live_classes?.course_id === id));
       const mods = modulesRes.data || [];
       mods.forEach((m: any) => m.lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order));
       setModules(mods);
@@ -128,6 +140,33 @@ const CourseDetail = () => {
       setAssignMarks("100");
     }
     setCreatingAssign(false);
+  };
+
+  const handleCreateLiveClass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !id) return;
+    setCreatingLive(true);
+    const roomName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const { data, error } = await supabase.from("live_classes").insert({
+      course_id: id,
+      teacher_id: user.id,
+      title: liveTitle,
+      description: liveDesc || null,
+      room_name: roomName,
+      scheduled_at: new Date(liveScheduledAt).toISOString(),
+      duration_minutes: parseInt(liveDuration),
+    }).select().single();
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Live class scheduled!");
+      setLiveClasses((prev) => [data, ...prev]);
+      setCreateLiveOpen(false);
+      setLiveTitle("");
+      setLiveDesc("");
+      setLiveScheduledAt("");
+      setLiveDuration("60");
+    }
+    setCreatingLive(false);
   };
 
   const totalLessons = modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
@@ -298,20 +337,68 @@ const CourseDetail = () => {
           </div>
 
           {/* Live Classes Section */}
-          {liveClasses.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold flex items-center gap-2 mb-4">
-                <Video className="h-5 w-5 text-primary" /> Live Classes ({liveClasses.length})
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold flex items-center gap-2">
+                <Video className="h-5 w-5 text-primary" /> Live Classes ({liveClasses.filter(lc => lc.status !== "completed").length})
               </h3>
+              {course.teacher_id === user?.id && (
+                <Dialog open={createLiveOpen} onOpenChange={setCreateLiveOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
+                      <Plus className="h-4 w-4" /> Schedule Meeting
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-primary" /> Schedule Live Class
+                      </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateLiveClass} className="space-y-4">
+                      <div>
+                        <Label>Title</Label>
+                        <Input value={liveTitle} onChange={(e) => setLiveTitle(e.target.value)} placeholder="e.g. Week 3: React Hooks Deep Dive" required />
+                      </div>
+                      <div>
+                        <Label>Description (optional)</Label>
+                        <Textarea value={liveDesc} onChange={(e) => setLiveDesc(e.target.value)} rows={2} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Date & Time</Label>
+                          <Input type="datetime-local" value={liveScheduledAt} onChange={(e) => setLiveScheduledAt(e.target.value)} required />
+                        </div>
+                        <div>
+                          <Label>Duration (min)</Label>
+                          <Input type="number" value={liveDuration} onChange={(e) => setLiveDuration(e.target.value)} min={15} step={15} />
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creatingLive}>
+                        {creatingLive && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Schedule Class
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
+
+            {liveClasses.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border py-12 text-center">
+                <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground">No live classes scheduled</p>
+              </div>
+            ) : (
               <div className="space-y-3">
                 {liveClasses.map((lc) => {
                   const isLive = lc.status === "live";
+                  const isCompleted = lc.status === "completed";
                   const scheduledTime = new Date(lc.scheduled_at);
                   return (
-                    <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                    <div key={lc.id} className={`flex items-center justify-between rounded-xl border border-border bg-card p-4 ${isCompleted ? "opacity-60" : ""}`}>
                       <div className="flex items-center gap-3">
-                        <div className={`rounded-lg p-2.5 ${isLive ? "bg-success/10" : "bg-primary/10"}`}>
-                          <Video className={`h-5 w-5 ${isLive ? "text-success" : "text-primary"}`} />
+                        <div className={`rounded-lg p-2.5 ${isLive ? "bg-success/10" : isCompleted ? "bg-muted" : "bg-primary/10"}`}>
+                          <Video className={`h-5 w-5 ${isLive ? "text-success" : isCompleted ? "text-muted-foreground" : "text-primary"}`} />
                         </div>
                         <div>
                           <p className="font-medium">{lc.title}</p>
@@ -323,15 +410,65 @@ const CourseDetail = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         {isLive && <Badge className="bg-success text-success-foreground animate-pulse">● Live</Badge>}
-                        <Link to={`/live/${lc.room_name}`}>
-                          <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90">
-                            <Video className="h-3.5 w-3.5" /> {isLive ? "Join Now" : "Open"}
-                          </Button>
-                        </Link>
+                        {isCompleted ? (
+                          <Badge variant="secondary" className="text-xs">Ended</Badge>
+                        ) : (
+                          <Link to={`/live/${lc.room_name}`}>
+                            <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90">
+                              <Video className="h-3.5 w-3.5" /> {isLive ? "Join Now" : "Open"}
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+
+          {/* Class Recordings Section */}
+          {recordings.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold flex items-center gap-2 mb-4">
+                <Film className="h-5 w-5 text-primary" /> Class Recordings ({recordings.length})
+              </h3>
+              <div className="space-y-3">
+                {recordings.map((rec) => (
+                  <div key={rec.id} className="rounded-xl border border-border bg-card p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-primary/10 p-2.5">
+                          <Film className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{rec.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(rec.created_at), "MMM d, yyyy 'at' h:mm a")}
+                            {rec.duration_seconds && ` • ${Math.floor(rec.duration_seconds / 60)} min`}
+                            {rec.file_size && ` • ${(rec.file_size / (1024 * 1024)).toFixed(1)} MB`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a href={rec.file_url} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" variant="outline" className="gap-1.5">
+                            <PlayCircle className="h-3.5 w-3.5" /> Watch
+                          </Button>
+                        </a>
+                        <a href={rec.file_url} download>
+                          <Button size="sm" variant="outline" className="gap-1.5">
+                            <Download className="h-3.5 w-3.5" /> Download
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                    {/* Inline video player */}
+                    <div className="mt-3 aspect-video rounded-lg overflow-hidden bg-black">
+                      <video src={rec.file_url} controls className="h-full w-full" />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
