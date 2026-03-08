@@ -371,6 +371,12 @@ const CourseDetail = () => {
             )}
           </div>
 
+          {/* Quizzes */}
+          <QuizManager courseId={id!} isTeacher={course.teacher_id === user?.id} enrolled={enrolled} />
+
+          {/* Prerequisites (teacher management + student view) */}
+          <CoursePrerequisites courseId={id!} isTeacher={course.teacher_id === user?.id} />
+
           {/* Content Editor (teachers only) */}
           <CourseContentEditor courseId={id!} isTeacher={course.teacher_id === user?.id} />
 
