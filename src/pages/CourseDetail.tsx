@@ -162,7 +162,10 @@ const CourseDetail = () => {
                 </Badge>
               )}
             </div>
-            <h1 className="mb-2 text-3xl font-bold md:text-4xl">{course.title}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="mb-2 text-3xl font-bold md:text-4xl">{course.title}</h1>
+              <BookmarkButton courseId={id!} />
+            </div>
             {course.description && <p className="max-w-2xl text-muted-foreground">{course.description}</p>}
             <p className="mt-3 text-sm text-muted-foreground">by {course.profiles?.full_name || "Unknown"}</p>
 
