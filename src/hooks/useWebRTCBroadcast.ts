@@ -11,32 +11,84 @@ interface PeerState {
   userId: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  userId: string;
+  userName: string;
+  message: string;
+  timestamp: number;
+}
+
 /**
  * Teacher broadcasts local stream to students via WebRTC.
- * Supabase Realtime channel is used for signaling.
+ * Supabase Realtime channel is used for signaling + chat.
  */
-export function useTeacherBroadcast(roomName: string, userId: string) {
+export function useTeacherBroadcast(roomName: string, userId: string, userName: string) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isLive, setIsLive] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isCamOff, setIsCamOff] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [raisedHands, setRaisedHands] = useState<string[]>([]);
   const peersRef = useRef<Map<string, PeerState>>(new Map());
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const activeTrackRef = useRef<MediaStreamTrack | null>(null);
 
-  const startBroadcast = useCallback(async () => {
+  const startBroadcast = useCallback(async (mode: "camera" | "screen" | "audio-only") => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 },
-        audio: true,
-      });
+      let stream: MediaStream;
+
+      if (mode === "screen") {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        // Try to get mic audio separately
+        let audioTrack: MediaStreamTrack | null = null;
+        try {
+          const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          audioTrack = audioStream.getAudioTracks()[0];
+        } catch { /* mic unavailable, use screen audio only */ }
+
+        stream = new MediaStream([
+          ...screenStream.getVideoTracks(),
+          ...(audioTrack ? [audioTrack] : screenStream.getAudioTracks()),
+        ]);
+        setScreenStream(screenStream);
+
+        screenStream.getVideoTracks()[0].onended = () => {
+          stopBroadcast();
+        };
+      } else if (mode === "audio-only") {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        setIsCamOff(true);
+      } else {
+        // Camera mode - try video+audio, fallback to audio-only
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: true,
+          });
+        } catch {
+          // Fallback: try audio only
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            setIsCamOff(true);
+          } catch {
+            // Fallback: screen share
+            const ss = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+            stream = ss;
+            setScreenStream(ss);
+            ss.getVideoTracks()[0].onended = () => stopBroadcast();
+          }
+        }
+      }
+
       setLocalStream(stream);
       localStreamRef.current = stream;
+      activeTrackRef.current = stream.getVideoTracks()[0] || null;
       setIsLive(true);
 
-      // Join realtime channel for signaling
       const channel = supabase.channel(`live-${roomName}`, {
         config: { broadcast: { self: false } },
       });
@@ -44,13 +96,13 @@ export function useTeacherBroadcast(roomName: string, userId: string) {
       channel
         .on("broadcast", { event: "join-request" }, async ({ payload }) => {
           const studentId = payload.studentId;
+          const studentName = payload.studentName || "Student";
           if (!studentId || peersRef.current.has(studentId)) return;
 
           const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
           peersRef.current.set(studentId, { pc, userId: studentId });
           setViewerCount(peersRef.current.size);
 
-          // Add tracks
           localStreamRef.current?.getTracks().forEach((track) => {
             pc.addTrack(track, localStreamRef.current!);
           });
@@ -66,7 +118,7 @@ export function useTeacherBroadcast(roomName: string, userId: string) {
           };
 
           pc.onconnectionstatechange = () => {
-            if (pc.connectionState === "disconnected" || pc.connectionState === "failed" || pc.connectionState === "closed") {
+            if (["disconnected", "failed", "closed"].includes(pc.connectionState)) {
               pc.close();
               peersRef.current.delete(studentId);
               setViewerCount(peersRef.current.size);
@@ -93,8 +145,20 @@ export function useTeacherBroadcast(roomName: string, userId: string) {
           if (payload.targetId !== userId) return;
           const peer = peersRef.current.get(payload.fromId);
           if (peer) {
-            await peer.pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+            try { await peer.pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch {}
           }
+        })
+        .on("broadcast", { event: "chat-message" }, ({ payload }) => {
+          setChatMessages((prev) => [...prev, payload as ChatMessage]);
+        })
+        .on("broadcast", { event: "raise-hand" }, ({ payload }) => {
+          setRaisedHands((prev) =>
+            prev.includes(payload.userName) ? prev : [...prev, payload.userName]
+          );
+          // Auto-remove after 10s
+          setTimeout(() => {
+            setRaisedHands((prev) => prev.filter((n) => n !== payload.userName));
+          }, 10000);
         })
         .subscribe();
 
@@ -110,14 +174,30 @@ export function useTeacherBroadcast(roomName: string, userId: string) {
     }
   }, [roomName, userId]);
 
+  const sendChat = useCallback((message: string) => {
+    if (!channelRef.current || !message.trim()) return;
+    const msg: ChatMessage = {
+      id: crypto.randomUUID(),
+      userId,
+      userName,
+      message: message.trim(),
+      timestamp: Date.now(),
+    };
+    channelRef.current.send({ type: "broadcast", event: "chat-message", payload: msg });
+    setChatMessages((prev) => [...prev, msg]);
+  }, [userId, userName]);
+
   const toggleMute = useCallback(() => {
     localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
     setIsMuted((m) => !m);
   }, []);
 
-  const toggleCamera = useCallback(() => {
-    localStreamRef.current?.getVideoTracks().forEach((t) => (t.enabled = !t.enabled));
-    setIsCamOff((c) => !c);
+  const toggleCamera = useCallback(async () => {
+    const videoTracks = localStreamRef.current?.getVideoTracks();
+    if (videoTracks && videoTracks.length > 0) {
+      videoTracks.forEach((t) => (t.enabled = !t.enabled));
+      setIsCamOff((c) => !c);
+    }
   }, []);
 
   const shareScreen = useCallback(async () => {
@@ -126,14 +206,12 @@ export function useTeacherBroadcast(roomName: string, userId: string) {
       setScreenStream(screen);
       const videoTrack = screen.getVideoTracks()[0];
 
-      // Replace video track for all peers
       peersRef.current.forEach(({ pc }) => {
         const sender = pc.getSenders().find((s) => s.track?.kind === "video");
         if (sender) sender.replaceTrack(videoTrack);
       });
 
       videoTrack.onended = () => {
-        // Revert to camera
         const camTrack = localStreamRef.current?.getVideoTracks()[0];
         if (camTrack) {
           peersRef.current.forEach(({ pc }) => {
@@ -153,11 +231,16 @@ export function useTeacherBroadcast(roomName: string, userId: string) {
     screenStream?.getTracks().forEach((t) => t.stop());
     peersRef.current.forEach(({ pc }) => pc.close());
     peersRef.current.clear();
-    channelRef.current?.unsubscribe();
+    if (channelRef.current) {
+      channelRef.current.send({ type: "broadcast", event: "teacher-ended", payload: {} });
+      channelRef.current.unsubscribe();
+    }
     setLocalStream(null);
     setScreenStream(null);
     setIsLive(false);
     setViewerCount(0);
+    setIsMuted(false);
+    setIsCamOff(false);
   }, [screenStream]);
 
   useEffect(() => {
@@ -169,32 +252,49 @@ export function useTeacherBroadcast(roomName: string, userId: string) {
   }, []);
 
   return {
-    localStream,
-    screenStream,
-    isLive,
-    viewerCount,
-    isMuted,
-    isCamOff,
-    startBroadcast,
-    stopBroadcast,
-    toggleMute,
-    toggleCamera,
-    shareScreen,
+    localStream, screenStream, isLive, viewerCount,
+    isMuted, isCamOff, chatMessages, raisedHands,
+    startBroadcast, stopBroadcast, toggleMute, toggleCamera,
+    shareScreen, sendChat,
   };
 }
 
 /**
- * Student receives the teacher's broadcast stream.
+ * Student receives the teacher's broadcast stream + chat.
  */
-export function useStudentViewer(roomName: string, userId: string) {
+export function useStudentViewer(roomName: string, userId: string, userName: string) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [ended, setEnded] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
+  const sendChat = useCallback((message: string) => {
+    if (!channelRef.current || !message.trim()) return;
+    const msg: ChatMessage = {
+      id: crypto.randomUUID(),
+      userId,
+      userName,
+      message: message.trim(),
+      timestamp: Date.now(),
+    };
+    channelRef.current.send({ type: "broadcast", event: "chat-message", payload: msg });
+    setChatMessages((prev) => [...prev, msg]);
+  }, [userId, userName]);
+
+  const raiseHand = useCallback(() => {
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "raise-hand",
+      payload: { userId, userName },
+    });
+  }, [userId, userName]);
+
   const joinBroadcast = useCallback(() => {
     setConnecting(true);
+    setEnded(false);
 
     const channel = supabase.channel(`live-${roomName}`, {
       config: { broadcast: { self: false } },
@@ -226,7 +326,7 @@ export function useStudentViewer(roomName: string, userId: string) {
         };
 
         pc.onconnectionstatechange = () => {
-          if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+          if (["disconnected", "failed"].includes(pc.connectionState)) {
             setConnected(false);
             setConnecting(false);
           }
@@ -245,30 +345,38 @@ export function useStudentViewer(roomName: string, userId: string) {
       .on("broadcast", { event: "ice-candidate" }, async ({ payload }) => {
         if (payload.targetId !== userId) return;
         if (pcRef.current) {
-          await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate));
+          try { await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch {}
         }
       })
       .on("broadcast", { event: "teacher-live" }, () => {
-        // Teacher is live, send join request
         channel.send({
           type: "broadcast",
           event: "join-request",
-          payload: { studentId: userId },
+          payload: { studentId: userId, studentName: userName },
         });
       })
+      .on("broadcast", { event: "teacher-ended" }, () => {
+        setConnected(false);
+        setConnecting(false);
+        setEnded(true);
+        pcRef.current?.close();
+        pcRef.current = null;
+      })
+      .on("broadcast", { event: "chat-message" }, ({ payload }) => {
+        setChatMessages((prev) => [...prev, payload as ChatMessage]);
+      })
       .subscribe(() => {
-        // Send join request immediately in case teacher is already live
         setTimeout(() => {
           channel.send({
             type: "broadcast",
             event: "join-request",
-            payload: { studentId: userId },
+            payload: { studentId: userId, studentName: userName },
           });
         }, 500);
       });
 
     channelRef.current = channel;
-  }, [roomName, userId]);
+  }, [roomName, userId, userName]);
 
   const leaveBroadcast = useCallback(() => {
     pcRef.current?.close();
@@ -287,5 +395,9 @@ export function useStudentViewer(roomName: string, userId: string) {
     };
   }, []);
 
-  return { remoteStream, connected, connecting, joinBroadcast, leaveBroadcast };
+  return {
+    remoteStream, connected, connecting, ended,
+    chatMessages, joinBroadcast, leaveBroadcast,
+    sendChat, raiseHand,
+  };
 }
