@@ -55,6 +55,7 @@ const CourseDetail = () => {
       ]);
       setCourse(courseRes.data);
       setAssignments(assignRes.data || []);
+      setLiveClasses(liveRes.data || []);
       const mods = modulesRes.data || [];
       mods.forEach((m: any) => m.lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order));
       setModules(mods);
