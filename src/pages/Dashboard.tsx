@@ -362,7 +362,7 @@ const Dashboard = () => {
             {!isTeacher && studentLiveClasses.length === 0 && (
               <div className="rounded-xl border border-dashed border-border py-16 text-center">
                 <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground">No upcoming live classes for your enrolled courses</p>
+                <p className="text-muted-foreground">No live classes available for your enrolled courses</p>
               </div>
             )}
           </TabsContent>
