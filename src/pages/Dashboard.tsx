@@ -88,14 +88,14 @@ const Dashboard = () => {
         setLiveClasses(liveRes.data || []);
       }
 
-      // Student upcoming live classes (from enrolled courses)
+      // Student live classes (from enrolled courses)
       if (enrollments && enrollments.length > 0) {
         const courseIds = enrollments.map((e) => e.course_id);
         const { data: studentLive } = await supabase
           .from("live_classes")
           .select("*, courses(title)")
           .in("course_id", courseIds)
-          .gte("scheduled_at", new Date().toISOString())
+          .neq("status", "completed")
           .order("scheduled_at", { ascending: true });
         setStudentLiveClasses(studentLive || []);
       }
