@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import Community from "./pages/Community";
 import CommunityPost from "./pages/CommunityPost";
 import LiveClass from "./pages/LiveClass";
+import ClassRecording from "./pages/ClassRecording";
 import Admin from "./pages/Admin";
 import AssignmentDetail from "./pages/AssignmentDetail";
 import TeacherAnalytics from "./pages/TeacherAnalytics";
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/community" element={<Community />} />
                 <Route path="/community/:id" element={<CommunityPost />} />
                 <Route path="/live/:roomName" element={<ProtectedRoute><LiveClass /></ProtectedRoute>} />
+                <Route path="/recordings/:classId" element={<ProtectedRoute><ClassRecording /></ProtectedRoute>} />
                 <Route path="/assignments/:assignmentId" element={<ProtectedRoute><AssignmentDetail /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute requiredRole="teacher"><TeacherAnalytics /></ProtectedRoute>} />
                 <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />

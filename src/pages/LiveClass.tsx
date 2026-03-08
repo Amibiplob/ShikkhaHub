@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ArrowLeft, Loader2, Mic, MicOff, Monitor, Video, VideoOff,
   Users, PhoneOff, Send, Hand, Camera, ScreenShare,
-  AudioLines, MessageSquare,
+  AudioLines, MessageSquare, Circle, Square, Upload, Film,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -115,13 +115,57 @@ const LiveClass = () => {
     toast.success("Connecting to class...");
   };
 
-  const handleStop = () => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleStop = async () => {
     if (isTeacher) {
+      // If recording, stop and upload first
+      if (teacher.isRecording) {
+        await handleStopRecordingAndUpload();
+      }
       teacher.stopBroadcast();
       supabase.from("live_classes").update({ status: "completed" }).eq("id", liveClass.id);
       toast.info("Broadcast ended.");
     } else {
       student.leaveBroadcast();
+    }
+  };
+
+  const handleStartRecording = () => {
+    teacher.startRecording();
+    toast.success("Recording started!");
+  };
+
+  const handleStopRecordingAndUpload = async () => {
+    setUploading(true);
+    try {
+      const blob = await teacher.stopRecording();
+      const fileName = `${user!.id}/${roomName}-${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from("class-recordings")
+        .upload(fileName, blob, { contentType: "video/webm" });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("class-recordings")
+        .getPublicUrl(fileName);
+
+      await supabase.from("class_recordings").insert({
+        live_class_id: liveClass.id,
+        teacher_id: user!.id,
+        file_url: urlData.publicUrl,
+        file_size: blob.size,
+        duration_seconds: teacher.recordingDuration,
+        title: `${liveClass.title} — ${format(new Date(), "MMM d, h:mm a")}`,
+      });
+
+      toast.success("Recording saved!");
+    } catch (err: any) {
+      console.error("Upload failed:", err);
+      toast.error("Failed to save recording.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -210,11 +254,32 @@ const LiveClass = () => {
                   <Button variant={teacher.screenStream ? "default" : "outline"} size="icon" onClick={teacher.shareScreen} title="Share screen">
                     <Monitor className="h-4 w-4" />
                   </Button>
+                  {/* Recording controls */}
+                  {!teacher.isRecording ? (
+                    <Button variant="outline" size="icon" onClick={handleStartRecording} title="Start recording" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                      <Circle className="h-4 w-4 fill-current" />
+                    </Button>
+                  ) : (
+                    <Button variant="destructive" size="icon" onClick={handleStopRecordingAndUpload} title="Stop recording" disabled={uploading} className="animate-pulse">
+                      {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-3.5 w-3.5 fill-current" />}
+                    </Button>
+                  )}
+                  {teacher.isRecording && (
+                    <span className="text-xs text-destructive font-mono tabular-nums">
+                      {Math.floor(teacher.recordingDuration / 60)}:{(teacher.recordingDuration % 60).toString().padStart(2, "0")}
+                    </span>
+                  )}
                 </>
               )}
               {!isTeacher && (
                 <Button variant="outline" size="icon" onClick={student.raiseHand} title="Raise hand">
                   <Hand className="h-4 w-4" />
+                </Button>
+              )}
+              {/* Recordings link for teacher */}
+              {isTeacher && liveClass && (
+                <Button variant="outline" size="icon" onClick={() => navigate(`/recordings/${liveClass.id}`)} title="View recordings">
+                  <Film className="h-4 w-4" />
                 </Button>
               )}
               <Button variant="outline" size="icon" onClick={() => setShowChat((s) => !s)} title="Toggle chat" className={showChat ? "bg-primary/10" : ""}>

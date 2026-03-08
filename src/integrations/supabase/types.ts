@@ -123,6 +123,47 @@ export type Database = {
           },
         ]
       }
+      class_recordings: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          file_size: number | null
+          file_url: string
+          id: string
+          live_class_id: string
+          teacher_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          live_class_id: string
+          teacher_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          live_class_id?: string
+          teacher_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_recordings_live_class_id_fkey"
+            columns: ["live_class_id"]
+            isOneToOne: false
+            referencedRelation: "live_classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_comments: {
         Row: {
           content: string
