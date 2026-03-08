@@ -434,41 +434,46 @@ const CourseDetail = () => {
                 <Film className="h-5 w-5 text-primary" /> Class Recordings ({recordings.length})
               </h3>
               <div className="space-y-3">
-                {recordings.map((rec) => (
-                  <div key={rec.id} className="rounded-xl border border-border bg-card p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-primary/10 p-2.5">
-                          <Film className="h-5 w-5 text-primary" />
+                {recordings.map((rec) => {
+                  const isExpanded = expandedRecording === rec.id;
+                  return (
+                    <div key={rec.id} className="rounded-xl border border-border bg-card p-4">
+                      <div
+                        className="flex items-center justify-between cursor-pointer"
+                        onClick={() => setExpandedRecording(isExpanded ? null : rec.id)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-lg bg-primary/10 p-2.5">
+                            <Film className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{rec.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(rec.created_at), "MMM d, yyyy 'at' h:mm a")}
+                              {rec.duration_seconds && ` • ${Math.floor(rec.duration_seconds / 60)} min`}
+                              {rec.file_size && ` • ${(rec.file_size / (1024 * 1024)).toFixed(1)} MB`}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{rec.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(rec.created_at), "MMM d, yyyy 'at' h:mm a")}
-                            {rec.duration_seconds && ` • ${Math.floor(rec.duration_seconds / 60)} min`}
-                            {rec.file_size && ` • ${(rec.file_size / (1024 * 1024)).toFixed(1)} MB`}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <a href={rec.file_url} download onClick={(e) => e.stopPropagation()}>
+                            <Button size="sm" variant="outline" className="gap-1.5">
+                              <Download className="h-3.5 w-3.5" /> Download
+                            </Button>
+                          </a>
+                          <Button size="sm" variant="outline" className="gap-1.5">
+                            <PlayCircle className="h-3.5 w-3.5" /> {isExpanded ? "Collapse" : "Watch"}
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <a href={rec.file_url} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" variant="outline" className="gap-1.5">
-                            <PlayCircle className="h-3.5 w-3.5" /> Watch
-                          </Button>
-                        </a>
-                        <a href={rec.file_url} download>
-                          <Button size="sm" variant="outline" className="gap-1.5">
-                            <Download className="h-3.5 w-3.5" /> Download
-                          </Button>
-                        </a>
-                      </div>
+                      {isExpanded && (
+                        <div className="mt-3 aspect-video rounded-lg overflow-hidden bg-black">
+                          <video src={rec.file_url} controls autoPlay className="h-full w-full" />
+                        </div>
+                      )}
                     </div>
-                    {/* Inline video player */}
-                    <div className="mt-3 aspect-video rounded-lg overflow-hidden bg-black">
-                      <video src={rec.file_url} controls className="h-full w-full" />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
