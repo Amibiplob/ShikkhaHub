@@ -90,13 +90,44 @@ const AssignmentDetail = () => {
     e.preventDefault();
     if (!user || !assignmentId) return;
     setSubmitting(true);
+
+    let fileUrl: string | null = null;
+    let content = subContent;
+
+    if (subType === "file") {
+      if (!selectedFile) {
+        toast.error("Please select a file to upload");
+        setSubmitting(false);
+        return;
+      }
+      setUploading(true);
+      const ext = selectedFile.name.split(".").pop();
+      const filePath = `${user.id}/${assignmentId}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("submissions")
+        .upload(filePath, selectedFile);
+      if (uploadError) {
+        toast.error("File upload failed: " + uploadError.message);
+        setSubmitting(false);
+        setUploading(false);
+        return;
+      }
+      const { data: urlData } = supabase.storage
+        .from("submissions")
+        .getPublicUrl(filePath);
+      fileUrl = urlData.publicUrl;
+      content = selectedFile.name;
+      setUploading(false);
+    }
+
     const { data, error } = await supabase
       .from("submissions")
       .insert({
         assignment_id: assignmentId,
         student_id: user.id,
         submission_type: subType,
-        content: subContent,
+        content,
+        file_url: fileUrl,
       })
       .select()
       .single();
@@ -106,6 +137,7 @@ const AssignmentDetail = () => {
       setMySubmission(data);
       setSubmitOpen(false);
       setSubContent("");
+      setSelectedFile(null);
     }
     setSubmitting(false);
   };
