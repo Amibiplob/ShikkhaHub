@@ -96,7 +96,7 @@ const Dashboard = () => {
           .from("live_classes")
           .select("*, courses(title)")
           .in("course_id", courseIds)
-          .neq("status", "completed")
+          .not("status", "in", '("completed","expired")')
           .order("scheduled_at", { ascending: true });
         setStudentLiveClasses(studentLive || []);
       }
