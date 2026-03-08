@@ -36,6 +36,7 @@ const CourseDetail = () => {
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [assignments, setAssignments] = useState<any[]>([]);
+  const [liveClasses, setLiveClasses] = useState<any[]>([]);
   const [createAssignOpen, setCreateAssignOpen] = useState(false);
   const [creatingAssign, setCreatingAssign] = useState(false);
   const [assignTitle, setAssignTitle] = useState("");
@@ -46,13 +47,15 @@ const CourseDetail = () => {
   useEffect(() => {
     if (!id) return;
     const fetch = async () => {
-      const [courseRes, modulesRes, assignRes] = await Promise.all([
+      const [courseRes, modulesRes, assignRes, liveRes] = await Promise.all([
         supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name)").eq("id", id).single(),
         supabase.from("modules").select("*, lessons(*)").eq("course_id", id).order("sort_order"),
         supabase.from("assignments").select("*").eq("course_id", id).order("created_at", { ascending: false }),
+        supabase.from("live_classes").select("*").eq("course_id", id).neq("status", "completed").order("scheduled_at", { ascending: true }),
       ]);
       setCourse(courseRes.data);
       setAssignments(assignRes.data || []);
+      setLiveClasses(liveRes.data || []);
       const mods = modulesRes.data || [];
       mods.forEach((m: any) => m.lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order));
       setModules(mods);
@@ -292,6 +295,45 @@ const CourseDetail = () => {
               )}
             </div>
           </div>
+
+          {/* Live Classes Section */}
+          {liveClasses.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold flex items-center gap-2 mb-4">
+                <Video className="h-5 w-5 text-primary" /> Live Classes ({liveClasses.length})
+              </h3>
+              <div className="space-y-3">
+                {liveClasses.map((lc) => {
+                  const isLive = lc.status === "live";
+                  const scheduledTime = new Date(lc.scheduled_at);
+                  return (
+                    <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`rounded-lg p-2.5 ${isLive ? "bg-success/10" : "bg-primary/10"}`}>
+                          <Video className={`h-5 w-5 ${isLive ? "text-success" : "text-primary"}`} />
+                        </div>
+                        <div>
+                          <p className="font-medium">{lc.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(scheduledTime, "MMM d, yyyy 'at' h:mm a")}
+                            {lc.duration_minutes && ` • ${lc.duration_minutes} min`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isLive && <Badge className="bg-success text-success-foreground animate-pulse">● Live</Badge>}
+                        <Link to={`/live/${lc.room_name}`}>
+                          <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90">
+                            <Video className="h-3.5 w-3.5" /> {isLive ? "Join Now" : "Open"}
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Assignments Section */}
           <div className="mt-8">
