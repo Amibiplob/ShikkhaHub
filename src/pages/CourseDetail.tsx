@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Bookmark, BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download } from "lucide-react";
+import { Bookmark, BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download, Film, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -38,12 +38,20 @@ const CourseDetail = () => {
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [assignments, setAssignments] = useState<any[]>([]);
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
+  const [recordings, setRecordings] = useState<any[]>([]);
   const [createAssignOpen, setCreateAssignOpen] = useState(false);
   const [creatingAssign, setCreatingAssign] = useState(false);
   const [assignTitle, setAssignTitle] = useState("");
   const [assignDesc, setAssignDesc] = useState("");
   const [assignDue, setAssignDue] = useState("");
   const [assignMarks, setAssignMarks] = useState("100");
+  // Schedule live class state
+  const [createLiveOpen, setCreateLiveOpen] = useState(false);
+  const [creatingLive, setCreatingLive] = useState(false);
+  const [liveTitle, setLiveTitle] = useState("");
+  const [liveDesc, setLiveDesc] = useState("");
+  const [liveScheduledAt, setLiveScheduledAt] = useState("");
+  const [liveDuration, setLiveDuration] = useState("60");
 
   useEffect(() => {
     if (!id) return;
