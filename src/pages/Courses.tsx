@@ -42,7 +42,7 @@ const Courses = () => {
             <h1 className="mb-2 text-3xl font-bold md:text-4xl">Browse Courses</h1>
             <p className="text-muted-foreground">Find the perfect course to advance your skills</p>
 
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -52,6 +52,19 @@ const Courses = () => {
                   className="pl-10"
                 />
               </div>
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger className="w-[160px]">
+                  <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
+                  <SelectValue placeholder="Difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  {difficulties.map((d) => (
+                    <SelectItem key={d} value={d} className="capitalize">
+                      {d === "All" ? "All Levels" : d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
