@@ -122,6 +122,7 @@ const Dashboard = () => {
       description,
       category: category || null,
       difficulty: difficulty || null,
+      is_published: true,
     }).select().single();
 
     if (error) toast.error(error.message);
