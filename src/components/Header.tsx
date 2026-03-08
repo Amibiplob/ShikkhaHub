@@ -92,6 +92,9 @@ const Header = () => {
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                   <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/achievements")}>
+                  <Trophy className="mr-2 h-4 w-4" /> Achievements
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
