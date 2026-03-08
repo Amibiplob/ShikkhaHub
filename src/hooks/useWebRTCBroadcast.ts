@@ -251,11 +251,65 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
     };
   }, []);
 
+  // ========= Recording via MediaRecorder =========
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startRecording = useCallback(() => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
+    recordedChunksRef.current = [];
+    setRecordingDuration(0);
+
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+      ? "video/webm;codecs=vp9,opus"
+      : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+        ? "video/webm;codecs=vp8,opus"
+        : "video/webm";
+
+    const mr = new MediaRecorder(stream, { mimeType });
+    mr.ondataavailable = (e) => {
+      if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+    };
+    mr.onstop = () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    };
+    mr.start(1000); // collect every second
+    mediaRecorderRef.current = mr;
+    setIsRecording(true);
+
+    recordingTimerRef.current = setInterval(() => {
+      setRecordingDuration((d) => d + 1);
+    }, 1000);
+  }, []);
+
+  const stopRecording = useCallback((): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const mr = mediaRecorderRef.current;
+      if (!mr || mr.state === "inactive") {
+        resolve(new Blob(recordedChunksRef.current, { type: "video/webm" }));
+        setIsRecording(false);
+        return;
+      }
+      mr.onstop = () => {
+        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+        setIsRecording(false);
+        resolve(blob);
+      };
+      mr.stop();
+    });
+  }, []);
+
   return {
     localStream, screenStream, isLive, viewerCount,
     isMuted, isCamOff, chatMessages, raisedHands,
+    isRecording, recordingDuration,
     startBroadcast, stopBroadcast, toggleMute, toggleCamera,
-    shareScreen, sendChat,
+    shareScreen, sendChat, startRecording, stopRecording,
   };
 }
 
