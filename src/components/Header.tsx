@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageSquare, X } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageSquare, Shield, X } from "lucide-react";
 import { useState } from "react";
 
 const Header = () => {
@@ -51,6 +51,13 @@ const Header = () => {
             <Link to="/dashboard">
               <Button variant="ghost" size="sm">
                 <LayoutDashboard className="mr-1.5 h-4 w-4" /> Dashboard
+              </Button>
+            </Link>
+          )}
+          {user && hasRole("admin") && (
+            <Link to="/admin">
+              <Button variant="ghost" size="sm">
+                <Shield className="mr-1.5 h-4 w-4" /> Admin
               </Button>
             </Link>
           )}
@@ -125,6 +132,13 @@ const Header = () => {
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
+                {hasRole("admin") && (
+                  <Link to="/admin" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <Shield className="mr-2 h-4 w-4" /> Admin
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
                 </Button>

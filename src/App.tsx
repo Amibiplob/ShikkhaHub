@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Community from "./pages/Community";
 import CommunityPost from "./pages/CommunityPost";
 import LiveClass from "./pages/LiveClass";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/community/:id" element={<CommunityPost />} />
             <Route path="/live/:roomName" element={<LiveClass />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
