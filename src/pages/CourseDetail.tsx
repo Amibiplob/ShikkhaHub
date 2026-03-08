@@ -14,6 +14,7 @@ import QuizManager from "@/components/QuizManager";
 import BookmarkButton from "@/components/BookmarkButton";
 import CoursePrerequisites from "@/components/CoursePrerequisites";
 import CourseAssistant from "@/components/CourseAssistant";
+import LiveClassModal from "@/components/LiveClassModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ const CourseDetail = () => {
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
   const [recordings, setRecordings] = useState<any[]>([]);
   const [expandedRecording, setExpandedRecording] = useState<string | null>(null);
+  const [selectedLiveClass, setSelectedLiveClass] = useState<any>(null);
   const [createAssignOpen, setCreateAssignOpen] = useState(false);
   const [creatingAssign, setCreatingAssign] = useState(false);
   const [assignTitle, setAssignTitle] = useState("");
@@ -414,11 +416,9 @@ const CourseDetail = () => {
                         {isEnded ? (
                           <Badge variant="secondary" className="text-xs">Expired</Badge>
                         ) : (
-                          <Link to={`/live/${lc.room_name}`}>
-                            <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90">
-                              <Video className="h-3.5 w-3.5" /> Join Now
-                            </Button>
-                          </Link>
+                          <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => setSelectedLiveClass(lc)}>
+                            <Video className="h-3.5 w-3.5" /> Join Now
+                          </Button>
                         )}
                       </div>
                     </div>
