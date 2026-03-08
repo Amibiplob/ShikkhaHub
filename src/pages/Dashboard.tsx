@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import StudentAnalytics from "@/components/StudentAnalytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -15,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Bookmark, BookOpen, Calendar, GraduationCap, Loader2, Plus, Users, Video } from "lucide-react";
+import { BarChart3, Bookmark, BookOpen, Calendar, GraduationCap, Loader2, Plus, Users, Video } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -190,6 +191,9 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="bookmarks">
               <Bookmark className="mr-1.5 h-3.5 w-3.5" /> Saved
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Analytics
             </TabsTrigger>
           </TabsList>
 
@@ -381,6 +385,10 @@ const Dashboard = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <StudentAnalytics />
           </TabsContent>
         </Tabs>
       </main>
