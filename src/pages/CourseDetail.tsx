@@ -13,6 +13,7 @@ import StudentProgressTracker from "@/components/StudentProgressTracker";
 import QuizManager from "@/components/QuizManager";
 import BookmarkButton from "@/components/BookmarkButton";
 import CoursePrerequisites from "@/components/CoursePrerequisites";
+import CourseAssistant from "@/components/CourseAssistant";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -433,6 +434,7 @@ const CourseDetail = () => {
         </div>
       </main>
       <Footer />
+      {enrolled && <CourseAssistant courseId={id!} courseTitle={course.title} />}
     </div>
   );
 };
