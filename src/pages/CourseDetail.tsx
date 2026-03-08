@@ -6,6 +6,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CourseReviews from "@/components/CourseReviews";
 import CertificateCard from "@/components/CertificateCard";
+import CourseContentEditor from "@/components/CourseContentEditor";
+import CourseDiscussions from "@/components/CourseDiscussions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -334,6 +336,12 @@ const CourseDetail = () => {
               </div>
             )}
           </div>
+
+          {/* Content Editor (teachers only) */}
+          <CourseContentEditor courseId={id!} isTeacher={course.teacher_id === user?.id} />
+
+          {/* Discussion Forum */}
+          <CourseDiscussions courseId={id!} enrolled={enrolled} isTeacher={course.teacher_id === user?.id} />
 
           {/* Reviews Section */}
           <CourseReviews courseId={id!} enrolled={enrolled} />
