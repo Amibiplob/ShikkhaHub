@@ -126,8 +126,9 @@ const LiveClass = () => {
         await handleStopRecordingAndUpload();
       }
       teacher.stopBroadcast();
-      supabase.from("live_classes").update({ status: "completed" }).eq("id", liveClass.id);
-      toast.info("Broadcast ended.");
+      await supabase.from("live_classes").update({ status: "expired" }).eq("id", liveClass.id);
+      setLiveClass((prev: any) => (prev ? { ...prev, status: "expired" } : prev));
+      toast.info("Meeting ended and marked as expired.");
     } else {
       student.leaveBroadcast();
     }
