@@ -91,6 +91,31 @@ const CourseDetail = () => {
     }
   };
 
+  const handleCreateAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !id) return;
+    setCreatingAssign(true);
+    const { data, error } = await supabase.from("assignments").insert({
+      course_id: id,
+      teacher_id: user.id,
+      title: assignTitle,
+      description: assignDesc || null,
+      due_date: assignDue ? new Date(assignDue).toISOString() : null,
+      max_marks: parseInt(assignMarks) || 100,
+    }).select().single();
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Assignment created!");
+      setAssignments((prev) => [data, ...prev]);
+      setCreateAssignOpen(false);
+      setAssignTitle("");
+      setAssignDesc("");
+      setAssignDue("");
+      setAssignMarks("100");
+    }
+    setCreatingAssign(false);
+  };
+
   const totalLessons = modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
   const completedCount = Object.keys(progress).length;
   const progressPercent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
