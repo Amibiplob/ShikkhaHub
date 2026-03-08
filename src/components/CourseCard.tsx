@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Clock } from "lucide-react";
+import BookmarkButton from "@/components/BookmarkButton";
 
 interface CourseCardProps {
   id: string;
@@ -38,14 +39,19 @@ const CourseCard = ({ id, title, description, thumbnail_url, category, difficult
         )}
       </div>
       <div className="p-5">
-        {category && (
-          <span className="mb-2 inline-block text-xs font-medium uppercase tracking-wider text-primary">
-            {category}
-          </span>
-        )}
-        <h3 className="mb-1.5 text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
-          {title}
-        </h3>
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            {category && (
+              <span className="mb-2 inline-block text-xs font-medium uppercase tracking-wider text-primary">
+                {category}
+              </span>
+            )}
+            <h3 className="mb-1.5 text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
+              {title}
+            </h3>
+          </div>
+          <BookmarkButton courseId={id} />
+        </div>
         {description && (
           <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{description}</p>
         )}
