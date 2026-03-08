@@ -63,6 +63,15 @@ const LiveClass = () => {
   const initJitsi = () => {
     if (!jitsiContainerRef.current || !roomName || !user) return;
 
+    // Dispose any existing instance first
+    if (apiRef.current) {
+      apiRef.current.dispose();
+      apiRef.current = null;
+    }
+
+    // Clear container
+    jitsiContainerRef.current.innerHTML = "";
+
     const domain = "meet.jit.si";
     const options = {
       roomName: `CodeCampus_${roomName}`,
@@ -78,6 +87,7 @@ const LiveClass = () => {
         startWithVideoMuted: false,
         prejoinPageEnabled: false,
         disableDeepLinking: true,
+        enableClosePage: false,
       },
       interfaceConfigOverwrite: {
         SHOW_JITSI_WATERMARK: false,
@@ -92,7 +102,16 @@ const LiveClass = () => {
     };
 
     try {
-      apiRef.current = new (window as any).JitsiMeetExternalAPI(domain, options);
+      const api = new (window as any).JitsiMeetExternalAPI(domain, options);
+      apiRef.current = api;
+
+      // Ensure iframe has proper permissions for camera/mic
+      const iframe = api.getIFrame();
+      if (iframe) {
+        iframe.setAttribute("allow", "camera *; microphone *; display-capture *; autoplay *; clipboard-write *; encrypted-media *");
+        iframe.style.border = "none";
+      }
+
       setJoined(true);
 
       // Update status to live if teacher
@@ -100,29 +119,32 @@ const LiveClass = () => {
         supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
       }
 
-      // Listen to events
-      apiRef.current.addListener("participantJoined", () => {
+      api.addListener("videoConferenceJoined", () => {
+        toast.success("Connected to live class!");
+      });
+      api.addListener("participantJoined", () => {
         setParticipants((p) => p + 1);
       });
-      apiRef.current.addListener("participantLeft", () => {
+      api.addListener("participantLeft", () => {
         setParticipants((p) => Math.max(0, p - 1));
       });
-      apiRef.current.addListener("videoConferenceLeft", () => {
-        leaveMeeting();
+      api.addListener("videoConferenceLeft", () => {
+        // Only update state, don't dispose again (user already left)
+        apiRef.current = null;
+        setJoined(false);
+        if (liveClass && user && liveClass.teacher_id === user.id) {
+          supabase.from("live_classes").update({ status: "completed" }).eq("id", liveClass.id);
+        }
       });
     } catch (err) {
+      console.error("Jitsi init error:", err);
       toast.error("Failed to start meeting. Please refresh and try again.");
     }
   };
 
   const leaveMeeting = () => {
-    apiRef.current?.dispose();
-    apiRef.current = null;
-    setJoined(false);
-
-    // Update status back if teacher
-    if (liveClass && user && liveClass.teacher_id === user.id) {
-      supabase.from("live_classes").update({ status: "completed" }).eq("id", liveClass.id);
+    if (apiRef.current) {
+      apiRef.current.executeCommand("hangup");
     }
   };
 
