@@ -253,26 +253,7 @@ const Dashboard = () => {
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {teacherCourses.map((course) => (
-                    <div key={course.id} className="space-y-3">
-                      <ThumbnailUpload
-                        courseId={course.id}
-                        currentUrl={course.thumbnail_url}
-                        onUploaded={(url) =>
-                          setTeacherCourses((prev) =>
-                            prev.map((c) => (c.id === course.id ? { ...c, thumbnail_url: url } : c))
-                          )
-                        }
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full gap-2"
-                        onClick={() => navigate(`/courses/${course.id}`)}
-                      >
-                        <Settings className="h-4 w-4" /> Course Settings
-                      </Button>
-                      <CourseCard {...course} />
-                    </div>
+                    <CourseCard key={course.id} {...course} />
                   ))}
                 </div>
               )}
