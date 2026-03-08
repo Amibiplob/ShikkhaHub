@@ -222,13 +222,20 @@ const LiveClass = () => {
               </Badge>
             )}
             {!joined ? (
-              <Button
-                onClick={joinMeeting}
-                className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
-                disabled={!user}
-              >
-                <Video className="h-4 w-4" /> {isTeacher ? "Start Class" : "Join Class"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={joinMeeting}
+                  className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
+                  disabled={!user}
+                >
+                  <Video className="h-4 w-4" /> {isTeacher ? "Start Class" : "Join Class"}
+                </Button>
+                {meetingUrl && (
+                  <Button variant="outline" asChild>
+                    <a href={meetingUrl} target="_blank" rel="noopener noreferrer">Open in Browser</a>
+                  </Button>
+                )}
+              </div>
             ) : (
               <Button variant="destructive" onClick={leaveMeeting} className="gap-2">
                 <VideoOff className="h-4 w-4" /> Leave
