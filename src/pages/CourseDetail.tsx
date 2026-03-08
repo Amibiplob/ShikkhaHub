@@ -248,6 +248,84 @@ const CourseDetail = () => {
               )}
             </div>
           </div>
+
+          {/* Assignments Section */}
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold flex items-center gap-2">
+                <ClipboardList className="h-5 w-5 text-primary" /> Assignments ({assignments.length})
+              </h3>
+              {course.teacher_id === user?.id && (
+                <Dialog open={createAssignOpen} onOpenChange={setCreateAssignOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
+                      <Plus className="h-4 w-4" /> New Assignment
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create Assignment</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateAssignment} className="space-y-4">
+                      <div>
+                        <Label>Title</Label>
+                        <Input value={assignTitle} onChange={(e) => setAssignTitle(e.target.value)} required />
+                      </div>
+                      <div>
+                        <Label>Description</Label>
+                        <Textarea value={assignDesc} onChange={(e) => setAssignDesc(e.target.value)} rows={3} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Due Date</Label>
+                          <Input type="datetime-local" value={assignDue} onChange={(e) => setAssignDue(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label>Max Marks</Label>
+                          <Input type="number" value={assignMarks} onChange={(e) => setAssignMarks(e.target.value)} min={1} />
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creatingAssign}>
+                        {creatingAssign && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
+
+            {assignments.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border py-12 text-center">
+                <ClipboardList className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground">No assignments yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {assignments.map((a) => {
+                  const isPastDue = a.due_date && new Date(a.due_date) < new Date();
+                  return (
+                    <Link key={a.id} to={`/assignments/${a.id}`}>
+                      <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-lg bg-primary/10 p-2.5">
+                            <ClipboardList className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{a.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {a.max_marks} marks
+                              {a.due_date && ` • Due ${format(new Date(a.due_date), "MMM d, yyyy")}`}
+                            </p>
+                          </div>
+                        </div>
+                        {isPastDue && <Badge variant="destructive" className="text-xs">Past Due</Badge>}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </main>
       <Footer />
