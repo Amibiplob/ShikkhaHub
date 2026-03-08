@@ -181,6 +181,15 @@ const LiveClass = () => {
 
   const isActive = isTeacher ? teacher.isLive : student.connected || student.connecting;
 
+  useEffect(() => {
+    if (!liveClass) return;
+    if (isActive || student.ended || liveClass.status === "expired" || liveClass.status === "completed") {
+      setEntryModalOpen(false);
+      return;
+    }
+    setEntryModalOpen(true);
+  }, [isActive, student.ended, liveClass]);
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex flex-col">
