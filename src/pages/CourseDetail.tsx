@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookOpen, CheckCircle2, ClipboardList, FileText, Loader2, PlayCircle, Plus, Video, Download } from "lucide-react";
+import { BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -150,10 +150,35 @@ const CourseDetail = () => {
             <div className="flex flex-wrap items-center gap-2 mb-3">
               {course.category && <Badge variant="outline" className="text-primary border-primary/30">{course.category}</Badge>}
               {course.difficulty && <Badge variant="outline">{course.difficulty}</Badge>}
+              {course.teacher_id === user?.id && (
+                <Badge variant={course.is_published ? "default" : "secondary"}>
+                  {course.is_published ? "Published" : "Draft"}
+                </Badge>
+              )}
             </div>
             <h1 className="mb-2 text-3xl font-bold md:text-4xl">{course.title}</h1>
             {course.description && <p className="max-w-2xl text-muted-foreground">{course.description}</p>}
             <p className="mt-3 text-sm text-muted-foreground">by {course.profiles?.full_name || "Unknown"}</p>
+
+            {/* Publish toggle for teacher */}
+            {course.teacher_id === user?.id && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 gap-1.5"
+                onClick={async () => {
+                  const newVal = !course.is_published;
+                  const { error } = await supabase.from("courses").update({ is_published: newVal }).eq("id", id);
+                  if (error) toast.error(error.message);
+                  else {
+                    setCourse({ ...course, is_published: newVal });
+                    toast.success(newVal ? "Course published!" : "Course unpublished");
+                  }
+                }}
+              >
+                {course.is_published ? <><EyeOff className="h-3.5 w-3.5" /> Unpublish</> : <><Eye className="h-3.5 w-3.5" /> Publish</>}
+              </Button>
+            )}
 
             <div className="mt-6 flex items-center gap-4">
               {!enrolled ? (
