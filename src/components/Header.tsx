@@ -9,8 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BarChart3, BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageSquare, Shield, Trophy, X } from "lucide-react";
+import { BarChart3, BookOpen, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Trophy, X } from "lucide-react";
 import { useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Header = () => {
   const { user, profile, signOut, hasRole } = useAuth();
@@ -70,7 +71,13 @@ const Header = () => {
           )}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1 md:flex">
+          <Link to="/leaderboard">
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Medal className="h-4 w-4" />
+            </Button>
+          </Link>
+          <ThemeToggle />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
