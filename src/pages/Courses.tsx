@@ -84,6 +84,9 @@ const Courses = () => {
         </div>
 
         <div className="container mx-auto px-4 py-10">
+          {!loading && courses.length > 0 && (
+            <p className="mb-4 text-sm text-muted-foreground">{courses.length} course{courses.length !== 1 ? "s" : ""} found</p>
+          )}
           {loading ? (
             <div className="flex justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
