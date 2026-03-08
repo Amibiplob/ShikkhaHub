@@ -50,9 +50,26 @@ const Dashboard = () => {
 
       // Teacher courses
       if (hasRole("teacher")) {
-        const { data } = await supabase.from("courses").select("*").eq("teacher_id", user.id).order("created_at", { ascending: false });
-        setTeacherCourses(data || []);
+        const [coursesRes, liveRes] = await Promise.all([
+          supabase.from("courses").select("*").eq("teacher_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("live_classes").select("*, courses(title)").eq("teacher_id", user.id).order("scheduled_at", { ascending: true }),
+        ]);
+        setTeacherCourses(coursesRes.data || []);
+        setLiveClasses(liveRes.data || []);
       }
+
+      // Student upcoming live classes (from enrolled courses)
+      if (enrollments && enrollments.length > 0) {
+        const courseIds = enrollments.map((e) => e.course_id);
+        const { data: studentLive } = await supabase
+          .from("live_classes")
+          .select("*, courses(title)")
+          .in("course_id", courseIds)
+          .gte("scheduled_at", new Date().toISOString())
+          .order("scheduled_at", { ascending: true });
+        setStudentLiveClasses(studentLive || []);
+      }
+
       setLoading(false);
     };
     fetchData();
