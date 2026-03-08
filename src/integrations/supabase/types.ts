@@ -61,6 +61,38 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          certificate_number: string
+          course_id: string
+          id: string
+          issued_at: string
+          user_id: string
+        }
+        Insert: {
+          certificate_number?: string
+          course_id: string
+          id?: string
+          issued_at?: string
+          user_id: string
+        }
+        Update: {
+          certificate_number?: string
+          course_id?: string
+          id?: string
+          issued_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_comments: {
         Row: {
           content: string
