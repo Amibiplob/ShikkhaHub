@@ -141,7 +141,8 @@ const LiveClass = () => {
       });
     } catch (err) {
       console.error("Jitsi init error:", err);
-      toast.error("Failed to start meeting. Please refresh and try again.");
+      toast.error("Embedded meeting failed. Opening in a new tab...");
+      if (meetingUrl) window.open(meetingUrl, "_blank", "noopener,noreferrer");
     }
   };
 
