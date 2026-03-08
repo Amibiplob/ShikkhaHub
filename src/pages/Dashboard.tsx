@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
 import ProfileEditor from "@/components/ProfileEditor";
 import LiveClassScheduler from "@/components/LiveClassScheduler";
+import LiveClassModal from "@/components/LiveClassModal";
 import ThumbnailUpload from "@/components/ThumbnailUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selectedLiveClass, setSelectedLiveClass] = useState<any>(null);
 
   // Create course form
   const [title, setTitle] = useState("");
