@@ -319,15 +319,53 @@ const AssignmentDetail = () => {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div>
-                          <Label>{subType === "github" ? "GitHub Repository URL" : subType === "url" ? "Website URL" : "Description / Notes"}</Label>
-                          <Input
-                            value={subContent}
-                            onChange={(e) => setSubContent(e.target.value)}
-                            placeholder={subType === "github" ? "https://github.com/user/repo" : subType === "url" ? "https://..." : "Describe your work..."}
-                            required
-                          />
-                        </div>
+                        {subType === "file" ? (
+                          <div>
+                            <Label>Upload File (PDF, images, documents — max 10MB)</Label>
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.zip"
+                              className="hidden"
+                              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                            />
+                            <div
+                              onClick={() => fileInputRef.current?.click()}
+                              className="mt-1 flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 p-6 transition-colors hover:border-primary/50 hover:bg-muted"
+                            >
+                              {selectedFile ? (
+                                <div className="flex items-center gap-2">
+                                  <Paperclip className="h-4 w-4 text-primary" />
+                                  <span className="text-sm font-medium">{selectedFile.name}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="text-center">
+                                  <Upload className="mx-auto mb-1 h-6 w-6 text-muted-foreground" />
+                                  <p className="text-sm text-muted-foreground">Click to select a file</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <Label>{subType === "github" ? "GitHub Repository URL" : subType === "url" ? "Website URL" : "Description / Notes"}</Label>
+                            <Input
+                              value={subContent}
+                              onChange={(e) => setSubContent(e.target.value)}
+                              placeholder={subType === "github" ? "https://github.com/user/repo" : subType === "url" ? "https://..." : "Describe your work..."}
+                              required
+                            />
+                          </div>
+                        )}
                         <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={submitting}>
                           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Submit
                         </Button>
