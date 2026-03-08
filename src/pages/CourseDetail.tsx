@@ -8,6 +8,7 @@ import CourseReviews from "@/components/CourseReviews";
 import CertificateCard from "@/components/CertificateCard";
 import CourseContentEditor from "@/components/CourseContentEditor";
 import CourseDiscussions from "@/components/CourseDiscussions";
+import StudentProgressTracker from "@/components/StudentProgressTracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -364,6 +365,9 @@ const CourseDetail = () => {
 
           {/* Content Editor (teachers only) */}
           <CourseContentEditor courseId={id!} isTeacher={course.teacher_id === user?.id} />
+
+          {/* Student Progress (teachers only) */}
+          <StudentProgressTracker courseId={id!} isTeacher={course.teacher_id === user?.id} />
 
           {/* Discussion Forum */}
           <CourseDiscussions courseId={id!} enrolled={enrolled} isTeacher={course.teacher_id === user?.id} />

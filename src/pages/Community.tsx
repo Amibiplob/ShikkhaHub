@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowBigUp, Loader2, MessageSquare, Pin, Plus, Search } from "lucide-react";
+import { ArrowBigUp, ChevronLeft, ChevronRight, Loader2, MessageSquare, Pin, Plus, Search, SortAsc } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -32,6 +32,8 @@ const categoryColors: Record<string, string> = {
   general: "bg-muted text-muted-foreground border-border",
 };
 
+const POSTS_PER_PAGE = 10;
+
 const Community = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -39,6 +41,9 @@ const Community = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "popular">("newest");
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [upvotedPosts, setUpvotedPosts] = useState<Set<string>>(new Set());
@@ -49,17 +54,23 @@ const Community = () => {
   const [postCategory, setPostCategory] = useState("general");
 
   const fetchPosts = async () => {
+    setLoading(true);
     let query = supabase
       .from("community_posts")
-      .select("*, profiles!community_posts_user_id_fkey(full_name, avatar_url)")
-      .order("is_pinned", { ascending: false })
-      .order("created_at", { ascending: false });
+      .select("*, profiles!community_posts_user_id_fkey(full_name, avatar_url)", { count: "exact" })
+      .order("is_pinned", { ascending: false });
+
+    if (sortBy === "newest" || sortBy === "popular") query = query.order("created_at", { ascending: false });
+    if (sortBy === "oldest") query = query.order("created_at", { ascending: true });
 
     if (category !== "all") query = query.eq("category", category);
     if (search) query = query.ilike("title", `%${search}%`);
 
-    const { data } = await query;
+    query = query.range(page * POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE - 1);
+
+    const { data, count } = await query;
     setPosts(data || []);
+    setTotalCount(count || 0);
     setLoading(false);
   };
 
@@ -97,7 +108,12 @@ const Community = () => {
   useEffect(() => {
     fetchPosts();
     fetchUpvotes();
-  }, [category, search, user]);
+  }, [category, search, user, sortBy, page]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [category, search, sortBy]);
 
   useEffect(() => {
     if (posts.length > 0) {
@@ -189,11 +205,22 @@ const Community = () => {
               </Dialog>
             </div>
 
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-6 flex items-center gap-3 flex-wrap">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder="Search posts..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
               </div>
+              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                <SelectTrigger className="w-[140px]">
+                  <SortAsc className="mr-2 h-3.5 w-3.5" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="oldest">Oldest</SelectItem>
+                  <SelectItem value="popular">Popular</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -266,6 +293,33 @@ const Community = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalCount > POSTS_PER_PAGE && (
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" /> Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page + 1} of {Math.ceil(totalCount / POSTS_PER_PAGE)}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={(page + 1) * POSTS_PER_PAGE >= totalCount}
+                onClick={() => setPage((p) => p + 1)}
+                className="gap-1"
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </div>

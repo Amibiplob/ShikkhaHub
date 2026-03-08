@@ -12,6 +12,7 @@ import {
 import { BarChart3, BookOpen, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Trophy, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationBell from "@/components/NotificationBell";
 
 const Header = () => {
   const { user, profile, signOut, hasRole } = useAuth();
@@ -77,6 +78,7 @@ const Header = () => {
               <Medal className="h-4 w-4" />
             </Button>
           </Link>
+          <NotificationBell />
           <ThemeToggle />
           {user ? (
             <DropdownMenu>
