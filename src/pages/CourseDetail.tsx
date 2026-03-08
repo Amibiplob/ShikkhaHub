@@ -575,6 +575,15 @@ const CourseDetail = () => {
           {/* Reviews Section */}
           <CourseReviews courseId={id!} enrolled={enrolled} />
         </div>
+
+        <LiveClassModal
+          liveClass={selectedLiveClass}
+          open={!!selectedLiveClass}
+          onOpenChange={(open) => { if (!open) setSelectedLiveClass(null); }}
+          onStatusChange={(lcId, status) => {
+            setLiveClasses((prev) => prev.map((lc) => lc.id === lcId ? { ...lc, status } : lc));
+          }}
+        />
       </main>
       <Footer />
       {enrolled && <CourseAssistant courseId={id!} courseTitle={course.title} />}
