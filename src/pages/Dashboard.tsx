@@ -390,6 +390,16 @@ const Dashboard = () => {
             <StudentAnalytics />
           </TabsContent>
         </Tabs>
+
+        <LiveClassModal
+          liveClass={selectedLiveClass}
+          open={!!selectedLiveClass}
+          onOpenChange={(open) => { if (!open) setSelectedLiveClass(null); }}
+          onStatusChange={(id, status) => {
+            setLiveClasses((prev) => prev.map((lc) => lc.id === id ? { ...lc, status } : lc));
+            setStudentLiveClasses((prev) => prev.filter((lc) => lc.id !== id));
+          }}
+        />
       </main>
     </div>
   );
