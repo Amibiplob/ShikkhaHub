@@ -88,14 +88,14 @@ const Dashboard = () => {
         setLiveClasses(liveRes.data || []);
       }
 
-      // Student upcoming live classes (from enrolled courses)
+      // Student live classes (from enrolled courses)
       if (enrollments && enrollments.length > 0) {
         const courseIds = enrollments.map((e) => e.course_id);
         const { data: studentLive } = await supabase
           .from("live_classes")
           .select("*, courses(title)")
           .in("course_id", courseIds)
-          .gte("scheduled_at", new Date().toISOString())
+          .neq("status", "completed")
           .order("scheduled_at", { ascending: true });
         setStudentLiveClasses(studentLive || []);
       }
@@ -325,10 +325,10 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Student's upcoming live classes */}
+            {/* Student live classes */}
             {!isTeacher && studentLiveClasses.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-xl font-semibold mb-3">Upcoming Live Classes</h2>
+                <h2 className="text-xl font-semibold mb-3">Live Classes</h2>
                 {studentLiveClasses.map((lc) => (
                   <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
                     <div className="flex items-center gap-3">
@@ -362,7 +362,7 @@ const Dashboard = () => {
             {!isTeacher && studentLiveClasses.length === 0 && (
               <div className="rounded-xl border border-dashed border-border py-16 text-center">
                 <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground">No upcoming live classes for your enrolled courses</p>
+                <p className="text-muted-foreground">No live classes available for your enrolled courses</p>
               </div>
             )}
           </TabsContent>

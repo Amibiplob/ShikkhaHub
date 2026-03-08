@@ -40,6 +40,8 @@ const LiveClass = () => {
     fetchClass();
   }, [roomName]);
 
+  const meetingUrl = roomName ? `https://meet.jit.si/CodeCampus_${roomName}` : "";
+
   const joinMeeting = () => {
     if (!jitsiContainerRef.current || !roomName || !user) return;
 
@@ -54,7 +56,8 @@ const LiveClass = () => {
     script.async = true;
     script.onload = () => initJitsi();
     script.onerror = () => {
-      toast.error("Failed to load video meeting. Please try again.");
+      toast.error("Embedded meeting failed. Opening in a new tab...");
+      if (meetingUrl) window.open(meetingUrl, "_blank", "noopener,noreferrer");
     };
     scriptRef.current = script;
     document.head.appendChild(script);
@@ -138,7 +141,8 @@ const LiveClass = () => {
       });
     } catch (err) {
       console.error("Jitsi init error:", err);
-      toast.error("Failed to start meeting. Please refresh and try again.");
+      toast.error("Embedded meeting failed. Opening in a new tab...");
+      if (meetingUrl) window.open(meetingUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -218,13 +222,20 @@ const LiveClass = () => {
               </Badge>
             )}
             {!joined ? (
-              <Button
-                onClick={joinMeeting}
-                className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
-                disabled={!user}
-              >
-                <Video className="h-4 w-4" /> {isTeacher ? "Start Class" : "Join Class"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={joinMeeting}
+                  className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
+                  disabled={!user}
+                >
+                  <Video className="h-4 w-4" /> {isTeacher ? "Start Class" : "Join Class"}
+                </Button>
+                {meetingUrl && (
+                  <Button variant="outline" asChild>
+                    <a href={meetingUrl} target="_blank" rel="noopener noreferrer">Open in Browser</a>
+                  </Button>
+                )}
+              </div>
             ) : (
               <Button variant="destructive" onClick={leaveMeeting} className="gap-2">
                 <VideoOff className="h-4 w-4" /> Leave
