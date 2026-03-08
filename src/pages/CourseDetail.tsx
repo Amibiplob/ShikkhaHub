@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import CourseReviews from "@/components/CourseReviews";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -326,6 +327,9 @@ const CourseDetail = () => {
               </div>
             )}
           </div>
+
+          {/* Reviews Section */}
+          <CourseReviews courseId={id!} enrolled={enrolled} />
         </div>
       </main>
       <Footer />
