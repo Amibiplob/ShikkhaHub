@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
+import ProfileEditor from "@/components/ProfileEditor";
 import LiveClassScheduler from "@/components/LiveClassScheduler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,11 +111,14 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || "there"}!</h1>
-          <p className="text-muted-foreground mt-1">
-            {isTeacher ? "Manage your courses and track student progress" : "Continue learning where you left off"}
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || "there"}!</h1>
+            <p className="text-muted-foreground mt-1">
+              {isTeacher ? "Manage your courses and track student progress" : "Continue learning where you left off"}
+            </p>
+          </div>
+          <ProfileEditor onUpdated={() => window.location.reload()} />
         </div>
 
         {/* Stats */}
