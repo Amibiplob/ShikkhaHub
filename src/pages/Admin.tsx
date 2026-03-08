@@ -97,8 +97,8 @@ const Admin = () => {
     }
   };
 
-  const addRole = async (userId: string, role: string) => {
-    const { data, error } = await supabase.from("user_roles").insert({ user_id: userId, role }).select().single();
+  const addRole = async (userId: string, role: "admin" | "teacher" | "student") => {
+    const { data, error } = await supabase.from("user_roles").insert([{ user_id: userId, role }]).select().single();
     if (error) toast.error(error.message);
     else {
       setRoles((prev) => [...prev, data]);
@@ -106,8 +106,8 @@ const Admin = () => {
     }
   };
 
-  const removeRole = async (userId: string, role: string) => {
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+  const removeRole = async (userId: string, role: "admin" | "teacher" | "student") => {
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role as any);
     if (error) toast.error(error.message);
     else {
       setRoles((prev) => prev.filter((r) => !(r.user_id === userId && r.role === role)));
