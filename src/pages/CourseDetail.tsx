@@ -366,6 +366,9 @@ const CourseDetail = () => {
           {/* Content Editor (teachers only) */}
           <CourseContentEditor courseId={id!} isTeacher={course.teacher_id === user?.id} />
 
+          {/* Student Progress (teachers only) */}
+          <StudentProgressTracker courseId={id!} isTeacher={course.teacher_id === user?.id} />
+
           {/* Discussion Forum */}
           <CourseDiscussions courseId={id!} enrolled={enrolled} isTeacher={course.teacher_id === user?.id} />
 
