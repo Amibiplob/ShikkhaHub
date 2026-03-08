@@ -10,6 +10,9 @@ import CertificateCard from "@/components/CertificateCard";
 import CourseContentEditor from "@/components/CourseContentEditor";
 import CourseDiscussions from "@/components/CourseDiscussions";
 import StudentProgressTracker from "@/components/StudentProgressTracker";
+import QuizManager from "@/components/QuizManager";
+import BookmarkButton from "@/components/BookmarkButton";
+import CoursePrerequisites from "@/components/CoursePrerequisites";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -17,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download } from "lucide-react";
+import { Bookmark, BookOpen, CheckCircle2, ClipboardList, Eye, EyeOff, FileText, Loader2, PlayCircle, Plus, Video, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
