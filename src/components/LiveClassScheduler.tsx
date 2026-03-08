@@ -53,6 +53,21 @@ const LiveClassScheduler = ({ courses, onCreated }: LiveClassSchedulerProps) => 
       toast.error(error.message);
     } else {
       toast.success("Live class scheduled!");
+      // Notify enrolled students
+      const { data: enrollments } = await supabase
+        .from("enrollments")
+        .select("user_id")
+        .eq("course_id", courseId);
+      if (enrollments && enrollments.length > 0) {
+        const notifications = enrollments.map((e) => ({
+          user_id: e.user_id,
+          title: "Live Class Scheduled",
+          message: `"${title}" is scheduled for ${new Date(scheduledAt).toLocaleDateString()}`,
+          type: "live_class",
+          link: `/live/${data.room_name}`,
+        }));
+        await supabase.from("notifications").insert(notifications);
+      }
       onCreated?.(data);
       setOpen(false);
       setTitle("");
