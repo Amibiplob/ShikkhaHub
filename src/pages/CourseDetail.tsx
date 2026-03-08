@@ -17,7 +17,7 @@ import { format } from "date-fns";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const navigate = useNavigate();
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
@@ -26,6 +26,13 @@ const CourseDetail = () => {
   const [enrolling, setEnrolling] = useState(false);
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [progress, setProgress] = useState<Record<string, boolean>>({});
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [createAssignOpen, setCreateAssignOpen] = useState(false);
+  const [creatingAssign, setCreatingAssign] = useState(false);
+  const [assignTitle, setAssignTitle] = useState("");
+  const [assignDesc, setAssignDesc] = useState("");
+  const [assignDue, setAssignDue] = useState("");
+  const [assignMarks, setAssignMarks] = useState("100");
 
   useEffect(() => {
     if (!id) return;
