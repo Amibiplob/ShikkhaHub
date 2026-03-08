@@ -205,11 +205,22 @@ const Community = () => {
               </Dialog>
             </div>
 
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-6 flex items-center gap-3 flex-wrap">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder="Search posts..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
               </div>
+              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                <SelectTrigger className="w-[140px]">
+                  <SortAsc className="mr-2 h-3.5 w-3.5" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="oldest">Oldest</SelectItem>
+                  <SelectItem value="popular">Popular</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -282,6 +293,33 @@ const Community = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalCount > POSTS_PER_PAGE && (
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" /> Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page + 1} of {Math.ceil(totalCount / POSTS_PER_PAGE)}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={(page + 1) * POSTS_PER_PAGE >= totalCount}
+                onClick={() => setPage((p) => p + 1)}
+                className="gap-1"
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </div>
