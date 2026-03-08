@@ -56,15 +56,19 @@ const CourseDetail = () => {
   useEffect(() => {
     if (!id) return;
     const fetch = async () => {
-      const [courseRes, modulesRes, assignRes, liveRes] = await Promise.all([
+      const [courseRes, modulesRes, assignRes, liveRes, recRes] = await Promise.all([
         supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name)").eq("id", id).single(),
         supabase.from("modules").select("*, lessons(*)").eq("course_id", id).order("sort_order"),
         supabase.from("assignments").select("*").eq("course_id", id).order("created_at", { ascending: false }),
-        supabase.from("live_classes").select("*").eq("course_id", id).neq("status", "completed").order("scheduled_at", { ascending: true }),
+        supabase.from("live_classes").select("*").eq("course_id", id).order("scheduled_at", { ascending: false }),
+        supabase.from("class_recordings").select("*, live_classes!class_recordings_live_class_id_fkey(course_id)").order("created_at", { ascending: false }),
       ]);
       setCourse(courseRes.data);
       setAssignments(assignRes.data || []);
       setLiveClasses(liveRes.data || []);
+      // Filter recordings for this course
+      const allRecs = recRes.data || [];
+      setRecordings(allRecs.filter((r: any) => r.live_classes?.course_id === id));
       const mods = modulesRes.data || [];
       mods.forEach((m: any) => m.lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order));
       setModules(mods);
