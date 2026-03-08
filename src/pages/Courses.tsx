@@ -17,18 +17,21 @@ const Courses = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [difficulty, setDifficulty] = useState("All");
 
   useEffect(() => {
     const fetchCourses = async () => {
+      setLoading(true);
       let query = supabase.from("courses").select("*, profiles!courses_teacher_id_fkey(full_name)").eq("is_published", true);
       if (category !== "All") query = query.eq("category", category);
+      if (difficulty !== "All") query = query.eq("difficulty", difficulty);
       if (search) query = query.ilike("title", `%${search}%`);
       const { data } = await query.order("created_at", { ascending: false });
       setCourses(data || []);
       setLoading(false);
     };
     fetchCourses();
-  }, [search, category]);
+  }, [search, category, difficulty]);
 
   return (
     <div className="min-h-screen flex flex-col">
