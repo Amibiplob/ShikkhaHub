@@ -366,8 +366,8 @@ const AssignmentDetail = () => {
                             />
                           </div>
                         )}
-                        <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={submitting}>
-                          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Submit
+                        <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={submitting || uploading}>
+                          {(submitting || uploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {uploading ? "Uploading..." : "Submit"}
                         </Button>
                       </form>
                     </DialogContent>
