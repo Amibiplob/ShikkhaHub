@@ -1,60 +1,74 @@
-import { BookOpen, Code2, MessageSquare, MonitorPlay, Trophy, Users } from "lucide-react";
+import { Award, BookOpen, Code2, MessageSquare, MonitorPlay, Trophy, Users, Zap } from "lucide-react";
 
 const features = [
   {
     icon: BookOpen,
     title: "Structured Courses",
     description: "Learn with organized modules and lessons — videos, articles, and downloadable resources.",
+    color: "text-primary",
+    bg: "bg-primary/10",
   },
   {
     icon: MonitorPlay,
     title: "Live Classes",
     description: "Join real-time video sessions with screen sharing, whiteboard, and interactive Q&A.",
+    color: "text-info",
+    bg: "bg-info/10",
   },
   {
     icon: Code2,
-    title: "W3Schools-Style Docs",
+    title: "Interactive Content",
     description: "Read beautifully formatted articles with code blocks, syntax highlighting, and examples.",
+    color: "text-accent",
+    bg: "bg-accent/10",
   },
   {
     icon: Trophy,
-    title: "Assignments & Feedback",
-    description: "Submit projects, get teacher reviews with detailed feedback and marks.",
+    title: "Assignments & Quizzes",
+    description: "Submit projects, take quizzes, get teacher reviews with detailed feedback and marks.",
+    color: "text-warning",
+    bg: "bg-warning/10",
   },
   {
-    icon: MessageSquare,
-    title: "Lesson Discussions",
-    description: "Ask questions under each lesson. Teachers pin important answers for everyone.",
+    icon: Award,
+    title: "Badges & Certificates",
+    description: "Earn achievement badges and downloadable certificates as you complete courses.",
+    color: "text-success",
+    bg: "bg-success/10",
   },
   {
     icon: Users,
     title: "Community Forum",
-    description: "Share knowledge, get career advice, and discuss the latest tech with fellow developers.",
+    description: "Share knowledge, get career advice, and discuss tech with fellow developers.",
+    color: "text-destructive",
+    bg: "bg-destructive/10",
   },
 ];
 
 const FeaturesSection = () => (
-  <section className="py-20 md:py-28">
+  <section className="py-24 md:py-32">
     <div className="container mx-auto px-4">
-      <div className="mb-14 text-center">
-        <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">
-          Everything you need to <span className="text-gradient-primary">level up</span>
+      <div className="mb-16 text-center">
+        <span className="mb-4 inline-block text-sm font-medium uppercase tracking-widest text-primary">Features</span>
+        <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">
+          Everything you need to{" "}
+          <span className="text-gradient-primary">level up</span>
         </h2>
-        <p className="mx-auto max-w-lg text-muted-foreground">
+        <p className="mx-auto max-w-lg text-lg text-muted-foreground">
           A complete platform for learning, teaching, and building together.
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {features.map((f) => (
+        {features.map((f, i) => (
           <div
             key={f.title}
-            className="group rounded-xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:shadow-glow"
+            className="group relative rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:border-primary/30 hover:shadow-glow hover:-translate-y-1"
           >
-            <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-              <f.icon className="h-5 w-5" />
+            <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.bg} ${f.color} transition-all duration-300 group-hover:scale-110`}>
+              <f.icon className="h-6 w-6" />
             </div>
-            <h3 className="mb-2 text-lg font-semibold">{f.title}</h3>
+            <h3 className="mb-2 text-lg font-bold">{f.title}</h3>
             <p className="text-sm leading-relaxed text-muted-foreground">{f.description}</p>
           </div>
         ))}
