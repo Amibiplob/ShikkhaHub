@@ -38,6 +38,9 @@ const AssignmentDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [subType, setSubType] = useState("github");
   const [subContent, setSubContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Review form
   const [reviewingId, setReviewingId] = useState<string | null>(null);
