@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
+import LiveClassScheduler from "@/components/LiveClassScheduler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,14 +12,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, GraduationCap, Loader2, Plus, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, Calendar, GraduationCap, Loader2, Plus, Users, Video } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 const Dashboard = () => {
   const { user, loading: authLoading, hasRole, profile } = useAuth();
   const navigate = useNavigate();
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [teacherCourses, setTeacherCourses] = useState<any[]>([]);
+  const [liveClasses, setLiveClasses] = useState<any[]>([]);
+  const [studentLiveClasses, setStudentLiveClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -45,9 +50,26 @@ const Dashboard = () => {
 
       // Teacher courses
       if (hasRole("teacher")) {
-        const { data } = await supabase.from("courses").select("*").eq("teacher_id", user.id).order("created_at", { ascending: false });
-        setTeacherCourses(data || []);
+        const [coursesRes, liveRes] = await Promise.all([
+          supabase.from("courses").select("*").eq("teacher_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("live_classes").select("*, courses(title)").eq("teacher_id", user.id).order("scheduled_at", { ascending: true }),
+        ]);
+        setTeacherCourses(coursesRes.data || []);
+        setLiveClasses(liveRes.data || []);
       }
+
+      // Student upcoming live classes (from enrolled courses)
+      if (enrollments && enrollments.length > 0) {
+        const courseIds = enrollments.map((e) => e.course_id);
+        const { data: studentLive } = await supabase
+          .from("live_classes")
+          .select("*, courses(title)")
+          .in("course_id", courseIds)
+          .gte("scheduled_at", new Date().toISOString())
+          .order("scheduled_at", { ascending: true });
+        setStudentLiveClasses(studentLive || []);
+      }
+
       setLoading(false);
     };
     fetchData();
@@ -122,6 +144,9 @@ const Dashboard = () => {
           <TabsList>
             {isTeacher && <TabsTrigger value="teaching">My Courses</TabsTrigger>}
             <TabsTrigger value="learning">Enrolled</TabsTrigger>
+            <TabsTrigger value="live">
+              <Video className="mr-1.5 h-3.5 w-3.5" /> Live Classes
+            </TabsTrigger>
           </TabsList>
 
           {isTeacher && (
@@ -199,6 +224,90 @@ const Dashboard = () => {
                 {enrolledCourses.map((course: any) => (
                   <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} />
                 ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="live">
+            {isTeacher && (
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Your Live Classes</h2>
+                <LiveClassScheduler
+                  courses={teacherCourses.map((c) => ({ id: c.id, title: c.title }))}
+                  onCreated={(lc) => setLiveClasses((prev) => [...prev, lc])}
+                />
+              </div>
+            )}
+
+            {/* Teacher's scheduled classes */}
+            {isTeacher && liveClasses.length > 0 && (
+              <div className="space-y-3 mb-6">
+                {liveClasses.map((lc) => (
+                  <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2.5">
+                        <Video className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{lc.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {lc.courses?.title} • {format(new Date(lc.scheduled_at), "MMM d, yyyy 'at' h:mm a")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={lc.status === "scheduled" ? "secondary" : lc.status === "live" ? "default" : "outline"}>
+                        {lc.status}
+                      </Badge>
+                      <Link to={`/live/${lc.room_name}`}>
+                        <Button size="sm" className="gap-1.5">
+                          <Video className="h-3.5 w-3.5" /> {lc.status === "live" ? "Join" : "Open"}
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Student's upcoming live classes */}
+            {!isTeacher && studentLiveClasses.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-xl font-semibold mb-3">Upcoming Live Classes</h2>
+                {studentLiveClasses.map((lc) => (
+                  <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2.5">
+                        <Calendar className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{lc.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {lc.courses?.title} • {format(new Date(lc.scheduled_at), "MMM d, yyyy 'at' h:mm a")}
+                        </p>
+                      </div>
+                    </div>
+                    <Link to={`/live/${lc.room_name}`}>
+                      <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90">
+                        <Video className="h-3.5 w-3.5" /> Join
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Empty states */}
+            {isTeacher && liveClasses.length === 0 && (
+              <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground">No live classes scheduled yet</p>
+              </div>
+            )}
+            {!isTeacher && studentLiveClasses.length === 0 && (
+              <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground">No upcoming live classes for your enrolled courses</p>
               </div>
             )}
           </TabsContent>
