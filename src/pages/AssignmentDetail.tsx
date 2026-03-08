@@ -268,6 +268,10 @@ const AssignmentDetail = () => {
                     <a href={mySubmission.content} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
                       {mySubmission.content} <ExternalLink className="h-3 w-3" />
                     </a>
+                  ) : mySubmission.submission_type === "file" && mySubmission.file_url ? (
+                    <a href={mySubmission.file_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                      <Download className="h-3.5 w-3.5" /> {mySubmission.content}
+                    </a>
                   ) : (
                     <p className="text-sm">{mySubmission.content}</p>
                   )}
