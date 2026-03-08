@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageSquare, Shield, X } from "lucide-react";
+import { BarChart3, BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageSquare, Shield, X } from "lucide-react";
 import { useState } from "react";
 
 const Header = () => {
@@ -51,6 +51,13 @@ const Header = () => {
             <Link to="/dashboard">
               <Button variant="ghost" size="sm">
                 <LayoutDashboard className="mr-1.5 h-4 w-4" /> Dashboard
+              </Button>
+            </Link>
+          )}
+          {user && hasRole("teacher") && (
+            <Link to="/analytics">
+              <Button variant="ghost" size="sm">
+                <BarChart3 className="mr-1.5 h-4 w-4" /> Analytics
               </Button>
             </Link>
           )}
@@ -132,6 +139,13 @@ const Header = () => {
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
+                {hasRole("teacher") && (
+                  <Link to="/analytics" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <BarChart3 className="mr-2 h-4 w-4" /> Analytics
+                    </Button>
+                  </Link>
+                )}
                 {hasRole("admin") && (
                   <Link to="/admin" onClick={() => setMobileOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">

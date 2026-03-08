@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
 import ProfileEditor from "@/components/ProfileEditor";
 import LiveClassScheduler from "@/components/LiveClassScheduler";
+import ThumbnailUpload from "@/components/ThumbnailUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -236,7 +237,18 @@ const Dashboard = () => {
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {teacherCourses.map((course) => (
-                    <CourseCard key={course.id} {...course} />
+                    <div key={course.id} className="space-y-3">
+                      <ThumbnailUpload
+                        courseId={course.id}
+                        currentUrl={course.thumbnail_url}
+                        onUploaded={(url) =>
+                          setTeacherCourses((prev) =>
+                            prev.map((c) => (c.id === course.id ? { ...c, thumbnail_url: url } : c))
+                          )
+                        }
+                      />
+                      <CourseCard {...course} />
+                    </div>
                   ))}
                 </div>
               )}
