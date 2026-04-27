@@ -1,122 +1,35 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from '/vite.svg'
+import './App.css'
 
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Courses from "./pages/Courses";
-import CourseDetail from "./pages/CourseDetail";
-import Dashboard from "./pages/Dashboard";
-import Community from "./pages/Community";
-import CommunityPost from "./pages/CommunityPost";
-import LiveClass from "./pages/LiveClass";
-import ClassRecording from "./pages/ClassRecording";
-import Admin from "./pages/Admin";
-import AssignmentDetail from "./pages/AssignmentDetail";
-import TeacherAnalytics from "./pages/TeacherAnalytics";
-import Achievements from "./pages/Achievements";
-import Leaderboard from "./pages/Leaderboard";
-import Profile from "./pages/Profile";
-import NotFound from "./pages/NotFound";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { TooltipProvider } from "./components/ui/tooltip";
-import { AuthProvider } from "./contexts/AuthContext";
-import { Toaster } from "./components/ui/toaster";
-import ProtectedRoute from "./components/ProtectedRoute";
+function App() {
+  const [count, setCount] = useState(0)
 
-const queryClient = new QueryClient();
+  return (
+    <>
+      <div>
+        <a href="https://vite.dev" target="_blank">
+          <img src={viteLogo} className="logo" alt="Vite logo" />
+        </a>
+        <a href="https://react.dev" target="_blank">
+          <img src={reactLogo} className="logo react" alt="React logo" />
+        </a>
+      </div>
+      <h1>Vite + React</h1>
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
+        <p>
+          Edit <code>src/App.tsx</code> and save to test HMR
+        </p>
+      </div>
+      <p className="read-the-docs">
+        Click on the Vite and React logos to learn more
+      </p>
+    </>
+  )
+}
 
-const App = () => (
-  <ErrorBoundary>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <AuthProvider>
-            <Toaster />
-
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/courses" element={<Courses />} />
-                <Route path="/courses/:id" element={<CourseDetail />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/community" element={<Community />} />
-                <Route path="/community/:id" element={<CommunityPost />} />
-                <Route
-                  path="/live/:roomName"
-                  element={
-                    <ProtectedRoute>
-                      <LiveClass />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/recordings/:classId"
-                  element={
-                    <ProtectedRoute>
-                      <ClassRecording />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/assignments/:assignmentId"
-                  element={
-                    <ProtectedRoute>
-                      <AssignmentDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/analytics"
-                  element={
-                    <ProtectedRoute requiredRole="teacher">
-                      <TeacherAnalytics />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/achievements"
-                  element={
-                    <ProtectedRoute>
-                      <Achievements />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute requiredRole="admin">
-                      <Admin />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
-  </ErrorBoundary>
-);
-
-export default App;
+export default App
