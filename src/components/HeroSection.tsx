@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Code2, Play, Sparkles, Users, Zap } from "lucide-react";
 
 const HeroSection = () => (
-  <section className="relative overflow-hidden bg-gradient-hero py-24 md:py-36">
+  <section className="relative overflow-hidden bg-gradient-hero py-10">
     {/* Animated grid background */}
     <div className="absolute inset-0 opacity-[0.03]" style={{
       backgroundImage: `linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px),
@@ -17,19 +17,16 @@ const HeroSection = () => (
 
     <div className="container relative mx-auto px-4">
       <div className="mx-auto max-w-4xl text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary backdrop-blur-sm">
-          <Sparkles className="h-4 w-4" />
-          Developer-focused learning platform
-        </div>
+    
 
         <h1 className="mb-6 text-5xl font-extrabold leading-[1.1] tracking-tight text-foreground md:text-7xl lg:text-8xl">
-          Learn to code{" "}
+          Learn to code
           <br className="hidden sm:block" />
           with <span className="text-gradient-primary">experts</span>
         </h1>
 
         <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground md:text-xl leading-relaxed">
-          Interactive courses, live classes, hands-on projects, and a vibrant community — everything you need to become a better developer.
+          Interactive courses, live classes, hands-on projects, and a vibrant community
         </p>
 
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
