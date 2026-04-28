@@ -2,15 +2,17 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
+const commentController = require("../controllers/commentController");
 
-const {
-  addComment,
-  getComments,
-  deleteComment,
-} = require("../controllers/commentController");
+//
+// ✅ Public route
+//
+router.get("/:postId", commentController.getComments);
 
-router.get("/:postId", getComments);
-router.post("/:postId", auth, addComment);
-router.delete("/:id", auth, deleteComment);
+//
+// ✅ Protected routes
+//
+router.post("/:postId", auth, commentController.addComment);
+router.delete("/:id", auth, commentController.deleteComment);
 
 module.exports = router;

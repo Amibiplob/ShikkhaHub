@@ -1,25 +1,32 @@
 const Post = require("../models/Post");
 
-// CREATE POST
+//
+// ✅ CREATE POST
+//
 exports.createPost = async (req, res) => {
   try {
     const { content, course } = req.body;
 
-    const post = new Post({
+    const post = await Post.create({
       content,
       course,
       author: req.user.id,
     });
 
-    await post.save();
-
-    res.status(201).json(post);
+    res.status(201).json({
+      message: "Post created successfully",
+      post,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// GET POSTS
+//
+// ✅ GET POSTS
+//
 exports.getPosts = async (req, res) => {
   try {
     const posts = await Post.find()
@@ -27,20 +34,32 @@ exports.getPosts = async (req, res) => {
       .populate("course", "title")
       .sort({ createdAt: -1 });
 
-    res.json(posts);
+    res.json({ posts });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// LIKE / UNLIKE
+//
+// ✅ LIKE / UNLIKE
+//
 exports.toggleLike = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+
     const userId = req.user.id;
 
-    if (post.likes.includes(userId)) {
+    const alreadyLiked = post.likes.includes(userId);
+
+    if (alreadyLiked) {
       post.likes = post.likes.filter((id) => id.toString() !== userId);
     } else {
       post.likes.push(userId);
@@ -48,49 +67,78 @@ exports.toggleLike = async (req, res) => {
 
     await post.save();
 
-    res.json(post);
+    res.json({
+      message: alreadyLiked ? "Unliked" : "Liked",
+      post,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
-// UPDATE POST
+
+//
+// ✅ UPDATE POST
+//
 exports.updatePost = async (req, res) => {
   try {
-    const Post = require("../models/Post");
     const post = await Post.findById(req.params.id);
 
-    if (!post) return res.status(404).json({ msg: "Post not found" });
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
 
     if (post.author.toString() !== req.user.id) {
-      return res.status(403).json({ msg: "Unauthorized" });
+      return res.status(403).json({
+        message: "Unauthorized",
+      });
     }
 
     post.content = req.body.content || post.content;
 
     await post.save();
 
-    res.json(post);
+    res.json({
+      message: "Post updated successfully",
+      post,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// DELETE POST
+//
+// ✅ DELETE POST
+//
 exports.deletePost = async (req, res) => {
   try {
-    const Post = require("../models/Post");
     const post = await Post.findById(req.params.id);
 
-    if (!post) return res.status(404).json({ msg: "Post not found" });
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
 
     if (post.author.toString() !== req.user.id) {
-      return res.status(403).json({ msg: "Unauthorized" });
+      return res.status(403).json({
+        message: "Unauthorized",
+      });
     }
 
     await post.deleteOne();
 
-    res.json({ msg: "Post deleted" });
+    res.json({
+      message: "Post deleted successfully",
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };

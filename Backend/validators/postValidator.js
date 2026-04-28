@@ -1,9 +1,13 @@
 const { body } = require("express-validator");
 
+//
+// ✅ POST VALIDATION
+//
 exports.postValidator = [
   body("content")
     .notEmpty()
-    .withMessage("Post cannot be empty")
+    .withMessage("Post content cannot be empty")
+
     .isLength({ max: 500 })
-    .withMessage("Max 500 chars"),
+    .withMessage("Post cannot exceed 500 characters"),
 ];

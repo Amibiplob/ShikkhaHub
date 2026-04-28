@@ -1,27 +1,41 @@
 const mongoose = require("mongoose");
 
-const PostSchema = new mongoose.Schema(
+const LessonSchema = new mongoose.Schema(
   {
-    content: {
+    title: {
       type: String,
       required: true,
+      trim: true,
     },
-    author: {
+
+    videoUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    content: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    section: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Section",
+      required: true,
+      index: true,
     },
-    course: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Course", // optional (for course-specific discussion)
+
+    order: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
-    likes: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
 
-module.exports = mongoose.model("Post", PostSchema);
+module.exports = mongoose.model("Lesson", LessonSchema);

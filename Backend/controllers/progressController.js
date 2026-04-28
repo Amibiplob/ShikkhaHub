@@ -2,7 +2,9 @@ const Progress = require("../models/Progress");
 const Lesson = require("../models/Lesson");
 const Section = require("../models/Section");
 
-// MARK COMPLETE
+//
+// ✅ MARK COMPLETE
+//
 exports.markComplete = async (req, res) => {
   try {
     const { lessonId, courseId } = req.body;
@@ -13,7 +15,7 @@ exports.markComplete = async (req, res) => {
     });
 
     if (!progress) {
-      progress = new Progress({
+      progress = await Progress.create({
         user: req.user.id,
         course: courseId,
         completedLessons: [],
@@ -26,13 +28,20 @@ exports.markComplete = async (req, res) => {
 
     await progress.save();
 
-    res.json(progress);
+    res.json({
+      message: "Progress updated",
+      progress,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// GET PROGRESS
+//
+// ✅ GET PROGRESS
+//
 exports.getProgress = async (req, res) => {
   try {
     const progress = await Progress.findOne({
@@ -40,13 +49,19 @@ exports.getProgress = async (req, res) => {
       course: req.params.courseId,
     });
 
-    res.json(progress || { completedLessons: [] });
+    res.json({
+      progress: progress || { completedLessons: [] },
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// GET FULL PROGRESS
+//
+// ✅ GET FULL PROGRESS
+//
 exports.getFullProgress = async (req, res) => {
   try {
     const progress = await Progress.findOne({
@@ -60,10 +75,12 @@ exports.getFullProgress = async (req, res) => {
 
     let totalLessons = 0;
 
-    for (let sec of sections) {
-      totalLessons += await Lesson.countDocuments({
+    for (const sec of sections) {
+      const count = await Lesson.countDocuments({
         section: sec._id,
       });
+
+      totalLessons += count;
     }
 
     const completed = progress?.completedLessons.length || 0;
@@ -75,6 +92,8 @@ exports.getFullProgress = async (req, res) => {
       percent,
     });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };

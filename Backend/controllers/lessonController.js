@@ -1,29 +1,38 @@
 const Lesson = require("../models/Lesson");
 
-// CREATE LESSON
+//
+// ✅ CREATE LESSON
+//
 exports.createLesson = async (req, res) => {
   try {
-    const lesson = new Lesson({
+    const lesson = await Lesson.create({
       ...req.body,
     });
 
-    await lesson.save();
-
-    res.status(201).json(lesson);
+    res.status(201).json({
+      message: "Lesson created successfully",
+      lesson,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// GET LESSONS BY SECTION
+//
+// ✅ GET LESSONS BY SECTION
+//
 exports.getLessons = async (req, res) => {
   try {
-    const lessons = await Lesson.find({ section: req.params.sectionId }).sort({
-      order: 1,
-    });
+    const lessons = await Lesson.find({
+      section: req.params.sectionId,
+    }).sort({ order: 1 });
 
-    res.json(lessons);
+    res.json({ lessons });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };

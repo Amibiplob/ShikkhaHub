@@ -2,19 +2,20 @@ const mongoose = require("mongoose");
 
 const LessonSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-    videoUrl: String, // YouTube / upload later
-    content: String, // text / notes
+    title: { type: String, required: true, trim: true },
+    videoUrl: { type: String, default: "", trim: true },
+    content: { type: String, default: "", trim: true },
     section: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Section",
+      required: true,
+      index: true,
     },
-    order: Number,
+    order: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Lesson", LessonSchema);
+// ✅ FIX: prevent overwrite error
+module.exports =
+  mongoose.models.Lesson || mongoose.model("Lesson", LessonSchema);

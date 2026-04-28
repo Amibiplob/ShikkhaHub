@@ -1,11 +1,13 @@
 const Course = require("../models/Course");
 
-// CREATE COURSE
+//
+// ✅ CREATE COURSE
+//
 exports.createCourse = async (req, res) => {
   try {
     const { title, description, thumbnail, price } = req.body;
 
-    const course = new Course({
+    const course = await Course.create({
       title,
       description,
       thumbnail,
@@ -13,25 +15,35 @@ exports.createCourse = async (req, res) => {
       instructor: req.user.id,
     });
 
-    await course.save();
-
-    res.status(201).json(course);
+    res.status(201).json({
+      message: "Course created successfully",
+      course,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// GET ALL COURSES
+//
+// ✅ GET ALL COURSES
+//
 exports.getCourses = async (req, res) => {
   try {
     const courses = await Course.find().populate("instructor", "name email");
-    res.json(courses);
+
+    res.json({ courses });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// GET SINGLE COURSE
+//
+// ✅ GET SINGLE COURSE
+//
 exports.getCourseById = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id).populate(
@@ -39,82 +51,131 @@ exports.getCourseById = async (req, res) => {
       "name email",
     );
 
-    if (!course) return res.status(404).json({ msg: "Course not found" });
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found",
+      });
+    }
 
-    res.json(course);
+    res.json({ course });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// UPDATE COURSE
+//
+// ✅ UPDATE COURSE
+//
 exports.updateCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
 
-    if (!course) return res.status(404).json({ msg: "Course not found" });
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found",
+      });
+    }
 
-    // only instructor can update
     if (course.instructor.toString() !== req.user.id) {
-      return res.status(403).json({ msg: "Unauthorized" });
+      return res.status(403).json({
+        message: "Unauthorized",
+      });
     }
 
     Object.assign(course, req.body);
     await course.save();
 
-    res.json(course);
+    res.json({
+      message: "Course updated successfully",
+      course,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// DELETE COURSE
+//
+// ✅ DELETE COURSE
+//
 exports.deleteCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
 
-    if (!course) return res.status(404).json({ msg: "Course not found" });
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found",
+      });
+    }
 
     if (course.instructor.toString() !== req.user.id) {
-      return res.status(403).json({ msg: "Unauthorized" });
+      return res.status(403).json({
+        message: "Unauthorized",
+      });
     }
 
     await course.deleteOne();
 
-    res.json({ msg: "Course deleted" });
+    res.json({
+      message: "Course deleted successfully",
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// ENROLL IN COURSE
+//
+// ✅ ENROLL COURSE
+//
 exports.enrollCourse = async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
 
-    if (!course) return res.status(404).json({ msg: "Course not found" });
-
-    if (course.students.includes(req.user.id)) {
-      return res.status(400).json({ msg: "Already enrolled" });
+    if (!course) {
+      return res.status(404).json({
+        message: "Course not found",
+      });
     }
 
-    course.students.push(req.user.id);
+    const userId = req.user.id;
+
+    if (course.students.includes(userId)) {
+      return res.status(400).json({
+        message: "Already enrolled",
+      });
+    }
+
+    course.students.push(userId);
     await course.save();
 
-    res.json({ msg: "Enrolled successfully" });
+    res.json({
+      message: "Enrolled successfully",
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
+//
+// ✅ GET MY COURSES
+//
 exports.getMyCourses = async (req, res) => {
   try {
     const courses = await Course.find({
       students: req.user.id,
     }).populate("instructor", "name");
 
-    res.json(courses);
+    res.json({ courses });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };

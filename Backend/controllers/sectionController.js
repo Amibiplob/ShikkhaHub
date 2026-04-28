@@ -1,40 +1,61 @@
 const Section = require("../models/Section");
 const Lesson = require("../models/Lesson");
 
-// CREATE SECTION
+//
+// ✅ CREATE SECTION
+//
 exports.createSection = async (req, res) => {
   try {
-    const section = new Section(req.body);
-    await section.save();
+    const { title, course, order } = req.body;
 
-    res.status(201).json(section);
+    const section = await Section.create({
+      title,
+      course,
+      order,
+    });
+
+    res.status(201).json({
+      message: "Section created",
+      section,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };
 
-// GET FULL COURSE CONTENT (sections + lessons)
+//
+// ✅ GET FULL COURSE CONTENT (OPTIMIZED)
+//
 exports.getCourseContent = async (req, res) => {
   try {
-    const sections = await Section.find({ course: req.params.courseId }).sort({
-      order: 1,
+    const sections = await Section.find({
+      course: req.params.courseId,
+    }).sort({ order: 1 });
+
+    const sectionIds = sections.map((s) => s._id);
+
+    const lessons = await Lesson.find({
+      section: { $in: sectionIds },
+    }).sort({ order: 1 });
+
+    const grouped = sections.map((sec) => {
+      return {
+        ...sec._doc,
+        lessons: lessons.filter(
+          (l) => l.section.toString() === sec._id.toString(),
+        ),
+      };
     });
 
-    const result = [];
-
-    for (let sec of sections) {
-      const lessons = await Lesson.find({ section: sec._id }).sort({
-        order: 1,
-      });
-
-      result.push({
-        ...sec._doc,
-        lessons,
-      });
-    }
-
-    res.json(result);
+    res.json({
+      courseId: req.params.courseId,
+      sections: grouped,
+    });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      message: err.message || "Server error",
+    });
   }
 };

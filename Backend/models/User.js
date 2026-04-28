@@ -5,19 +5,30 @@ const UserSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true,
     },
+
     email: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
+      lowercase: true,
+      index: true,
     },
+
     password: {
       type: String,
       required: true,
+      minlength: 6,
+      select: false, // never return password by default
     },
+
     role: {
       type: String,
-      default: "user", // admin support later
+      enum: ["user", "admin", "instructor"],
+      default: "user",
+      index: true,
     },
   },
   { timestamps: true },
