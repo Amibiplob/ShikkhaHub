@@ -118,7 +118,7 @@ const Footer = () => (
           </ul>
         </div>
       </div>
-      <div className="mt-10 border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+      <div className="mt-10 border-t border-border pt-6 text-center text-sm text-muted-foreground">
         <p>© {new Date().getFullYear()} ShikkhaHub . All rights reserved.</p>
       </div>
     </div>
