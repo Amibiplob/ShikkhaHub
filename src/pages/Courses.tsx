@@ -37,7 +37,7 @@ const Courses = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <div className="border-b border-border bg-gradient-hero py-12">
+        <div className="border-b border-border py-12">
           <div className="container mx-auto px-4">
             <h1 className="mb-2 text-3xl font-bold md:text-4xl">Browse Courses</h1>
             <p className="text-muted-foreground">Find the perfect course to advance your skills</p>

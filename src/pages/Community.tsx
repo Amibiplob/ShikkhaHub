@@ -160,7 +160,7 @@ const Community = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <div className="border-b border-border bg-gradient-hero py-10">
+        <div className="border-b border-border py-10">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between">
               <div>

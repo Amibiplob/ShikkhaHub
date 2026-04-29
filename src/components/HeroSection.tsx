@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Code2, Play, Sparkles, Users, Zap } from "lucide-react";
 
 const HeroSection = () => (
-  <section className="relative overflow-hidden bg-gradient-hero py-10">
+  <section className="relative overflow-hidden py-10">
     {/* Animated grid background */}
     <div className="absolute inset-0 opacity-[0.03]" style={{
       backgroundImage: `linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px),
