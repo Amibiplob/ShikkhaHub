@@ -32,8 +32,6 @@ const Index = () => {
       <Header />
       <main className="flex-1">
         <HeroSection />
-
-        {/* Featured Courses */}
         {featuredCourses.length > 0 && (
           <section className="py-20 md:py-28 border-t border-border">
             <div className="container mx-auto px-4">
@@ -82,10 +80,7 @@ const Index = () => {
             </div>
           </section>
         )}
-
         <FeaturesSection />
-
-        {/* CTA Section */}
         <section className="border-t border-border py-24">
           <div className="container mx-auto px-4 text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">
