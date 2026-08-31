@@ -164,6 +164,9 @@ const Header = () => {
       {mobileOpen && (
         <div className="border-t border-border bg-background p-4 md:hidden">
           <nav className="flex flex-col gap-2">
+            <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Explore
+            </p>
             <Link to="/courses" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
                 <BookOpen className="mr-2 h-4 w-4" /> Courses
@@ -174,6 +177,19 @@ const Header = () => {
                 <MessageSquare className="mr-2 h-4 w-4" /> Community
               </Button>
             </Link>
+            <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Medal className="mr-2 h-4 w-4" /> Leaderboard
+              </Button>
+            </Link>
+            {user && (
+              <Link to="/achievements" onClick={() => setMobileOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Trophy className="mr-2 h-4 w-4" /> Achievements
+                </Button>
+              </Link>
+            )}
+
             {user ? (
               <>
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
