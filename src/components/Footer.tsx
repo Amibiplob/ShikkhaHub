@@ -11,7 +11,7 @@ const Footer = () => (
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold tracking-tight">
-              Code<span className="text-gradient-primary">Campus</span>
+              Shikkha<span className="text-gradient-primary">Hub</span>
             </span>
           </Link>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
@@ -55,7 +55,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="mt-10 border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} CodeCampus. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} ShikkhaHub. All rights reserved.</p>
         <p>Built with ❤️ for developers</p>
       </div>
     </div>

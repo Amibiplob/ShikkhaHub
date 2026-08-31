@@ -101,7 +101,7 @@ const Auth = () => {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-primary">
               <GraduationCap className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold">Welcome to CodeCampus</h1>
+            <h1 className="text-2xl font-bold">Welcome to ShikkhaHub</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {showForgotPassword ? "Reset your password" : "Sign in or create an account to get started"}
             </p>
