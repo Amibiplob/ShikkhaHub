@@ -38,7 +38,7 @@ const Header = () => {
             <GraduationCap className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold tracking-tight">
-            Code<span className="text-gradient-primary">Campus</span>
+            Shikkha<span className="text-gradient-primary">Hub</span>
           </span>
         </Link>
 
