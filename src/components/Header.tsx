@@ -240,11 +240,30 @@ const Header = () => {
 
             {user ? (
               <>
+                <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  My Learning
+                </p>
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
+                <Link to="/dashboard?tab=bookmarks" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Bookmark className="mr-2 h-4 w-4" /> Bookmarks
+                  </Button>
+                </Link>
+                <Link to="/dashboard?tab=live" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Video className="mr-2 h-4 w-4" /> Live Classes
+                  </Button>
+                </Link>
+                <Link to="/profile" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start">
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </Button>
+                </Link>
+
                 {hasRole("teacher") && (
                   <Link to="/analytics" onClick={() => setMobileOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">
