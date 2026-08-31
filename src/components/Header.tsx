@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,10 +6,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BarChart3, BookOpen, ChevronDown, Compass, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Trophy, User, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BookOpen, ChevronDown, Compass, Flame, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Sparkles, Trophy, User, Video, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
@@ -18,7 +19,10 @@ import GlobalSearch from "@/components/GlobalSearch";
 const Header = () => {
   const { user, profile, signOut, hasRole } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isActive = (path: string) => location.pathname.startsWith(path);
+
 
   const initials = profile?.full_name
     ?.split(" ")
@@ -47,12 +51,21 @@ const Header = () => {
                 <ChevronDown className="ml-1 h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-52">
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Learn</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => navigate("/courses")}>
                 <BookOpen className="mr-2 h-4 w-4" /> All Courses
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/courses?level=beginner")}>
+                <Sparkles className="mr-2 h-4 w-4" /> Beginner Friendly
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/courses?sort=popular")}>
+                <Flame className="mr-2 h-4 w-4" /> Most Popular
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Community</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => navigate("/community")}>
-                <MessageSquare className="mr-2 h-4 w-4" /> Community Forum
+                <MessageSquare className="mr-2 h-4 w-4" /> Forum
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/leaderboard")}>
                 <Medal className="mr-2 h-4 w-4" /> Leaderboard
@@ -64,39 +77,74 @@ const Header = () => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+
           <Link to="/courses">
-            <Button variant="ghost" size="sm">
+            <Button variant={isActive("/courses") ? "secondary" : "ghost"} size="sm">
               <BookOpen className="mr-1.5 h-4 w-4" /> Courses
             </Button>
           </Link>
           <Link to="/community">
-            <Button variant="ghost" size="sm">
+            <Button variant={isActive("/community") ? "secondary" : "ghost"} size="sm">
               <MessageSquare className="mr-1.5 h-4 w-4" /> Community
             </Button>
           </Link>
 
           {user && (
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm">
-                <LayoutDashboard className="mr-1.5 h-4 w-4" /> Dashboard
-              </Button>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={isActive("/dashboard") ? "secondary" : "ghost"} size="sm">
+                  <LayoutDashboard className="mr-1.5 h-4 w-4" /> My Learning
+                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/dashboard?tab=courses")}>
+                  <BookOpen className="mr-2 h-4 w-4" /> My Courses
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/dashboard?tab=bookmarks")}>
+                  <Bookmark className="mr-2 h-4 w-4" /> Bookmarks
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/dashboard?tab=live")}>
+                  <Video className="mr-2 h-4 w-4" /> Live Classes
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/achievements")}>
+                  <Award className="mr-2 h-4 w-4" /> Certificates & Badges
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-          {user && hasRole("teacher") && (
-            <Link to="/analytics">
-              <Button variant="ghost" size="sm">
-                <BarChart3 className="mr-1.5 h-4 w-4" /> Analytics
-              </Button>
-            </Link>
-          )}
-          {user && hasRole("admin") && (
-            <Link to="/admin">
-              <Button variant="ghost" size="sm">
-                <Shield className="mr-1.5 h-4 w-4" /> Admin
-              </Button>
-            </Link>
+
+          {user && (hasRole("teacher") || hasRole("admin")) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={isActive("/analytics") || isActive("/admin") ? "secondary" : "ghost"} size="sm">
+                  <GraduationCap className="mr-1.5 h-4 w-4" /> Teach
+                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52">
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  <BookOpen className="mr-2 h-4 w-4" /> My Courses
+                </DropdownMenuItem>
+                {hasRole("teacher") && (
+                  <DropdownMenuItem onClick={() => navigate("/analytics")}>
+                    <BarChart3 className="mr-2 h-4 w-4" /> Analytics
+                  </DropdownMenuItem>
+                )}
+                {hasRole("admin") && (
+                  <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    <Shield className="mr-2 h-4 w-4" /> Admin Panel
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </nav>
+
 
         <div className="hidden items-center gap-1 md:flex">
           <GlobalSearch />
@@ -192,11 +240,30 @@ const Header = () => {
 
             {user ? (
               <>
+                <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  My Learning
+                </p>
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
+                <Link to="/dashboard?tab=bookmarks" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Bookmark className="mr-2 h-4 w-4" /> Bookmarks
+                  </Button>
+                </Link>
+                <Link to="/dashboard?tab=live" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start">
+                    <Video className="mr-2 h-4 w-4" /> Live Classes
+                  </Button>
+                </Link>
+                <Link to="/profile" onClick={() => setMobileOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start">
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </Button>
+                </Link>
+
                 {hasRole("teacher") && (
                   <Link to="/analytics" onClick={() => setMobileOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">
