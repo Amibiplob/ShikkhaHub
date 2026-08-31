@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BarChart3, BookOpen, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Trophy, User, X } from "lucide-react";
+import { BarChart3, BookOpen, ChevronDown, Compass, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Trophy, User, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
@@ -40,6 +40,30 @@ const Header = () => {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 md:flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Compass className="mr-1.5 h-4 w-4" /> Explore
+                <ChevronDown className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-52">
+              <DropdownMenuItem onClick={() => navigate("/courses")}>
+                <BookOpen className="mr-2 h-4 w-4" /> All Courses
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/community")}>
+                <MessageSquare className="mr-2 h-4 w-4" /> Community Forum
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/leaderboard")}>
+                <Medal className="mr-2 h-4 w-4" /> Leaderboard
+              </DropdownMenuItem>
+              {user && (
+                <DropdownMenuItem onClick={() => navigate("/achievements")}>
+                  <Trophy className="mr-2 h-4 w-4" /> Achievements
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Link to="/courses">
             <Button variant="ghost" size="sm">
               <BookOpen className="mr-1.5 h-4 w-4" /> Courses
@@ -50,6 +74,7 @@ const Header = () => {
               <MessageSquare className="mr-1.5 h-4 w-4" /> Community
             </Button>
           </Link>
+
           {user && (
             <Link to="/dashboard">
               <Button variant="ghost" size="sm">
