@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,10 +6,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BarChart3, BookOpen, ChevronDown, Compass, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Trophy, User, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BookOpen, ChevronDown, Compass, Flame, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Sparkles, Trophy, User, Video, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
@@ -18,7 +19,10 @@ import GlobalSearch from "@/components/GlobalSearch";
 const Header = () => {
   const { user, profile, signOut, hasRole } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isActive = (path: string) => location.pathname.startsWith(path);
+
 
   const initials = profile?.full_name
     ?.split(" ")
