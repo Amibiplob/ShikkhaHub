@@ -51,7 +51,7 @@ const Header = () => {
                 <ChevronDown className="ml-1 h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuContent align="start" className="w-64">
               <DropdownMenuLabel>Learn</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => navigate("/courses")}>
                 <BookOpen className="mr-2 h-4 w-4" /> All Courses
@@ -59,14 +59,52 @@ const Header = () => {
               <DropdownMenuItem onClick={() => navigate("/courses?level=beginner")}>
                 <Sparkles className="mr-2 h-4 w-4" /> Beginner Friendly
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/courses?level=advanced")}>
+                <Rocket className="mr-2 h-4 w-4" /> Advanced Tracks
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/courses?sort=popular")}>
                 <Flame className="mr-2 h-4 w-4" /> Most Popular
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Community</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate("/community")}>
-                <MessageSquare className="mr-2 h-4 w-4" /> Forum
+              <DropdownMenuItem onClick={() => navigate("/courses?sort=newest")}>
+                <Clock className="mr-2 h-4 w-4" /> Newly Added
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Categories</DropdownMenuLabel>
+              {categories.map((c) => (
+                <DropdownMenuItem key={c.label} onClick={() => navigate(`/courses?category=${encodeURIComponent(c.label)}`)}>
+                  <c.icon className="mr-2 h-4 w-4" /> {c.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Link to="/courses">
+            <Button variant={isActive("/courses") ? "secondary" : "ghost"} size="sm">
+              <BookOpen className="mr-1.5 h-4 w-4" /> Courses
+            </Button>
+          </Link>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={isActive("/community") || isActive("/leaderboard") || isActive("/achievements") ? "secondary" : "ghost"}
+                size="sm"
+              >
+                <MessageSquare className="mr-1.5 h-4 w-4" /> Community
+                <ChevronDown className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuItem onClick={() => navigate("/community")}>
+                <MessageSquare className="mr-2 h-4 w-4" /> Discussion Forum
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/community?category=Career+Advice")}>
+                <Briefcase className="mr-2 h-4 w-4" /> Career Advice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/community?category=Help")}>
+                <LifeBuoy className="mr-2 h-4 w-4" /> Ask for Help
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/leaderboard")}>
                 <Medal className="mr-2 h-4 w-4" /> Leaderboard
               </DropdownMenuItem>
@@ -78,16 +116,6 @@ const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link to="/courses">
-            <Button variant={isActive("/courses") ? "secondary" : "ghost"} size="sm">
-              <BookOpen className="mr-1.5 h-4 w-4" /> Courses
-            </Button>
-          </Link>
-          <Link to="/community">
-            <Button variant={isActive("/community") ? "secondary" : "ghost"} size="sm">
-              <MessageSquare className="mr-1.5 h-4 w-4" /> Community
-            </Button>
-          </Link>
 
           {user && (
             <DropdownMenu>
