@@ -84,7 +84,19 @@ const Index = () => {
           </section>
         )}
 
+        <CategoriesSection />
+
         <FeaturesSection />
+
+        <HowItWorksSection />
+
+        <LearningPathsSection />
+
+        <TeachSection />
+
+        <FaqSection />
+
+
 
         {/* CTA Section */}
         <section className="border-t border-border bg-gradient-hero py-24">
