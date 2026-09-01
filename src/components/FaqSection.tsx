@@ -25,6 +25,20 @@ const faqs = [
 
 const FaqSection = () => (
   <section className="border-t border-border py-20 md:py-24">
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }),
+      }}
+    />
     <div className="container mx-auto max-w-3xl px-4">
       <div className="mb-12 text-center">
         <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">FAQ</span>
