@@ -10,11 +10,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Award, BarChart3, Bookmark, BookOpen, ChevronDown, Compass, Flame, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Sparkles, Trophy, User, Video, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BookOpen, Braces, Brain, Briefcase, ChevronDown, Clock, Compass, Database, Flame, Globe, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Medal, Menu, MessageSquare, Palette, Rocket, Server, Shield, Smartphone, Sparkles, Trophy, User, Video, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import GlobalSearch from "@/components/GlobalSearch";
+
+const categories = [
+  { icon: Globe, label: "Web Development" },
+  { icon: Braces, label: "Programming" },
+  { icon: Smartphone, label: "Mobile" },
+  { icon: Database, label: "Data Science" },
+  { icon: Brain, label: "AI" },
+  { icon: Server, label: "DevOps" },
+  { icon: Palette, label: "Design" },
+];
 
 const Header = () => {
   const { user, profile, signOut, hasRole } = useAuth();
