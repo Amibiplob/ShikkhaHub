@@ -267,6 +267,28 @@ const Header = () => {
                 <BookOpen className="mr-2 h-4 w-4" /> Courses
               </Button>
             </Link>
+            <Link to="/courses?level=beginner" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Sparkles className="mr-2 h-4 w-4" /> Beginner Friendly
+              </Button>
+            </Link>
+            <Link to="/courses?sort=popular" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Flame className="mr-2 h-4 w-4" /> Most Popular
+              </Button>
+            </Link>
+            <div className="flex flex-wrap gap-2 px-3 py-1">
+              {categories.map((c) => (
+                <Link
+                  key={c.label}
+                  to={`/courses?category=${encodeURIComponent(c.label)}`}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
+                >
+                  {c.label}
+                </Link>
+              ))}
+            </div>
             <Link to="/community" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
                 <MessageSquare className="mr-2 h-4 w-4" /> Community
@@ -284,6 +306,14 @@ const Header = () => {
                 </Button>
               </Link>
             )}
+            {!(user && (hasRole("teacher") || hasRole("admin"))) && (
+              <Link to="/auth?tab=signup" onClick={() => setMobileOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <GraduationCap className="mr-2 h-4 w-4" /> Teach on ShikkhaHub
+                </Button>
+              </Link>
+            )}
+
 
             {user ? (
               <>
