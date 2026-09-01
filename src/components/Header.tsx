@@ -10,11 +10,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Award, BarChart3, Bookmark, BookOpen, ChevronDown, Compass, Flame, GraduationCap, LayoutDashboard, LogOut, Medal, Menu, MessageSquare, Shield, Sparkles, Trophy, User, Video, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BookOpen, Braces, Brain, Briefcase, ChevronDown, Clock, Compass, Database, Flame, Globe, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Medal, Menu, MessageSquare, Palette, Rocket, Server, Shield, Smartphone, Sparkles, Trophy, User, Video, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import GlobalSearch from "@/components/GlobalSearch";
+
+const categories = [
+  { icon: Globe, label: "Web Development" },
+  { icon: Braces, label: "Programming" },
+  { icon: Smartphone, label: "Mobile" },
+  { icon: Database, label: "Data Science" },
+  { icon: Brain, label: "AI" },
+  { icon: Server, label: "DevOps" },
+  { icon: Palette, label: "Design" },
+];
 
 const Header = () => {
   const { user, profile, signOut, hasRole } = useAuth();
@@ -51,7 +61,7 @@ const Header = () => {
                 <ChevronDown className="ml-1 h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuContent align="start" className="w-64">
               <DropdownMenuLabel>Learn</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => navigate("/courses")}>
                 <BookOpen className="mr-2 h-4 w-4" /> All Courses
@@ -59,14 +69,52 @@ const Header = () => {
               <DropdownMenuItem onClick={() => navigate("/courses?level=beginner")}>
                 <Sparkles className="mr-2 h-4 w-4" /> Beginner Friendly
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/courses?level=advanced")}>
+                <Rocket className="mr-2 h-4 w-4" /> Advanced Tracks
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/courses?sort=popular")}>
                 <Flame className="mr-2 h-4 w-4" /> Most Popular
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Community</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate("/community")}>
-                <MessageSquare className="mr-2 h-4 w-4" /> Forum
+              <DropdownMenuItem onClick={() => navigate("/courses?sort=newest")}>
+                <Clock className="mr-2 h-4 w-4" /> Newly Added
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Categories</DropdownMenuLabel>
+              {categories.map((c) => (
+                <DropdownMenuItem key={c.label} onClick={() => navigate(`/courses?category=${encodeURIComponent(c.label)}`)}>
+                  <c.icon className="mr-2 h-4 w-4" /> {c.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Link to="/courses">
+            <Button variant={isActive("/courses") ? "secondary" : "ghost"} size="sm">
+              <BookOpen className="mr-1.5 h-4 w-4" /> Courses
+            </Button>
+          </Link>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={isActive("/community") || isActive("/leaderboard") || isActive("/achievements") ? "secondary" : "ghost"}
+                size="sm"
+              >
+                <MessageSquare className="mr-1.5 h-4 w-4" /> Community
+                <ChevronDown className="ml-1 h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuItem onClick={() => navigate("/community")}>
+                <MessageSquare className="mr-2 h-4 w-4" /> Discussion Forum
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/community?category=Career+Advice")}>
+                <Briefcase className="mr-2 h-4 w-4" /> Career Advice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/community?category=Help")}>
+                <LifeBuoy className="mr-2 h-4 w-4" /> Ask for Help
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/leaderboard")}>
                 <Medal className="mr-2 h-4 w-4" /> Leaderboard
               </DropdownMenuItem>
@@ -78,16 +126,6 @@ const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link to="/courses">
-            <Button variant={isActive("/courses") ? "secondary" : "ghost"} size="sm">
-              <BookOpen className="mr-1.5 h-4 w-4" /> Courses
-            </Button>
-          </Link>
-          <Link to="/community">
-            <Button variant={isActive("/community") ? "secondary" : "ghost"} size="sm">
-              <MessageSquare className="mr-1.5 h-4 w-4" /> Community
-            </Button>
-          </Link>
 
           {user && (
             <DropdownMenu>
@@ -143,7 +181,16 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+
+          {!(user && (hasRole("teacher") || hasRole("admin"))) && (
+            <Link to="/auth?tab=signup">
+              <Button variant="ghost" size="sm">
+                <GraduationCap className="mr-1.5 h-4 w-4" /> Teach
+              </Button>
+            </Link>
+          )}
         </nav>
+
 
 
         <div className="hidden items-center gap-1 md:flex">
@@ -220,6 +267,28 @@ const Header = () => {
                 <BookOpen className="mr-2 h-4 w-4" /> Courses
               </Button>
             </Link>
+            <Link to="/courses?level=beginner" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Sparkles className="mr-2 h-4 w-4" /> Beginner Friendly
+              </Button>
+            </Link>
+            <Link to="/courses?sort=popular" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Flame className="mr-2 h-4 w-4" /> Most Popular
+              </Button>
+            </Link>
+            <div className="flex flex-wrap gap-2 px-3 py-1">
+              {categories.map((c) => (
+                <Link
+                  key={c.label}
+                  to={`/courses?category=${encodeURIComponent(c.label)}`}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
+                >
+                  {c.label}
+                </Link>
+              ))}
+            </div>
             <Link to="/community" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
                 <MessageSquare className="mr-2 h-4 w-4" /> Community
@@ -237,6 +306,14 @@ const Header = () => {
                 </Button>
               </Link>
             )}
+            {!(user && (hasRole("teacher") || hasRole("admin"))) && (
+              <Link to="/auth?tab=signup" onClick={() => setMobileOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <GraduationCap className="mr-2 h-4 w-4" /> Teach on ShikkhaHub
+                </Button>
+              </Link>
+            )}
+
 
             {user ? (
               <>
