@@ -5,6 +5,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
+import CategoriesSection from "@/components/CategoriesSection";
+import HowItWorksSection from "@/components/HowItWorksSection";
+import LearningPathsSection from "@/components/LearningPathsSection";
+import TeachSection from "@/components/TeachSection";
+import FaqSection from "@/components/FaqSection";
 import CourseCard from "@/components/CourseCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
@@ -79,7 +84,19 @@ const Index = () => {
           </section>
         )}
 
+        <CategoriesSection />
+
         <FeaturesSection />
+
+        <HowItWorksSection />
+
+        <LearningPathsSection />
+
+        <TeachSection />
+
+        <FaqSection />
+
+
 
         {/* CTA Section */}
         <section className="border-t border-border bg-gradient-hero py-24">
