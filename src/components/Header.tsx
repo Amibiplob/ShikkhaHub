@@ -171,7 +171,16 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+
+          {!(user && (hasRole("teacher") || hasRole("admin"))) && (
+            <Link to="/auth?tab=signup">
+              <Button variant="ghost" size="sm">
+                <GraduationCap className="mr-1.5 h-4 w-4" /> Teach
+              </Button>
+            </Link>
+          )}
         </nav>
+
 
 
         <div className="hidden items-center gap-1 md:flex">
