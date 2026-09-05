@@ -1,0 +1,9 @@
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.prevent_admin_lockout() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_badge_earned() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_new_assignment() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_new_enrollment() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_new_live_class() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_submission_graded() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.expire_old_live_classes() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, app_role) FROM anon;

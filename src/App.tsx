@@ -48,7 +48,7 @@ const App = () => (
                 <Route path="/live/:roomName" element={<ProtectedRoute><LiveClass /></ProtectedRoute>} />
                 <Route path="/recordings/:classId" element={<ProtectedRoute><ClassRecording /></ProtectedRoute>} />
                 <Route path="/assignments/:assignmentId" element={<ProtectedRoute><AssignmentDetail /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute requiredRole="teacher"><TeacherAnalytics /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute allowedRoles={["teacher", "admin"]}><TeacherAnalytics /></ProtectedRoute>} />
                 <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

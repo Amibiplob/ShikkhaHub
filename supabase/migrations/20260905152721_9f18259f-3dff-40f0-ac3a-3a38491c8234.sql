@@ -1,0 +1,10 @@
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.prevent_admin_lockout() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.notify_badge_earned() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.notify_new_assignment() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.notify_new_enrollment() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.notify_new_live_class() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.notify_submission_graded() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.expire_old_live_classes() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, app_role) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, app_role) TO authenticated, service_role;
