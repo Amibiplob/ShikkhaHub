@@ -15,19 +15,22 @@ import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import GlobalSearch from "@/components/GlobalSearch";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const categories = [
-  { icon: Globe, label: "Web Development" },
-  { icon: Braces, label: "Programming" },
-  { icon: Smartphone, label: "Mobile" },
-  { icon: Database, label: "Data Science" },
-  { icon: Brain, label: "AI" },
-  { icon: Server, label: "DevOps" },
-  { icon: Palette, label: "Design" },
+  { icon: Globe, label: "Web Development", key: "cat.web" },
+  { icon: Braces, label: "Programming", key: "cat.programming" },
+  { icon: Smartphone, label: "Mobile", key: "cat.mobileShort" },
+  { icon: Database, label: "Data Science", key: "cat.data" },
+  { icon: Brain, label: "AI", key: "cat.aiShort" },
+  { icon: Server, label: "DevOps", key: "cat.devopsShort" },
+  { icon: Palette, label: "Design", key: "cat.designShort" },
 ];
 
 const Header = () => {
   const { user, profile, signOut, hasRole } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -57,32 +60,32 @@ const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
-                <Compass className="mr-1.5 h-4 w-4" /> Explore
+                <Compass className="mr-1.5 h-4 w-4" /> {t("nav.explore")}
                 <ChevronDown className="ml-1 h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
-              <DropdownMenuLabel>Learn</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("nav.learn")}</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => navigate("/courses")}>
-                <BookOpen className="mr-2 h-4 w-4" /> All Courses
+                <BookOpen className="mr-2 h-4 w-4" /> {t("nav.allCourses")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/courses?level=beginner")}>
-                <Sparkles className="mr-2 h-4 w-4" /> Beginner Friendly
+                <Sparkles className="mr-2 h-4 w-4" /> {t("nav.beginner")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/courses?level=advanced")}>
-                <Rocket className="mr-2 h-4 w-4" /> Advanced Tracks
+                <Rocket className="mr-2 h-4 w-4" /> {t("nav.advanced")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/courses?sort=popular")}>
-                <Flame className="mr-2 h-4 w-4" /> Most Popular
+                <Flame className="mr-2 h-4 w-4" /> {t("nav.popular")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/courses?sort=newest")}>
-                <Clock className="mr-2 h-4 w-4" /> Newly Added
+                <Clock className="mr-2 h-4 w-4" /> {t("nav.newest")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Categories</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("nav.categories")}</DropdownMenuLabel>
               {categories.map((c) => (
                 <DropdownMenuItem key={c.label} onClick={() => navigate(`/courses?category=${encodeURIComponent(c.label)}`)}>
-                  <c.icon className="mr-2 h-4 w-4" /> {c.label}
+                  <c.icon className="mr-2 h-4 w-4" /> {t(c.key)}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -90,7 +93,7 @@ const Header = () => {
 
           <Link to="/courses">
             <Button variant={isActive("/courses") ? "secondary" : "ghost"} size="sm">
-              <BookOpen className="mr-1.5 h-4 w-4" /> Courses
+              <BookOpen className="mr-1.5 h-4 w-4" /> {t("nav.courses")}
             </Button>
           </Link>
 
@@ -100,27 +103,27 @@ const Header = () => {
                 variant={isActive("/community") || isActive("/leaderboard") || isActive("/achievements") ? "secondary" : "ghost"}
                 size="sm"
               >
-                <MessageSquare className="mr-1.5 h-4 w-4" /> Community
+                <MessageSquare className="mr-1.5 h-4 w-4" /> {t("nav.community")}
                 <ChevronDown className="ml-1 h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuItem onClick={() => navigate("/community")}>
-                <MessageSquare className="mr-2 h-4 w-4" /> Discussion Forum
+                <MessageSquare className="mr-2 h-4 w-4" /> {t("nav.forum")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/community?category=Career+Advice")}>
-                <Briefcase className="mr-2 h-4 w-4" /> Career Advice
+                <Briefcase className="mr-2 h-4 w-4" /> {t("nav.career")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/community?category=Help")}>
-                <LifeBuoy className="mr-2 h-4 w-4" /> Ask for Help
+                <LifeBuoy className="mr-2 h-4 w-4" /> {t("nav.help")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/leaderboard")}>
-                <Medal className="mr-2 h-4 w-4" /> Leaderboard
+                <Medal className="mr-2 h-4 w-4" /> {t("nav.leaderboard")}
               </DropdownMenuItem>
               {user && (
                 <DropdownMenuItem onClick={() => navigate("/achievements")}>
-                  <Trophy className="mr-2 h-4 w-4" /> Achievements
+                  <Trophy className="mr-2 h-4 w-4" /> {t("nav.achievements")}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -131,26 +134,26 @@ const Header = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant={isActive("/dashboard") ? "secondary" : "ghost"} size="sm">
-                  <LayoutDashboard className="mr-1.5 h-4 w-4" /> My Learning
+                  <LayoutDashboard className="mr-1.5 h-4 w-4" /> {t("nav.myLearning")}
                   <ChevronDown className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  <LayoutDashboard className="mr-2 h-4 w-4" /> {t("nav.dashboard")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/dashboard?tab=courses")}>
-                  <BookOpen className="mr-2 h-4 w-4" /> My Courses
+                  <BookOpen className="mr-2 h-4 w-4" /> {t("nav.myCourses")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/dashboard?tab=bookmarks")}>
-                  <Bookmark className="mr-2 h-4 w-4" /> Bookmarks
+                  <Bookmark className="mr-2 h-4 w-4" /> {t("nav.bookmarks")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/dashboard?tab=live")}>
-                  <Video className="mr-2 h-4 w-4" /> Live Classes
+                  <Video className="mr-2 h-4 w-4" /> {t("nav.liveClasses")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/achievements")}>
-                  <Award className="mr-2 h-4 w-4" /> Certificates & Badges
+                  <Award className="mr-2 h-4 w-4" /> {t("nav.certificates")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -160,22 +163,22 @@ const Header = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant={isActive("/analytics") || isActive("/admin") ? "secondary" : "ghost"} size="sm">
-                  <GraduationCap className="mr-1.5 h-4 w-4" /> Teach
+                  <GraduationCap className="mr-1.5 h-4 w-4" /> {t("nav.teach")}
                   <ChevronDown className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-52">
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <BookOpen className="mr-2 h-4 w-4" /> My Courses
+                  <BookOpen className="mr-2 h-4 w-4" /> {t("nav.myCourses")}
                 </DropdownMenuItem>
                 {hasRole("teacher") && (
                   <DropdownMenuItem onClick={() => navigate("/analytics")}>
-                    <BarChart3 className="mr-2 h-4 w-4" /> Analytics
+                    <BarChart3 className="mr-2 h-4 w-4" /> {t("nav.analytics")}
                   </DropdownMenuItem>
                 )}
                 {hasRole("admin") && (
                   <DropdownMenuItem onClick={() => navigate("/admin")}>
-                    <Shield className="mr-2 h-4 w-4" /> Admin Panel
+                    <Shield className="mr-2 h-4 w-4" /> {t("nav.admin")}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -185,7 +188,7 @@ const Header = () => {
           {!(user && (hasRole("teacher") || hasRole("admin"))) && (
             <Link to="/auth?tab=signup">
               <Button variant="ghost" size="sm">
-                <GraduationCap className="mr-1.5 h-4 w-4" /> Teach
+                <GraduationCap className="mr-1.5 h-4 w-4" /> {t("nav.teach")}
               </Button>
             </Link>
           )}
@@ -195,6 +198,7 @@ const Header = () => {
 
         <div className="hidden items-center gap-1 md:flex">
           <GlobalSearch />
+          <LanguageToggle />
           <Link to="/leaderboard">
             <Button variant="ghost" size="icon" className="h-9 w-9">
               <Medal className="h-4 w-4" />
@@ -216,33 +220,33 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium">{profile?.full_name || "User"}</p>
+                  <p className="text-sm font-medium">{profile?.full_name || t("nav.user")}</p>
                   <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  <LayoutDashboard className="mr-2 h-4 w-4" /> {t("nav.dashboard")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <User className="mr-2 h-4 w-4" /> Profile
+                  <User className="mr-2 h-4 w-4" /> {t("nav.profile")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/achievements")}>
-                  <Trophy className="mr-2 h-4 w-4" /> Achievements
+                  <Trophy className="mr-2 h-4 w-4" /> {t("nav.achievements")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="mr-2 h-4 w-4" /> Sign out
+                  <LogOut className="mr-2 h-4 w-4" /> {t("nav.signOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <>
               <Link to="/auth">
-                <Button variant="ghost" size="sm">Sign in</Button>
+                <Button variant="ghost" size="sm">{t("nav.signIn")}</Button>
               </Link>
               <Link to="/auth?tab=signup">
                 <Button size="sm" className="bg-gradient-primary text-primary-foreground hover:opacity-90">
-                  Get Started
+                  {t("nav.getStarted")}
                 </Button>
               </Link>
             </>
@@ -260,21 +264,21 @@ const Header = () => {
         <div className="border-t border-border bg-background p-4 md:hidden">
           <nav className="flex flex-col gap-2">
             <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Explore
+              {t("nav.explore")}
             </p>
             <Link to="/courses" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
-                <BookOpen className="mr-2 h-4 w-4" /> Courses
+                <BookOpen className="mr-2 h-4 w-4" /> {t("nav.courses")}
               </Button>
             </Link>
             <Link to="/courses?level=beginner" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
-                <Sparkles className="mr-2 h-4 w-4" /> Beginner Friendly
+                <Sparkles className="mr-2 h-4 w-4" /> {t("nav.beginner")}
               </Button>
             </Link>
             <Link to="/courses?sort=popular" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
-                <Flame className="mr-2 h-4 w-4" /> Most Popular
+                <Flame className="mr-2 h-4 w-4" /> {t("nav.popular")}
               </Button>
             </Link>
             <div className="flex flex-wrap gap-2 px-3 py-1">
@@ -285,31 +289,31 @@ const Header = () => {
                   onClick={() => setMobileOpen(false)}
                   className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
                 >
-                  {c.label}
+                  {t(c.key)}
                 </Link>
               ))}
             </div>
             <Link to="/community" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
-                <MessageSquare className="mr-2 h-4 w-4" /> Community
+                <MessageSquare className="mr-2 h-4 w-4" /> {t("nav.community")}
               </Button>
             </Link>
             <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
-                <Medal className="mr-2 h-4 w-4" /> Leaderboard
+                <Medal className="mr-2 h-4 w-4" /> {t("nav.leaderboard")}
               </Button>
             </Link>
             {user && (
               <Link to="/achievements" onClick={() => setMobileOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start">
-                  <Trophy className="mr-2 h-4 w-4" /> Achievements
+                  <Trophy className="mr-2 h-4 w-4" /> {t("nav.achievements")}
                 </Button>
               </Link>
             )}
             {!(user && (hasRole("teacher") || hasRole("admin"))) && (
               <Link to="/auth?tab=signup" onClick={() => setMobileOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start">
-                  <GraduationCap className="mr-2 h-4 w-4" /> Teach on ShikkhaHub
+                  <GraduationCap className="mr-2 h-4 w-4" /> {t("nav.teachOn")}
                 </Button>
               </Link>
             )}
@@ -318,50 +322,50 @@ const Header = () => {
             {user ? (
               <>
                 <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  My Learning
+                  {t("nav.myLearning")}
                 </p>
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
-                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> {t("nav.dashboard")}
                   </Button>
                 </Link>
                 <Link to="/dashboard?tab=bookmarks" onClick={() => setMobileOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
-                    <Bookmark className="mr-2 h-4 w-4" /> Bookmarks
+                    <Bookmark className="mr-2 h-4 w-4" /> {t("nav.bookmarks")}
                   </Button>
                 </Link>
                 <Link to="/dashboard?tab=live" onClick={() => setMobileOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
-                    <Video className="mr-2 h-4 w-4" /> Live Classes
+                    <Video className="mr-2 h-4 w-4" /> {t("nav.liveClasses")}
                   </Button>
                 </Link>
                 <Link to="/profile" onClick={() => setMobileOpen(false)}>
                   <Button variant="ghost" className="w-full justify-start">
-                    <User className="mr-2 h-4 w-4" /> Profile
+                    <User className="mr-2 h-4 w-4" /> {t("nav.profile")}
                   </Button>
                 </Link>
 
                 {hasRole("teacher") && (
                   <Link to="/analytics" onClick={() => setMobileOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">
-                      <BarChart3 className="mr-2 h-4 w-4" /> Analytics
+                      <BarChart3 className="mr-2 h-4 w-4" /> {t("nav.analytics")}
                     </Button>
                   </Link>
                 )}
                 {hasRole("admin") && (
                   <Link to="/admin" onClick={() => setMobileOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">
-                      <Shield className="mr-2 h-4 w-4" /> Admin
+                      <Shield className="mr-2 h-4 w-4" /> {t("nav.adminShort")}
                     </Button>
                   </Link>
                 )}
                 <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
-                  <LogOut className="mr-2 h-4 w-4" /> Sign out
+                  <LogOut className="mr-2 h-4 w-4" /> {t("nav.signOut")}
                 </Button>
               </>
             ) : (
               <Link to="/auth" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full bg-gradient-primary text-primary-foreground">Sign in</Button>
+                <Button className="w-full bg-gradient-primary text-primary-foreground">{t("nav.signIn")}</Button>
               </Link>
             )}
           </nav>
