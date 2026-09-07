@@ -13,10 +13,12 @@ import FaqSection from "@/components/FaqSection";
 import CourseCard from "@/components/CourseCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const [featuredCourses, setFeaturedCourses] = useState<any[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -44,12 +46,12 @@ const Index = () => {
             <div className="container mx-auto px-4">
               <div className="mb-12 flex items-end justify-between">
                 <div>
-                  <span className="mb-2 inline-block text-sm font-medium uppercase tracking-widest text-primary">Popular</span>
-                  <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Featured Courses</h2>
+                  <span className="mb-2 inline-block text-sm font-medium uppercase tracking-widest text-primary">{t("featured.eyebrow")}</span>
+                  <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{t("featured.title")}</h2>
                 </div>
                 <Link to="/courses">
                   <Button variant="outline" className="gap-2 hidden sm:flex">
-                    View All <ArrowRight className="h-4 w-4" />
+                    {t("featured.viewAll")} <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -76,7 +78,7 @@ const Index = () => {
               <div className="mt-8 text-center sm:hidden">
                 <Link to="/courses">
                   <Button variant="outline" className="gap-2">
-                    View All Courses <ArrowRight className="h-4 w-4" />
+                    {t("featured.viewAllCourses")} <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -102,15 +104,15 @@ const Index = () => {
         <section className="border-t border-border bg-gradient-hero py-24">
           <div className="container mx-auto px-4 text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">
-              Ready to start your{" "}
-              <span className="text-gradient-primary">coding journey</span>?
+              {t("cta.title1")}{" "}
+              <span className="text-gradient-primary">{t("cta.title2")}</span>?
             </h2>
             <p className="mx-auto mb-10 max-w-md text-lg text-muted-foreground">
-              Join thousands of developers learning new skills every day.
+              {t("cta.subtitle")}
             </p>
             <Link to="/auth?tab=signup">
               <Button size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2 px-10 h-12 text-base shadow-glow">
-                Get Started Free <ArrowRight className="h-5 w-5" />
+                {t("cta.button")} <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
           </div>
