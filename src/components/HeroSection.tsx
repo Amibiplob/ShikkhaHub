@@ -31,7 +31,7 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-hero py-24 md:py-36">
+    <section className="relative overflow-hidden bg-gradient-hero py-14 md:py-20">
       {/* Animated grid background */}
       <div className="absolute inset-0 opacity-[0.03]" style={{
         backgroundImage: `linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px),
@@ -74,7 +74,7 @@ const HeroSection = () => {
           </div>
 
           {/* Stats */}
-          <div className="mt-20 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
+          <div className="mt-12 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
             {stats.map((stat) => (
               <div key={stat.label} className="relative text-center group">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-glow">
