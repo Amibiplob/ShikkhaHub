@@ -199,11 +199,6 @@ const Header = () => {
         <div className="hidden items-center gap-1 md:flex">
           <GlobalSearch />
           <LanguageToggle />
-          <Link to="/leaderboard">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
-              <Medal className="h-4 w-4" />
-            </Button>
-          </Link>
           <NotificationBell />
           <ThemeToggle />
           {user ? (

@@ -971,6 +971,7 @@ export type Database = {
     }
     Functions: {
       expire_old_live_classes: { Args: never; Returns: undefined }
+      get_platform_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
