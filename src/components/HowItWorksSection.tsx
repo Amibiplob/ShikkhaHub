@@ -12,9 +12,9 @@ const HowItWorksSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="border-t border-border bg-muted/30 py-20 md:py-24">
+    <section className="border-t border-border bg-muted/30 py-12 md:py-16">
       <div className="container mx-auto px-4">
-        <div className="mb-14 text-center">
+        <div className="mb-8 text-center">
           <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
             {t("how.eyebrow")}
           </span>

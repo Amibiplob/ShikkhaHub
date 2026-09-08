@@ -13,8 +13,8 @@ const TeachSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="border-t border-border bg-muted/30 py-20 md:py-24">
-      <div className="container mx-auto grid items-center gap-12 px-4 lg:grid-cols-2">
+    <section className="border-t border-border bg-muted/30 py-12 md:py-16">
+      <div className="container mx-auto grid items-center gap-8 px-4 lg:grid-cols-2">
         <div>
           <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
             {t("teach.eyebrow")}

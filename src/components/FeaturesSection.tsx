@@ -14,9 +14,9 @@ const FeaturesSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="py-24 md:py-32">
+    <section className="py-14 md:py-20">
       <div className="container mx-auto px-4">
-        <div className="mb-16 text-center">
+        <div className="mb-10 text-center">
           <span className="mb-4 inline-block text-sm font-medium uppercase tracking-widest text-primary">
             {t("features.eyebrow")}
           </span>

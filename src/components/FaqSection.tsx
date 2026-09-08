@@ -8,7 +8,7 @@ const FaqSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="border-t border-border py-20 md:py-24">
+    <section className="border-t border-border py-12 md:py-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
