@@ -1,15 +1,33 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Code2, Play, Sparkles, Users, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const HeroSection = () => {
   const { t } = useLanguage();
+  const [counts, setCounts] = useState<{ courses: number; students: number; live: number } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data, error } = await supabase.rpc("get_platform_stats");
+      if (!active || error || !data) return;
+      const d = data as { courses: number; students: number; live_classes: number };
+      setCounts({ courses: d.courses ?? 0, students: d.students ?? 0, live: d.live_classes ?? 0 });
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const fmt = (n: number | undefined) => (n === undefined ? "—" : n.toLocaleString());
 
   const stats = [
-    { icon: Code2, label: t("hero.statCourses"), value: "50+" },
-    { icon: Users, label: t("hero.statStudents"), value: "2,000+" },
-    { icon: Zap, label: t("hero.statLive"), value: "100+" },
+    { icon: Code2, label: t("hero.statCourses"), value: fmt(counts?.courses) },
+    { icon: Users, label: t("hero.statStudents"), value: fmt(counts?.students) },
+    { icon: Zap, label: t("hero.statLive"), value: fmt(counts?.live) },
   ];
 
   return (
