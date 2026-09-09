@@ -57,7 +57,7 @@ const Community = () => {
     setLoading(true);
     let query = supabase
       .from("community_posts")
-      .select("*, profiles!community_posts_user_id_fkey(full_name, avatar_url)", { count: "exact" })
+      .select("*, profiles!community_posts_user_id_profiles_fkey(full_name, avatar_url)", { count: "exact" })
       .order("is_pinned", { ascending: false });
 
     if (sortBy === "newest" || sortBy === "popular") query = query.order("created_at", { ascending: false });

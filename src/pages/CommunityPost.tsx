@@ -59,8 +59,8 @@ const CommunityPost = () => {
     if (!id) return;
     const fetchAll = async () => {
       const [postRes, commentsRes, upvotesRes] = await Promise.all([
-        supabase.from("community_posts").select("*, profiles!community_posts_user_id_fkey(full_name, avatar_url)").eq("id", id).single(),
-        supabase.from("community_comments").select("*, profiles!community_comments_user_id_fkey(full_name, avatar_url)").eq("post_id", id).order("created_at"),
+        supabase.from("community_posts").select("*, profiles!community_posts_user_id_profiles_fkey(full_name, avatar_url)").eq("id", id).single(),
+        supabase.from("community_comments").select("*, profiles!community_comments_user_id_profiles_fkey(full_name, avatar_url)").eq("post_id", id).order("created_at"),
         supabase.from("community_upvotes").select("*").eq("post_id", id),
       ]);
 
@@ -143,7 +143,7 @@ const CommunityPost = () => {
     else {
       setComment("");
       // Refresh comments
-      const { data } = await supabase.from("community_comments").select("*, profiles!community_comments_user_id_fkey(full_name, avatar_url)").eq("post_id", id!).order("created_at");
+      const { data } = await supabase.from("community_comments").select("*, profiles!community_comments_user_id_profiles_fkey(full_name, avatar_url)").eq("post_id", id!).order("created_at");
       const flat = data || [];
       const top: Comment[] = [];
       const childMap: Record<string, Comment[]> = {};
@@ -176,7 +176,7 @@ const CommunityPost = () => {
       setReplyTo(null);
       setReplyContent("");
       // Refresh
-      const { data } = await supabase.from("community_comments").select("*, profiles!community_comments_user_id_fkey(full_name, avatar_url)").eq("post_id", id!).order("created_at");
+      const { data } = await supabase.from("community_comments").select("*, profiles!community_comments_user_id_profiles_fkey(full_name, avatar_url)").eq("post_id", id!).order("created_at");
       const flat = data || [];
       const top: Comment[] = [];
       const childMap: Record<string, Comment[]> = {};
