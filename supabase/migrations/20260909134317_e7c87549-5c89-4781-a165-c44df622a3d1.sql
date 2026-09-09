@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.expire_old_live_classes() FROM anon, authenticated;
