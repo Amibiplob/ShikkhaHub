@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,8 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowBigUp, ChevronLeft, ChevronRight, Loader2, MessageSquare, Pin, Plus, Search, SortAsc } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowBigUp, ChevronLeft, ChevronRight, Loader2, MessageSquare, Pin, Plus, Search, SortAsc, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -35,10 +35,11 @@ const categoryColors: Record<string, string> = {
 const POSTS_PER_PAGE = 10;
 
 const Community = () => {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "popular">("newest");
@@ -47,50 +48,29 @@ const Community = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [upvotedPosts, setUpvotedPosts] = useState<Set<string>>(new Set());
+  const [upvoteCounts, setUpvoteCounts] = useState<Record<string, number>>({});
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
   // Create form
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [postCategory, setPostCategory] = useState("general");
 
-  const fetchPosts = async () => {
-    setLoading(true);
-    let query = supabase
-      .from("community_posts")
-      .select("*, profiles!community_posts_user_id_profiles_fkey(full_name, avatar_url)", { count: "exact" })
-      .order("is_pinned", { ascending: false });
+  const isAdmin = useMemo(() => hasRole("admin"), [hasRole, user]);
 
-    if (sortBy === "newest" || sortBy === "popular") query = query.order("created_at", { ascending: false });
-    if (sortBy === "oldest") query = query.order("created_at", { ascending: true });
-
-    if (category !== "all") query = query.eq("category", category);
-    if (search) query = query.ilike("title", `%${search}%`);
-
-    query = query.range(page * POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE - 1);
-
-    const { data, count } = await query;
-    setPosts(data || []);
-    setTotalCount(count || 0);
-    setLoading(false);
-  };
-
-  const fetchUpvotes = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("community_upvotes")
-      .select("post_id")
-      .eq("user_id", user.id)
-      .not("post_id", "is", null);
-    setUpvotedPosts(new Set(data?.map((u) => u.post_id!).filter(Boolean) || []));
-  };
-
-  // Fetch upvote counts
-  const [upvoteCounts, setUpvoteCounts] = useState<Record<string, number>>({});
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+  // Debounce the search box so we don't fire a query per keystroke
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const fetchCounts = async (postIds: string[]) => {
-    if (postIds.length === 0) return;
-    
+    if (postIds.length === 0) {
+      setUpvoteCounts({});
+      setCommentCounts({});
+      return;
+    }
+
     const [upvotes, comments] = await Promise.all([
       supabase.from("community_upvotes").select("post_id").in("post_id", postIds),
       supabase.from("community_comments").select("post_id").in("post_id", postIds),
@@ -101,34 +81,110 @@ const Community = () => {
     setUpvoteCounts(uCounts);
 
     const cCounts: Record<string, number> = {};
-    comments.data?.forEach((c) => { cCounts[c.post_id] = (cCounts[c.post_id] || 0) + 1; });
+    comments.data?.forEach((c) => { if (c.post_id) cCounts[c.post_id] = (cCounts[c.post_id] || 0) + 1; });
     setCommentCounts(cCounts);
   };
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    const select = "*, profiles!community_posts_user_id_profiles_fkey(full_name, avatar_url)";
+
+    const applyFilters = (q: any) => {
+      if (category !== "all") q = q.eq("category", category);
+      if (search) q = q.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+      return q;
+    };
+
+    if (sortBy === "popular") {
+      // Popular needs upvote counts across all matching posts, so sort in memory.
+      const { data, error } = await applyFilters(supabase.from("community_posts").select(select));
+      if (error) {
+        toast.error("Could not load posts");
+        setPosts([]);
+        setTotalCount(0);
+        setLoading(false);
+        return;
+      }
+      const all = data || [];
+      const ids = all.map((p: any) => p.id);
+      const { data: ups } = ids.length
+        ? await supabase.from("community_upvotes").select("post_id").in("post_id", ids)
+        : { data: [] as any[] };
+      const counts: Record<string, number> = {};
+      ups?.forEach((u: any) => { if (u.post_id) counts[u.post_id] = (counts[u.post_id] || 0) + 1; });
+      const sorted = [...all].sort((a: any, b: any) => {
+        if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+        const diff = (counts[b.id] || 0) - (counts[a.id] || 0);
+        if (diff !== 0) return diff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      setTotalCount(sorted.length);
+      setPosts(sorted.slice(page * POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE));
+      setLoading(false);
+      return;
+    }
+
+    let query = applyFilters(
+      supabase.from("community_posts").select(select, { count: "exact" }).order("is_pinned", { ascending: false })
+    ).order("created_at", { ascending: sortBy === "oldest" });
+
+    query = query.range(page * POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE - 1);
+
+    const { data, count, error } = await query;
+    if (error) toast.error("Could not load posts");
+    setPosts(data || []);
+    setTotalCount(count || 0);
+    setLoading(false);
+  };
+
+  const fetchUpvotes = async () => {
+    if (!user) {
+      setUpvotedPosts(new Set());
+      return;
+    }
+    const { data } = await supabase
+      .from("community_upvotes")
+      .select("post_id")
+      .eq("user_id", user.id)
+      .not("post_id", "is", null);
+    setUpvotedPosts(new Set(data?.map((u) => u.post_id!).filter(Boolean) || []));
+  };
+
+  // Reset to first page whenever filters change
+  useEffect(() => {
+    setPage(0);
+  }, [category, search, sortBy]);
 
   useEffect(() => {
     fetchPosts();
     fetchUpvotes();
   }, [category, search, user, sortBy, page]);
 
-  // Reset page when filters change
   useEffect(() => {
-    setPage(0);
-  }, [category, search, sortBy]);
-
-  useEffect(() => {
-    if (posts.length > 0) {
-      fetchCounts(posts.map((p) => p.id));
-    }
+    fetchCounts(posts.map((p) => p.id));
   }, [posts]);
+
+  const openCreate = () => {
+    if (!user) {
+      toast.error("Please sign in to create a post");
+      navigate("/auth");
+      return;
+    }
+    setCreateOpen(true);
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return navigate("/auth");
+    if (!title.trim() || !content.trim()) {
+      toast.error("Title and content are required");
+      return;
+    }
     setCreating(true);
     const { error } = await supabase.from("community_posts").insert({
       user_id: user.id,
-      title,
-      content,
+      title: title.trim(),
+      content: content.trim(),
       category: postCategory,
     });
     if (error) toast.error(error.message);
@@ -138,23 +194,54 @@ const Community = () => {
       setTitle("");
       setContent("");
       setPostCategory("general");
-      fetchPosts();
+      if (page !== 0) setPage(0);
+      else fetchPosts();
     }
     setCreating(false);
   };
 
   const toggleUpvote = async (postId: string) => {
-    if (!user) return navigate("/auth");
-    if (upvotedPosts.has(postId)) {
-      await supabase.from("community_upvotes").delete().eq("user_id", user.id).eq("post_id", postId);
-      setUpvotedPosts((prev) => { const n = new Set(prev); n.delete(postId); return n; });
-      setUpvoteCounts((prev) => ({ ...prev, [postId]: (prev[postId] || 1) - 1 }));
-    } else {
-      await supabase.from("community_upvotes").insert({ user_id: user.id, post_id: postId });
-      setUpvotedPosts((prev) => new Set(prev).add(postId));
-      setUpvoteCounts((prev) => ({ ...prev, [postId]: (prev[postId] || 0) + 1 }));
+    if (!user) {
+      toast.error("Please sign in to upvote");
+      return navigate("/auth");
+    }
+    const wasUpvoted = upvotedPosts.has(postId);
+    // Optimistic update
+    setUpvotedPosts((prev) => {
+      const n = new Set(prev);
+      wasUpvoted ? n.delete(postId) : n.add(postId);
+      return n;
+    });
+    setUpvoteCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] || 0) + (wasUpvoted ? -1 : 1)) }));
+
+    const { error } = wasUpvoted
+      ? await supabase.from("community_upvotes").delete().eq("user_id", user.id).eq("post_id", postId)
+      : await supabase.from("community_upvotes").insert({ user_id: user.id, post_id: postId });
+
+    if (error) {
+      // Revert
+      setUpvotedPosts((prev) => {
+        const n = new Set(prev);
+        wasUpvoted ? n.add(postId) : n.delete(postId);
+        return n;
+      });
+      setUpvoteCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] || 0) + (wasUpvoted ? 1 : -1)) }));
+      toast.error("Could not update your vote");
     }
   };
+
+  const deletePost = async (postId: string) => {
+    if (!confirm("Delete this post? This cannot be undone.")) return;
+    const { error } = await supabase.from("community_posts").delete().eq("id", postId);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Post deleted");
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+      setTotalCount((c) => Math.max(0, c - 1));
+    }
+  };
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / POSTS_PER_PAGE));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -162,17 +249,15 @@ const Community = () => {
       <main className="flex-1">
         <div className="border-b border-border bg-gradient-hero py-10">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <h1 className="mb-2 text-3xl font-bold md:text-4xl">Community</h1>
                 <p className="text-muted-foreground">Discuss, learn, and share with fellow developers</p>
               </div>
+              <Button onClick={openCreate} className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
+                <Plus className="h-4 w-4" /> New Post
+              </Button>
               <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
-                    <Plus className="h-4 w-4" /> New Post
-                  </Button>
-                </DialogTrigger>
                 <DialogContent className="max-w-lg">
                   <DialogHeader>
                     <DialogTitle>Create Post</DialogTitle>
@@ -208,7 +293,7 @@ const Community = () => {
             <div className="mt-6 flex items-center gap-3 flex-wrap">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search posts..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+                <Input placeholder="Search posts..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-10" />
               </div>
               <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
                 <SelectTrigger className="w-[140px]">
@@ -247,7 +332,11 @@ const Community = () => {
           ) : posts.length === 0 ? (
             <div className="py-20 text-center">
               <MessageSquare className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="text-lg text-muted-foreground">No posts yet. Be the first to start a discussion!</p>
+              <p className="text-lg text-muted-foreground">
+                {search || category !== "all"
+                  ? "No posts match your search. Try another topic or keyword."
+                  : "No posts yet. Be the first to start a discussion!"}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -256,7 +345,9 @@ const Community = () => {
                   {/* Upvote */}
                   <div className="flex flex-col items-center gap-1 pt-1">
                     <button
-                      onClick={(e) => { e.preventDefault(); toggleUpvote(post.id); }}
+                      type="button"
+                      aria-label="Upvote post"
+                      onClick={() => toggleUpvote(post.id)}
                       className={`rounded-md p-1 transition-colors ${upvotedPosts.has(post.id) ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       <ArrowBigUp className={`h-6 w-6 ${upvotedPosts.has(post.id) ? "fill-primary" : ""}`} />
@@ -275,14 +366,24 @@ const Community = () => {
                       <Badge variant="outline" className={`text-xs ${categoryColors[post.category] || ""}`}>
                         {CATEGORIES.find((c) => c.value === post.category)?.label || post.category}
                       </Badge>
+                      {(user?.id === post.user_id || isAdmin) && (
+                        <button
+                          type="button"
+                          onClick={() => deletePost(post.id)}
+                          className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
+                          aria-label="Delete post"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                     <Link to={`/community/${post.id}`}>
-                      <h3 className="text-lg font-semibold hover:text-primary transition-colors leading-snug">
+                      <h3 className="text-lg font-semibold hover:text-primary transition-colors leading-snug break-words">
                         {post.title}
                       </h3>
                     </Link>
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{post.content}</p>
-                    <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground break-words">{post.content}</p>
+                    <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                       <span>by {post.profiles?.full_name || "Anonymous"}</span>
                       <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
                       <Link to={`/community/${post.id}`} className="flex items-center gap-1 hover:text-foreground transition-colors">
@@ -303,13 +404,13 @@ const Community = () => {
                 variant="outline"
                 size="sm"
                 disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
                 className="gap-1"
               >
                 <ChevronLeft className="h-4 w-4" /> Previous
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page + 1} of {Math.ceil(totalCount / POSTS_PER_PAGE)}
+                Page {page + 1} of {totalPages}
               </span>
               <Button
                 variant="outline"
