@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -85,7 +85,11 @@ const Community = () => {
     setCommentCounts(cCounts);
   };
 
+  const requestId = useRef(0);
+
   const fetchPosts = async () => {
+    const myId = ++requestId.current;
+    const isStale = () => myId !== requestId.current;
     setLoading(true);
     const select = "*, profiles!community_posts_user_id_profiles_fkey(full_name, avatar_url)";
 
@@ -98,6 +102,7 @@ const Community = () => {
     if (sortBy === "popular") {
       // Popular needs upvote counts across all matching posts, so sort in memory.
       const { data, error } = await applyFilters(supabase.from("community_posts").select(select));
+      if (isStale()) return;
       if (error) {
         toast.error("Could not load posts");
         setPosts([]);
@@ -110,6 +115,7 @@ const Community = () => {
       const { data: ups } = ids.length
         ? await supabase.from("community_upvotes").select("post_id").in("post_id", ids)
         : { data: [] as any[] };
+      if (isStale()) return;
       const counts: Record<string, number> = {};
       ups?.forEach((u: any) => { if (u.post_id) counts[u.post_id] = (counts[u.post_id] || 0) + 1; });
       const sorted = [...all].sort((a: any, b: any) => {
@@ -131,6 +137,7 @@ const Community = () => {
     query = query.range(page * POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE - 1);
 
     const { data, count, error } = await query;
+    if (isStale()) return;
     if (error) toast.error("Could not load posts");
     setPosts(data || []);
     setTotalCount(count || 0);
@@ -157,8 +164,15 @@ const Community = () => {
 
   useEffect(() => {
     fetchPosts();
-    fetchUpvotes();
   }, [category, search, user, sortBy, page]);
+
+  useEffect(() => {
+    fetchUpvotes();
+  }, [user]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [page]);
 
   useEffect(() => {
     fetchCounts(posts.map((p) => p.id));
