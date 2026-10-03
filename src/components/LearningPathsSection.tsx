@@ -13,7 +13,7 @@ const LearningPathsSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="border-t border-border py-12 md:py-16">
+    <section id="learning-paths" className="scroll-mt-24 border-t border-border py-12 md:py-16">
       <div className="container mx-auto px-4">
         <div className="mb-8 max-w-2xl">
           <span className="mb-3 inline-block font-mono text-xs font-semibold uppercase tracking-widest text-primary">

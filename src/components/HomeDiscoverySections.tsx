@@ -143,7 +143,7 @@ const LiveAndCommunitySection = () => {
   }, []);
 
   return (
-    <section id="live-learning" className="border-y border-border bg-muted/25 py-12 md:py-16">
+    <section id="live-learning" className="scroll-mt-24 border-y border-border bg-muted/25 py-12 md:py-16">
       <div className="container mx-auto grid gap-10 px-4 lg:grid-cols-[1.3fr_0.7fr]">
         <div>
           <div className="mb-7 flex items-end justify-between gap-4">
