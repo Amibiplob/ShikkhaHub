@@ -19,12 +19,12 @@ const CategoriesSection = () => {
   return (
     <section className="border-t border-border py-12 md:py-16">
       <div className="container mx-auto px-4">
-        <div className="mb-8 text-center">
-          <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
+        <div className="mb-8 max-w-2xl">
+          <span className="mb-3 inline-block font-mono text-xs font-semibold uppercase tracking-widest text-primary">
             {t("categories.eyebrow")}
           </span>
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{t("categories.title")}</h2>
-          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">{t("categories.subtitle")}</p>
+          <h2 className="font-heading text-3xl font-bold md:text-4xl">{t("categories.title")}</h2>
+          <p className="mt-3 max-w-lg text-muted-foreground">{t("categories.subtitle")}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -32,9 +32,9 @@ const CategoriesSection = () => {
             <Link
               key={c.key}
               to={`/courses?category=${encodeURIComponent(c.slug)}`}
-              className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-glow"
+              className="group flex flex-col items-start gap-4 border border-border bg-card p-6 text-left transition-colors duration-300 hover:border-primary/50 hover:bg-secondary/50"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+              <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                 <c.icon className="h-5 w-5" />
               </span>
               <span className="text-sm font-semibold">{t(c.key)}</span>

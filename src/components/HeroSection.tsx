@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Code2, Play, Sparkles, Users, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, Code2, Play, Radio, Users, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,7 +31,7 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-hero py-14 md:py-20">
+    <section className="relative overflow-hidden bg-gradient-hero py-12 md:py-16">
       {/* Animated grid background */}
       <div className="absolute inset-0 opacity-[0.03]" style={{
         backgroundImage: `linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px),
@@ -39,28 +39,24 @@ const HeroSection = () => {
         backgroundSize: "60px 60px",
       }} />
 
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-10 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute bottom-10 right-10 h-96 w-96 rounded-full bg-accent/5 blur-3xl" />
-
       <div className="container relative mx-auto px-4">
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary backdrop-blur-sm">
-            <Sparkles className="h-4 w-4" />
+        <div className="grid items-center gap-12 lg:grid-cols-[1.08fr_0.92fr]">
+          <div>
+          <div className="mb-6 inline-flex items-center gap-2 border border-primary/25 bg-primary/5 px-3 py-1.5 font-mono text-xs font-semibold uppercase text-primary">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             {t("hero.badge")}
           </div>
 
-          <h1 className="mb-6 text-5xl font-extrabold leading-[1.1] tracking-tight text-foreground md:text-7xl lg:text-8xl">
+          <h1 className="mb-6 font-heading text-5xl font-bold leading-[1.02] text-foreground md:text-7xl">
             {t("hero.title1")}{" "}
-            <br className="hidden sm:block" />
             {t("hero.titleWith")} <span className="text-gradient-primary">{t("hero.titleExperts")}</span>
           </h1>
 
-          <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground md:text-xl leading-relaxed">
+          <p className="mb-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
             {t("hero.subtitle")}
           </p>
 
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <Link to="/auth?tab=signup">
               <Button size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow gap-2 px-8 h-12 text-base">
                 {t("hero.ctaPrimary")} <ArrowRight className="h-5 w-5" />
@@ -73,17 +69,25 @@ const HeroSection = () => {
             </Link>
           </div>
 
-          {/* Stats */}
-          <div className="mt-12 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="relative text-center group">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-glow">
+              <div key={stat.label} className="group border border-border bg-card p-6 transition-colors hover:border-primary/40">
+                <div className="mb-5 flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <stat.icon className="h-5 w-5" />
                 </div>
-                <p className="text-3xl font-bold text-foreground md:text-4xl">{stat.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+                <p className="font-heading text-4xl font-bold text-foreground">{stat.value}</p>
+                <p className="mt-1 font-mono text-xs uppercase text-muted-foreground">{stat.label}</p>
               </div>
             ))}
+            <Link to="/courses" className="group flex min-h-40 flex-col justify-between bg-primary p-6 text-primary-foreground transition-opacity hover:opacity-90">
+              <BookOpen className="h-6 w-6" />
+              <div>
+                <p className="font-heading text-xl font-bold">{t("hero.catalogTitle")}</p>
+                <p className="mt-1 flex items-center gap-2 text-sm">{t("hero.catalogCta")} <ArrowRight className="h-4 w-4" /></p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>

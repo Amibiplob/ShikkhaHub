@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Award, BarChart3, Bookmark, BookOpen, Braces, Brain, Briefcase, ChevronDown, Clock, Compass, Database, Flame, Globe, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Medal, Menu, MessageSquare, Palette, Rocket, Server, Shield, Smartphone, Sparkles, Trophy, User, Video, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BookOpen, Braces, Brain, Briefcase, ChevronDown, Clock, Compass, Database, Flame, Globe, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Map, Medal, Menu, MessageSquare, Palette, Radio, Rocket, Server, Shield, Smartphone, Sparkles, Trophy, User, Video, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
@@ -44,8 +44,8 @@ const Header = () => {
     .toUpperCase() || "U";
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-border">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header className="sticky top-0 z-50 px-3 pt-3">
+      <div className="glass container mx-auto flex h-16 items-center justify-between rounded-lg border border-border px-4 shadow-md">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
             <GraduationCap className="h-5 w-5 text-primary-foreground" />
@@ -94,6 +94,18 @@ const Header = () => {
           <Link to="/courses">
             <Button variant={isActive("/courses") ? "secondary" : "ghost"} size="sm">
               <BookOpen className="mr-1.5 h-4 w-4" /> {t("nav.courses")}
+            </Button>
+          </Link>
+
+          <Link to="/#learning-paths" className="hidden lg:block">
+            <Button variant="ghost" size="sm">
+              <Map className="mr-1.5 h-4 w-4" /> {t("nav.paths")}
+            </Button>
+          </Link>
+
+          <Link to="/#live-learning" className="hidden xl:block">
+            <Button variant="ghost" size="sm">
+              <Radio className="mr-1.5 h-4 w-4" /> {t("nav.live")}
             </Button>
           </Link>
 
@@ -256,7 +268,7 @@ const Header = () => {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-border bg-background p-4 md:hidden">
+        <div className="container mx-auto mt-1 rounded-lg border border-border bg-background p-4 shadow-lg md:hidden">
           <nav className="flex flex-col gap-2">
             <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("nav.explore")}
@@ -296,6 +308,16 @@ const Header = () => {
             <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
                 <Medal className="mr-2 h-4 w-4" /> {t("nav.leaderboard")}
+              </Button>
+            </Link>
+            <Link to="/#learning-paths" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Map className="mr-2 h-4 w-4" /> {t("nav.paths")}
+              </Button>
+            </Link>
+            <Link to="/#live-learning" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Radio className="mr-2 h-4 w-4" /> {t("nav.live")}
               </Button>
             </Link>
             {user && (

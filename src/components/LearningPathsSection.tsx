@@ -13,19 +13,19 @@ const LearningPathsSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="border-t border-border py-12 md:py-16">
+    <section id="learning-paths" className="scroll-mt-24 border-t border-border py-12 md:py-16">
       <div className="container mx-auto px-4">
-        <div className="mb-8 text-center">
-          <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
+        <div className="mb-8 max-w-2xl">
+          <span className="mb-3 inline-block font-mono text-xs font-semibold uppercase tracking-widest text-primary">
             {t("paths.eyebrow")}
           </span>
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{t("paths.title")}</h2>
-          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">{t("paths.subtitle")}</p>
+          <h2 className="font-heading text-3xl font-bold md:text-4xl">{t("paths.title")}</h2>
+          <p className="mt-3 max-w-lg text-muted-foreground">{t("paths.subtitle")}</p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {paths.map((p) => (
-            <div key={p.key} className="flex flex-col rounded-2xl border border-border bg-card p-7 transition-all hover:border-primary/30 hover:shadow-glow">
+            <div key={p.key} className="flex flex-col border-t-2 border-primary bg-card p-7 transition-colors hover:bg-secondary/50">
               <p className="text-xs font-semibold uppercase tracking-wide text-primary">{t(`paths.${p.key}.level`)}</p>
               <h3 className="mb-5 mt-2 text-xl font-bold">{t(`paths.${p.key}.title`)}</h3>
               <ul className="mb-7 space-y-3">

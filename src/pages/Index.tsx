@@ -14,6 +14,7 @@ import CourseCard from "@/components/CourseCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import HomeDiscoverySections from "@/components/HomeDiscoverySections";
 
 const Index = () => {
   const [featuredCourses, setFeaturedCourses] = useState<any[]>([]);
@@ -39,6 +40,8 @@ const Index = () => {
       <Header />
       <main className="flex-1">
         <HeroSection />
+
+        <HomeDiscoverySections.ContinueLearningSection />
 
         {/* Featured Courses */}
         {featuredCourses.length > 0 && (
@@ -88,11 +91,15 @@ const Index = () => {
 
         <CategoriesSection />
 
+        <LearningPathsSection />
+
+        <HomeDiscoverySections.LiveAndCommunitySection />
+
         <FeaturesSection />
 
-        <HowItWorksSection />
+        <HomeDiscoverySections.CredentialsSection />
 
-        <LearningPathsSection />
+        <HowItWorksSection />
 
         <TeachSection />
 
