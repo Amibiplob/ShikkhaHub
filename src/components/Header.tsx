@@ -56,7 +56,7 @@ const Header = () => {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
@@ -97,7 +97,7 @@ const Header = () => {
             </Button>
           </Link>
 
-          <Link to="/#learning-paths" className="hidden lg:block">
+          <Link to="/#learning-paths" className="hidden xl:block">
             <Button variant="ghost" size="sm">
               <Map className="mr-1.5 h-4 w-4" /> {t("nav.paths")}
             </Button>
@@ -208,8 +208,8 @@ const Header = () => {
 
 
 
-        <div className="hidden items-center gap-1 md:flex">
-          <GlobalSearch />
+        <div className="hidden items-center gap-1 xl:flex">
+          <div className="hidden 2xl:block"><GlobalSearch /></div>
           <LanguageToggle />
           <NotificationBell />
           <ThemeToggle />
@@ -261,14 +261,14 @@ const Header = () => {
         </div>
 
         {/* Mobile toggle */}
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+        <Button variant="ghost" size="icon" className="xl:hidden" aria-label={mobileOpen ? "Close menu" : "Open menu"} onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="container mx-auto mt-1 rounded-lg border border-border bg-background p-4 shadow-lg md:hidden">
+        <div className="container mx-auto mt-1 rounded-lg border border-border bg-background p-4 shadow-lg xl:hidden">
           <nav className="flex flex-col gap-2">
             <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("nav.explore")}
