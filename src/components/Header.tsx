@@ -97,13 +97,13 @@ const Header = () => {
             </Button>
           </Link>
 
-          <Link to="/#learning-paths" className="hidden 2xl:block">
+          <Link to="/#learning-paths" className="hidden xl:block">
             <Button variant="ghost" size="sm">
               <Map className="mr-1.5 h-4 w-4" /> {t("nav.paths")}
             </Button>
           </Link>
 
-          <Link to="/#live-learning" className="hidden 2xl:block">
+          <Link to="/#live-learning" className="hidden xl:block">
             <Button variant="ghost" size="sm">
               <Radio className="mr-1.5 h-4 w-4" /> {t("nav.live")}
             </Button>
