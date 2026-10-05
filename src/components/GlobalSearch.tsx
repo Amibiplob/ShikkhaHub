@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { BookOpen, FileText, MessageSquare, Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const GlobalSearch = () => {
   const navigate = useNavigate();
@@ -61,9 +62,9 @@ const GlobalSearch = () => {
           className="h-8 w-48 pl-8 text-sm"
         />
         {query && (
-          <button onClick={() => { setQuery(""); setOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2">
+          <Button type="button" variant="ghost" size="icon" aria-label="Clear search" onClick={() => { setQuery(""); setOpen(false); }} className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2">
             <X className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+          </Button>
         )}
       </div>
 
@@ -79,10 +80,10 @@ const GlobalSearch = () => {
                 <>
                   <p className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase">Courses</p>
                   {results.courses.map((c) => (
-                    <button key={c.id} onClick={() => handleNav(`/courses/${c.id}`)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted transition-colors">
+                    <Button key={c.id} variant="ghost" onClick={() => handleNav(`/courses/${c.id}`)} className="h-auto w-full justify-start gap-2 px-2 py-1.5 font-normal">
                       <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span className="truncate">{c.title}</span>
-                    </button>
+                    </Button>
                   ))}
                 </>
               )}
@@ -90,10 +91,10 @@ const GlobalSearch = () => {
                 <>
                   <p className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase">Community</p>
                   {results.posts.map((p) => (
-                    <button key={p.id} onClick={() => handleNav(`/community/${p.id}`)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted transition-colors">
+                    <Button key={p.id} variant="ghost" onClick={() => handleNav(`/community/${p.id}`)} className="h-auto w-full justify-start gap-2 px-2 py-1.5 font-normal">
                       <MessageSquare className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span className="truncate">{p.title}</span>
-                    </button>
+                    </Button>
                   ))}
                 </>
               )}
@@ -101,10 +102,10 @@ const GlobalSearch = () => {
                 <>
                   <p className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase">Assignments</p>
                   {results.assignments.map((a) => (
-                    <button key={a.id} onClick={() => handleNav(`/assignments/${a.id}`)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted transition-colors">
+                    <Button key={a.id} variant="ghost" onClick={() => handleNav(`/assignments/${a.id}`)} className="h-auto w-full justify-start gap-2 px-2 py-1.5 font-normal">
                       <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span className="truncate">{a.title}</span>
-                    </button>
+                    </Button>
                   ))}
                 </>
               )}

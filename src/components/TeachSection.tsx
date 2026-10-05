@@ -32,8 +32,8 @@ const TeachSection = () => {
 
         <div className="space-y-4">
           {perks.map((p) => (
-            <div key={p.key} className="flex gap-4 rounded-2xl border border-border bg-card p-6">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+            <div key={p.key} className="flex gap-4 rounded-lg border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                 <p.icon className="h-5 w-5" />
               </span>
               <div>

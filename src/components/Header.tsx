@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Award, BarChart3, Bookmark, BookOpen, Braces, Brain, Briefcase, ChevronDown, Clock, Compass, Database, Flame, Globe, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Map, Medal, Menu, MessageSquare, Palette, Radio, Rocket, Server, Shield, Smartphone, Sparkles, Trophy, User, Video, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BookOpen, Braces, Brain, Briefcase, ChevronDown, Clock, Compass, Database, Flame, Globe, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Map, Medal, Menu, MessageSquare, Palette, Radio, Rocket, Search, Server, Shield, Smartphone, Sparkles, Trophy, User, Video, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
@@ -42,6 +42,14 @@ const Header = () => {
     .map((n) => n[0])
     .join("")
     .toUpperCase() || "U";
+
+  const goHomeSection = (id: string) => {
+    setMobileOpen(false);
+    navigate(`/#${id}`);
+    if (location.pathname === "/") {
+      window.requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 px-3 pt-3">
@@ -97,17 +105,13 @@ const Header = () => {
             </Button>
           </Link>
 
-          <Link to="/#learning-paths" className="hidden xl:block">
-            <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hidden xl:inline-flex" onClick={() => goHomeSection("learning-paths")}>
               <Map className="mr-1.5 h-4 w-4" /> {t("nav.paths")}
-            </Button>
-          </Link>
+          </Button>
 
-          <Link to="/#live-learning" className="hidden xl:block">
-            <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hidden xl:inline-flex" onClick={() => goHomeSection("live-learning")}>
               <Radio className="mr-1.5 h-4 w-4" /> {t("nav.live")}
-            </Button>
-          </Link>
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -270,6 +274,7 @@ const Header = () => {
       {mobileOpen && (
         <div className="container mx-auto mt-1 rounded-lg border border-border bg-background p-4 shadow-lg xl:hidden">
           <nav className="flex flex-col gap-2">
+            <GlobalSearch />
             <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("nav.explore")}
             </p>
@@ -315,16 +320,12 @@ const Header = () => {
                 <Medal className="mr-2 h-4 w-4" /> {t("nav.leaderboard")}
               </Button>
             </Link>
-            <Link to="/#learning-paths" onClick={() => setMobileOpen(false)}>
-              <Button variant="ghost" className="w-full justify-start">
+            <Button variant="ghost" className="w-full justify-start" onClick={() => goHomeSection("learning-paths")}>
                 <Map className="mr-2 h-4 w-4" /> {t("nav.paths")}
-              </Button>
-            </Link>
-            <Link to="/#live-learning" onClick={() => setMobileOpen(false)}>
-              <Button variant="ghost" className="w-full justify-start">
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" onClick={() => goHomeSection("live-learning")}>
                 <Radio className="mr-2 h-4 w-4" /> {t("nav.live")}
-              </Button>
-            </Link>
+            </Button>
             {user && (
               <Link to="/achievements" onClick={() => setMobileOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start">

@@ -45,9 +45,9 @@ const Index = () => {
 
         {/* Featured Courses */}
         {featuredCourses.length > 0 && (
-          <section className="py-12 md:py-16 border-t border-border">
+          <section className="border-t border-border bg-muted/20 py-12 md:py-16">
             <div className="container mx-auto px-4">
-              <div className="mb-8 flex items-end justify-between">
+              <div className="mb-8 flex items-end justify-between gap-4">
                 <div>
                   <span className="mb-2 inline-block text-sm font-medium uppercase tracking-widest text-primary">{t("featured.eyebrow")}</span>
                   <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{t("featured.title")}</h2>
@@ -109,7 +109,7 @@ const Index = () => {
 
         {/* CTA Section */}
         <section className="border-t border-border bg-gradient-hero py-14 md:py-20">
-          <div className="container mx-auto px-4 text-center">
+          <div className="container mx-auto max-w-4xl px-4 text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">
               {t("cta.title1")}{" "}
               <span className="text-gradient-primary">{t("cta.title2")}</span>?
