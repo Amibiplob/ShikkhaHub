@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Settings, User } from "lucide-react";
+import { BookOpen, User } from "lucide-react";
 import BookmarkButton from "@/components/BookmarkButton";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,8 +23,7 @@ const difficultyColors: Record<string, string> = {
 };
 
 const CourseCard = ({ id, title, description, thumbnail_url, category, difficulty, teacher_name, progressPercent }: CourseCardProps) => {
-  const { user } = useAuth();
-  const isOwner = user?.id !== undefined && teacher_name !== undefined; // We'll use a simpler approach
+  useAuth();
 
   return (
     <div className="relative group">
@@ -92,18 +90,6 @@ const CourseCard = ({ id, title, description, thumbnail_url, category, difficult
             )}
           </div>
         </div>
-      </Link>
-
-      {/* Settings button overlay */}
-      <Link
-        to={`/courses/${id}`}
-        className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-        title="Course Settings"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Button size="icon" variant="secondary" className="h-8 w-8 shadow-md">
-          <Settings className="h-4 w-4" />
-        </Button>
       </Link>
     </div>
   );

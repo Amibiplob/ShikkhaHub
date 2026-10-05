@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ type AppRole = Database["public"]["Enums"]["app_role"];
 const Auth = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState(searchParams.get("tab") === "signup" ? "signup" : "signin");
   const [loading, setLoading] = useState(false);
@@ -30,21 +31,22 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<AppRole>("student");
+  const [role, setRole] = useState<AppRole>(searchParams.get("role") === "teacher" ? "teacher" : "student");
+  const destination = typeof location.state?.from === "string" ? location.state.from : "/dashboard";
 
   // Forgot password
   const [resetEmail, setResetEmail] = useState("");
 
   useEffect(() => {
-    if (user) navigate("/dashboard");
-  }, [user, navigate]);
+    if (user) navigate(destination);
+  }, [user, navigate, destination]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) toast.error(error.message);
-    else navigate("/dashboard");
+    else navigate(destination);
     setLoading(false);
   };
 
@@ -87,7 +89,7 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin + "/dashboard" },
+      options: { redirectTo: window.location.origin },
     });
     if (error) toast.error(error.message);
   };

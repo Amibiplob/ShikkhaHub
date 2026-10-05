@@ -23,7 +23,7 @@ const TeachSection = () => {
             {t("teach.title")} <span className="text-gradient-primary">ShikkhaHub</span>
           </h2>
           <p className="mb-8 max-w-md text-muted-foreground">{t("teach.subtitle")}</p>
-          <Link to="/auth?tab=signup">
+          <Link to="/auth?tab=signup&role=teacher">
             <Button size="lg" className="gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90">
               {t("teach.cta")} <ArrowRight className="h-5 w-5" />
             </Button>
