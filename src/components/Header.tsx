@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Award, BarChart3, Bookmark, BookOpen, Braces, Brain, Briefcase, ChevronDown, Clock, Compass, Database, Flame, Globe, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Map, Medal, Menu, MessageSquare, Palette, Radio, Rocket, Search, Server, Shield, Smartphone, Sparkles, Trophy, User, Video, X } from "lucide-react";
+import { Award, BarChart3, Bookmark, BookOpen, Braces, Brain, Briefcase, ChevronDown, Clock, Compass, Database, Flame, Globe, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Map, Medal, Menu, MessageSquare, Palette, Radio, Rocket, Server, Shield, Smartphone, Sparkles, Trophy, User, Video, X } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
