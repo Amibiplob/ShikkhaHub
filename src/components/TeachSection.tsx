@@ -23,7 +23,7 @@ const TeachSection = () => {
             {t("teach.title")} <span className="text-gradient-primary">ShikkhaHub</span>
           </h2>
           <p className="mb-8 max-w-md text-muted-foreground">{t("teach.subtitle")}</p>
-          <Link to="/auth?tab=signup">
+          <Link to="/auth?tab=signup&role=teacher">
             <Button size="lg" className="gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90">
               {t("teach.cta")} <ArrowRight className="h-5 w-5" />
             </Button>
@@ -32,8 +32,8 @@ const TeachSection = () => {
 
         <div className="space-y-4">
           {perks.map((p) => (
-            <div key={p.key} className="flex gap-4 rounded-2xl border border-border bg-card p-6">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+            <div key={p.key} className="flex gap-4 rounded-lg border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                 <p.icon className="h-5 w-5" />
               </span>
               <div>

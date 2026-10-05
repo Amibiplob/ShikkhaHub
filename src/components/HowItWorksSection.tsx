@@ -23,11 +23,11 @@ const HowItWorksSection = () => {
 
         <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
-            <li key={s.key} className="relative rounded-2xl border border-border bg-card p-7">
+            <li key={s.key} className="relative rounded-lg border border-border bg-card p-7 shadow-sm">
               <span className="absolute right-5 top-5 text-4xl font-extrabold text-primary/10">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <span className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <span className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <s.icon className="h-6 w-6" />
               </span>
               <h3 className="mb-2 text-lg font-bold">{t(`how.${s.key}.title`)}</h3>

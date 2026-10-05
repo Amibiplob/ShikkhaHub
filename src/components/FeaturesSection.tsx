@@ -14,7 +14,7 @@ const FeaturesSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="py-14 md:py-20">
+    <section className="border-b border-border py-12 md:py-16">
       <div className="container mx-auto px-4">
         <div className="mb-10 text-center">
           <span className="mb-4 inline-block text-sm font-medium uppercase tracking-widest text-primary">
@@ -31,9 +31,9 @@ const FeaturesSection = () => {
           {features.map((f) => (
             <div
               key={f.key}
-              className="group relative rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:border-primary/30 hover:shadow-glow hover:-translate-y-1"
+              className="group relative rounded-lg border border-border bg-card p-7 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
             >
-              <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl ${f.bg} ${f.color} transition-all duration-300 group-hover:scale-110`}>
+              <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg ${f.bg} ${f.color} transition-all duration-300 group-hover:scale-105`}>
                 <f.icon className="h-6 w-6" />
               </div>
               <h3 className="mb-2 text-lg font-bold">{t(`features.${f.key}.title`)}</h3>

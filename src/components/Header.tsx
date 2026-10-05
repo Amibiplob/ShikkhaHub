@@ -43,6 +43,14 @@ const Header = () => {
     .join("")
     .toUpperCase() || "U";
 
+  const goHomeSection = (id: string) => {
+    setMobileOpen(false);
+    navigate(`/#${id}`);
+    if (location.pathname === "/") {
+      window.requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 px-3 pt-3">
       <div className="glass container mx-auto flex h-16 items-center justify-between rounded-lg border border-border px-4 shadow-md">
@@ -97,17 +105,13 @@ const Header = () => {
             </Button>
           </Link>
 
-          <Link to="/#learning-paths" className="hidden xl:block">
-            <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hidden xl:inline-flex" onClick={() => goHomeSection("learning-paths")}>
               <Map className="mr-1.5 h-4 w-4" /> {t("nav.paths")}
-            </Button>
-          </Link>
+          </Button>
 
-          <Link to="/#live-learning" className="hidden xl:block">
-            <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hidden xl:inline-flex" onClick={() => goHomeSection("live-learning")}>
               <Radio className="mr-1.5 h-4 w-4" /> {t("nav.live")}
-            </Button>
-          </Link>
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -123,10 +127,10 @@ const Header = () => {
               <DropdownMenuItem onClick={() => navigate("/community")}>
                 <MessageSquare className="mr-2 h-4 w-4" /> {t("nav.forum")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/community?category=Career+Advice")}>
+              <DropdownMenuItem onClick={() => navigate("/community?category=career")}>
                 <Briefcase className="mr-2 h-4 w-4" /> {t("nav.career")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/community?category=Help")}>
+              <DropdownMenuItem onClick={() => navigate("/community?category=programming")}>
                 <LifeBuoy className="mr-2 h-4 w-4" /> {t("nav.help")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -270,6 +274,7 @@ const Header = () => {
       {mobileOpen && (
         <div className="container mx-auto mt-1 rounded-lg border border-border bg-background p-4 shadow-lg xl:hidden">
           <nav className="flex flex-col gap-2">
+            <GlobalSearch />
             <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("nav.explore")}
             </p>
@@ -281,6 +286,11 @@ const Header = () => {
             <Link to="/courses?level=beginner" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
                 <Sparkles className="mr-2 h-4 w-4" /> {t("nav.beginner")}
+              </Button>
+            </Link>
+            <Link to="/courses?level=advanced" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Rocket className="mr-2 h-4 w-4" /> {t("nav.advanced")}
               </Button>
             </Link>
             <Link to="/courses?sort=popular" onClick={() => setMobileOpen(false)}>
@@ -310,16 +320,12 @@ const Header = () => {
                 <Medal className="mr-2 h-4 w-4" /> {t("nav.leaderboard")}
               </Button>
             </Link>
-            <Link to="/#learning-paths" onClick={() => setMobileOpen(false)}>
-              <Button variant="ghost" className="w-full justify-start">
+            <Button variant="ghost" className="w-full justify-start" onClick={() => goHomeSection("learning-paths")}>
                 <Map className="mr-2 h-4 w-4" /> {t("nav.paths")}
-              </Button>
-            </Link>
-            <Link to="/#live-learning" onClick={() => setMobileOpen(false)}>
-              <Button variant="ghost" className="w-full justify-start">
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" onClick={() => goHomeSection("live-learning")}>
                 <Radio className="mr-2 h-4 w-4" /> {t("nav.live")}
-              </Button>
-            </Link>
+            </Button>
             {user && (
               <Link to="/achievements" onClick={() => setMobileOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start">

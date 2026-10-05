@@ -177,6 +177,12 @@
     box-shadow: var(--shadow-glow);
   }
 
+  .hero-grid {
+    background-image: linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.3) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
   .glass {
     backdrop-filter: blur(12px);
     background: hsl(var(--card) / 0.8);

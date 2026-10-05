@@ -8,30 +8,51 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Loader2, SlidersHorizontal } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
-const categories = ["All", "Programming", "Web Development", "Data Science", "Mobile", "DevOps", "AI"];
+const categories = ["All", "Programming", "Web Development", "Data Science", "Mobile", "DevOps", "AI", "Design", "Computer Science", "Backend"];
 const difficulties = ["All", "beginner", "intermediate", "advanced"];
 
 const Courses = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
-  const [difficulty, setDifficulty] = useState("All");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [category, setCategory] = useState(searchParams.get("category") || "All");
+  const [difficulty, setDifficulty] = useState(searchParams.get("level") || "All");
+  const sort = searchParams.get("sort") || "newest";
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "");
+    setCategory(searchParams.get("category") || "All");
+    setDifficulty(searchParams.get("level") || "All");
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
-      let query = supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name)").eq("is_published", true);
+      let query = supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name), enrollments(count)").eq("is_published", true);
       if (category !== "All") query = query.eq("category", category);
       if (difficulty !== "All") query = query.eq("difficulty", difficulty);
       if (search) query = query.ilike("title", `%${search}%`);
-      const { data } = await query.order("created_at", { ascending: false });
-      setCourses(data || []);
+      const { data } = await query.order("created_at", { ascending: sort === "oldest" });
+      const ordered = sort === "popular"
+        ? [...(data || [])].sort((a, b) => (b.enrollments?.[0]?.count || 0) - (a.enrollments?.[0]?.count || 0))
+        : (data || []);
+      setCourses(ordered);
       setLoading(false);
     };
     fetchCourses();
-  }, [search, category, difficulty]);
+  }, [search, category, difficulty, sort]);
+
+  const updateFilters = (next: { search?: string; category?: string; level?: string }) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(next).forEach(([key, value]) => {
+      if (!value || value === "All") params.delete(key);
+      else params.set(key, value);
+    });
+    setSearchParams(params, { replace: true });
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -48,11 +69,14 @@ const Courses = () => {
                 <Input
                   placeholder="Search courses..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    updateFilters({ search: e.target.value });
+                  }}
                   className="pl-10"
                 />
               </div>
-              <Select value={difficulty} onValueChange={setDifficulty}>
+              <Select value={difficulty} onValueChange={(value) => updateFilters({ level: value })}>
                 <SelectTrigger className="w-[160px]">
                   <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
                   <SelectValue placeholder="Difficulty" />
@@ -73,7 +97,7 @@ const Courses = () => {
                   key={c}
                   variant={category === c ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setCategory(c)}
+                  onClick={() => updateFilters({ category: c })}
                   className={category === c ? "bg-gradient-primary text-primary-foreground" : ""}
                 >
                   {c}

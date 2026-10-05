@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
@@ -37,12 +37,15 @@ const POSTS_PER_PAGE = 10;
 const Community = () => {
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "popular">("newest");
+  const [category, setCategory] = useState(searchParams.get("category") || "all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "popular">(
+    searchParams.get("sort") === "oldest" || searchParams.get("sort") === "popular" ? searchParams.get("sort") as "oldest" | "popular" : "newest"
+  );
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
@@ -63,6 +66,19 @@ const Community = () => {
     const t = setTimeout(() => setSearch(searchInput.trim()), 350);
     return () => clearTimeout(t);
   }, [searchInput]);
+
+  useEffect(() => {
+    setCategory(searchParams.get("category") || "all");
+    const requestedSort = searchParams.get("sort");
+    setSortBy(requestedSort === "oldest" || requestedSort === "popular" ? requestedSort : "newest");
+  }, [searchParams]);
+
+  const updateListParam = (key: "category" | "sort", value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if ((key === "category" && value === "all") || (key === "sort" && value === "newest")) params.delete(key);
+    else params.set(key, value);
+    setSearchParams(params, { replace: true });
+  };
 
   const fetchCounts = async (postIds: string[]) => {
     if (postIds.length === 0) {
@@ -309,7 +325,7 @@ const Community = () => {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder="Search posts..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-10" />
               </div>
-              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+              <Select value={sortBy} onValueChange={(v: "newest" | "oldest" | "popular") => updateListParam("sort", v)}>
                 <SelectTrigger className="w-[140px]">
                   <SortAsc className="mr-2 h-3.5 w-3.5" />
                   <SelectValue />
@@ -328,7 +344,7 @@ const Community = () => {
                   key={c.value}
                   variant={category === c.value ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setCategory(c.value)}
+                  onClick={() => updateListParam("category", c.value)}
                   className={category === c.value ? "bg-gradient-primary text-primary-foreground" : ""}
                 >
                   {c.label}

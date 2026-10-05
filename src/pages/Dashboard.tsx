@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import StudentAnalytics from "@/components/StudentAnalytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ import { format } from "date-fns";
 const Dashboard = () => {
   const { user, loading: authLoading, hasRole, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [courseProgress, setCourseProgress] = useState<Record<string, number>>({});
   const [teacherCourses, setTeacherCourses] = useState<any[]>([]);
@@ -184,7 +185,14 @@ const Dashboard = () => {
           )}
         </div>
 
-        <Tabs defaultValue={isTeacher ? "teaching" : "learning"}>
+        <Tabs
+          value={searchParams.get("tab") || (isTeacher ? "teaching" : "learning")}
+          onValueChange={(value) => {
+            const params = new URLSearchParams(searchParams);
+            params.set("tab", value);
+            setSearchParams(params, { replace: true });
+          }}
+        >
           <TabsList>
             {isTeacher && <TabsTrigger value="teaching">My Courses</TabsTrigger>}
             <TabsTrigger value="learning">Enrolled</TabsTrigger>
