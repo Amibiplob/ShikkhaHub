@@ -123,10 +123,10 @@ const Header = () => {
               <DropdownMenuItem onClick={() => navigate("/community")}>
                 <MessageSquare className="mr-2 h-4 w-4" /> {t("nav.forum")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/community?category=Career+Advice")}>
+              <DropdownMenuItem onClick={() => navigate("/community?category=career")}>
                 <Briefcase className="mr-2 h-4 w-4" /> {t("nav.career")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/community?category=Help")}>
+              <DropdownMenuItem onClick={() => navigate("/community?category=programming")}>
                 <LifeBuoy className="mr-2 h-4 w-4" /> {t("nav.help")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -281,6 +281,11 @@ const Header = () => {
             <Link to="/courses?level=beginner" onClick={() => setMobileOpen(false)}>
               <Button variant="ghost" className="w-full justify-start">
                 <Sparkles className="mr-2 h-4 w-4" /> {t("nav.beginner")}
+              </Button>
+            </Link>
+            <Link to="/courses?level=advanced" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className="w-full justify-start">
+                <Rocket className="mr-2 h-4 w-4" /> {t("nav.advanced")}
               </Button>
             </Link>
             <Link to="/courses?sort=popular" onClick={() => setMobileOpen(false)}>

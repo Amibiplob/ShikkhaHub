@@ -32,7 +32,7 @@ const CategoriesSection = () => {
             <Link
               key={c.key}
               to={`/courses?category=${encodeURIComponent(c.slug)}`}
-              className="group flex flex-col items-start gap-4 border border-border bg-card p-6 text-left transition-colors duration-300 hover:border-primary/50 hover:bg-secondary/50"
+              className="group flex min-h-36 flex-col items-start justify-between gap-4 rounded-lg border border-border bg-card p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-secondary/50 hover:shadow-md"
             >
               <span className="flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                 <c.icon className="h-5 w-5" />

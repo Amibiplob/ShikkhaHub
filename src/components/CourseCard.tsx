@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, User } from "lucide-react";
 import BookmarkButton from "@/components/BookmarkButton";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface CourseCardProps {
   id: string;
@@ -23,8 +22,6 @@ const difficultyColors: Record<string, string> = {
 };
 
 const CourseCard = ({ id, title, description, thumbnail_url, category, difficulty, teacher_name, progressPercent }: CourseCardProps) => {
-  useAuth();
-
   return (
     <div className="relative group">
       <Link to={`/courses/${id}`} className="block">

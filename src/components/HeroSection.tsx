@@ -31,23 +31,19 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-hero py-12 md:py-16">
+    <section className="relative overflow-hidden border-b border-border bg-gradient-hero py-12 md:py-20">
       {/* Animated grid background */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{
-        backgroundImage: `linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px),
-                           linear-gradient(90deg, hsl(var(--primary) / 0.3) 1px, transparent 1px)`,
-        backgroundSize: "60px 60px",
-      }} />
+      <div className="hero-grid absolute inset-0 opacity-[0.05]" />
 
       <div className="container relative mx-auto px-4">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
           <div>
           <div className="mb-6 inline-flex items-center gap-2 border border-primary/25 bg-primary/5 px-3 py-1.5 font-mono text-xs font-semibold uppercase text-primary">
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             {t("hero.badge")}
           </div>
 
-          <h1 className="mb-6 font-heading text-5xl font-bold leading-[1.02] text-foreground md:text-7xl">
+          <h1 className="mb-6 max-w-3xl font-heading text-5xl font-bold leading-[1.02] text-foreground md:text-7xl">
             {t("hero.title1")}{" "}
             {t("hero.titleWith")} <span className="text-gradient-primary">{t("hero.titleExperts")}</span>
           </h1>
@@ -73,7 +69,7 @@ const HeroSection = () => {
 
           <div className="grid grid-cols-2 gap-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="group border border-border bg-card p-6 transition-colors hover:border-primary/40">
+              <div key={stat.label} className="group rounded-lg border border-border bg-card/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
                 <div className="mb-5 flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <stat.icon className="h-5 w-5" />
                 </div>
@@ -81,7 +77,7 @@ const HeroSection = () => {
                 <p className="mt-1 font-mono text-xs uppercase text-muted-foreground">{stat.label}</p>
               </div>
             ))}
-            <Link to="/courses" className="group flex min-h-40 flex-col justify-between bg-primary p-6 text-primary-foreground transition-opacity hover:opacity-90">
+            <Link to="/courses" className="group flex min-h-40 flex-col justify-between rounded-lg bg-primary p-6 text-primary-foreground shadow-glow transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90">
               <BookOpen className="h-6 w-6" />
               <div>
                 <p className="font-heading text-xl font-bold">{t("hero.catalogTitle")}</p>
