@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArrowBigUp, ChevronLeft, ChevronRight, Loader2, MessageSquare, Pin, Plus, Search, SortAsc, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { sortPopular, paginate } from "@/lib/communitySort";
 
 const CATEGORIES = [
   { value: "all", label: "All Topics" },
@@ -134,14 +135,9 @@ const Community = () => {
       if (isStale()) return;
       const counts: Record<string, number> = {};
       ups?.forEach((u: any) => { if (u.post_id) counts[u.post_id] = (counts[u.post_id] || 0) + 1; });
-      const sorted = [...all].sort((a: any, b: any) => {
-        if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
-        const diff = (counts[b.id] || 0) - (counts[a.id] || 0);
-        if (diff !== 0) return diff;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
+      const sorted = sortPopular(all, counts);
       setTotalCount(sorted.length);
-      setPosts(sorted.slice(page * POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE));
+      setPosts(paginate(sorted, page, POSTS_PER_PAGE));
       setLoading(false);
       return;
     }
