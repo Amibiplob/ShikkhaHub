@@ -84,10 +84,25 @@ test('unexpected permissive Realtime policies survive and must block staging acc
 });
 
 test('reapplying a recorded migration fails transactionally rather than masking drift', async () => {
-  const db = await createDatabase();
+  const db = await createDatabase({ phase3: false });
   try {
     await assert.rejects(() => apply(db, october[0]), /already exists/);
     assert.equal((await db.query("SELECT to_regprocedure('public.submit_quiz(uuid,jsonb)') IS NOT NULL AS exists")).rows[0].exists, true);
     assert.equal((await db.query("SELECT count(*)::int AS count FROM pg_policies WHERE tablename='teacher_requests'")).rows[0].count, 2);
   } finally { await db.close(); }
+});
+
+test('Phase 3 certificate-number collision aborts the new migration without deleting legacy certificates',async()=>{
+ const db=await createDatabase({phase3:false});
+ try{
+  await seed(db);
+  for(const user of [ids.student,ids.other])await db.query("INSERT INTO certificates(user_id,course_id,certificate_number) VALUES($1,$2,'LEGACY-DUPLICATE')",[user,ids.course]);
+  const phase3=(await readdir('supabase/migrations')).filter(f=>f.startsWith('20261027')).sort();
+  await apply(db,phase3[0]);await apply(db,phase3[1]);
+  await assert.rejects(()=>apply(db,phase3[2]),/unique index|duplicate key/);
+  assert.equal((await db.query('SELECT count(*)::int AS n FROM certificates')).rows[0].n,2);
+  assert.equal((await db.query("SELECT count(*)::int AS n FROM information_schema.columns WHERE table_name='certificates' AND column_name='verification_token'")).rows[0].n,0);
+  const fk=(await db.query("SELECT pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conname='certificates_course_id_fkey'")).rows[0].definition;
+  assert.match(fk,/CASCADE/);
+ }finally{await db.close();}
 });

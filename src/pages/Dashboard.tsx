@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react";
+const TutoringWorkspace = lazy(() => import("@/components/TutoringWorkspace"));
 import type { Course, LiveSession } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
@@ -14,11 +16,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Bookmark, BookOpen, Calendar, GraduationCap, Loader2, Plus, Settings, Users, Video } from "lucide-react";
+import {
+  BarChart3,
+  Bookmark,
+  BookOpen,
+  Calendar,
+  GraduationCap,
+  Loader2,
+  Plus,
+  Settings,
+  Users,
+  Video,
+} from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -27,10 +52,14 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
-  const [courseProgress, setCourseProgress] = useState<Record<string, number>>({});
+  const [courseProgress, setCourseProgress] = useState<Record<string, number>>(
+    {},
+  );
   const [teacherCourses, setTeacherCourses] = useState<Course[]>([]);
   const [liveClasses, setLiveClasses] = useState<LiveSession[]>([]);
-  const [studentLiveClasses, setStudentLiveClasses] = useState<LiveSession[]>([]);
+  const [studentLiveClasses, setStudentLiveClasses] = useState<LiveSession[]>(
+    [],
+  );
   const [bookmarkedCourses, setBookmarkedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -53,7 +82,9 @@ const Dashboard = () => {
       // Enrolled courses
       const { data: enrollments } = await supabase
         .from("enrollments")
-        .select("course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))")
+        .select(
+          "course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))",
+        )
         .eq("user_id", user.id);
       const courses = enrollments?.map((e) => e.courses).filter(Boolean) || [];
       setEnrolledCourses(courses);
@@ -70,15 +101,24 @@ const Dashboard = () => {
           .select("lesson_id")
           .eq("user_id", user.id)
           .eq("completed", true);
-        const completedSet = new Set(completedLessons?.map((l) => l.lesson_id) || []);
+        const completedSet = new Set(
+          completedLessons?.map((l) => l.lesson_id) || [],
+        );
         const progressMap: Record<string, number> = {};
         courseIds.forEach((cid: string) => {
           const mods = allModules?.filter((m) => m.course_id === cid) || [];
-          const totalLessons = mods.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
-          const completed = mods.reduce(
-            (acc, m) => acc + (m.lessons?.filter((l) => completedSet.has(l.id)).length || 0), 0
+          const totalLessons = mods.reduce(
+            (acc, m) => acc + (m.lessons?.length || 0),
+            0,
           );
-          progressMap[cid] = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
+          const completed = mods.reduce(
+            (acc, m) =>
+              acc +
+              (m.lessons?.filter((l) => completedSet.has(l.id)).length || 0),
+            0,
+          );
+          progressMap[cid] =
+            totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
         });
         setCourseProgress(progressMap);
       }
@@ -86,8 +126,16 @@ const Dashboard = () => {
       // Teacher courses
       if (hasRole("teacher") || hasRole("admin")) {
         const [coursesRes, liveRes] = await Promise.all([
-          supabase.from("courses").select("*").eq("teacher_id", user.id).order("created_at", { ascending: false }),
-          supabase.from("live_classes").select("*, courses(title)").eq("teacher_id", user.id).order("scheduled_at", { ascending: true }),
+          supabase
+            .from("courses")
+            .select("*")
+            .eq("teacher_id", user.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("live_classes")
+            .select("*, courses(title)")
+            .eq("teacher_id", user.id)
+            .order("scheduled_at", { ascending: true }),
         ]);
         setTeacherCourses(coursesRes.data || []);
         setLiveClasses(liveRes.data || []);
@@ -108,9 +156,13 @@ const Dashboard = () => {
       // Bookmarked courses
       const { data: bookmarks } = await supabase
         .from("course_bookmarks")
-        .select("course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))")
+        .select(
+          "course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))",
+        )
         .eq("user_id", user.id);
-      setBookmarkedCourses(bookmarks?.map((b) => b.courses).filter(Boolean) || []);
+      setBookmarkedCourses(
+        bookmarks?.map((b) => b.courses).filter(Boolean) || [],
+      );
 
       setLoading(false);
     };
@@ -121,14 +173,18 @@ const Dashboard = () => {
     e.preventDefault();
     if (!user) return;
     setCreating(true);
-    const { data, error } = await supabase.from("courses").insert({
-      teacher_id: user.id,
-      title,
-      description,
-      category: category || null,
-      difficulty: difficulty || null,
-      is_published: false,
-    }).select().single();
+    const { data, error } = await supabase
+      .from("courses")
+      .insert({
+        teacher_id: user.id,
+        title,
+        description,
+        category: category || null,
+        difficulty: difficulty || null,
+        is_published: false,
+      })
+      .select()
+      .single();
 
     if (error) toast.error(error.message);
     else {
@@ -143,9 +199,15 @@ const Dashboard = () => {
     setCreating(false);
   };
 
-  if (authLoading || loading) return (
-    <div className="min-h-screen flex flex-col"><Header /><div className="flex flex-1 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></div>
-  );
+  if (authLoading || loading)
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
 
   const isTeacher = hasRole("teacher") || hasRole("admin");
 
@@ -155,9 +217,13 @@ const Dashboard = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-8 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Welcome back, {profile?.full_name || "there"}!</h1>
+            <h1 className="text-3xl font-bold">
+              Welcome back, {profile?.full_name || "there"}!
+            </h1>
             <p className="text-muted-foreground mt-1">
-              {isTeacher ? "Manage your courses and track student progress" : "Continue learning where you left off"}
+              {isTeacher
+                ? "Manage your courses and track student progress"
+                : "Continue learning where you left off"}
             </p>
           </div>
           <ProfileEditor onUpdated={() => window.location.reload()} />
@@ -187,7 +253,9 @@ const Dashboard = () => {
         </div>
 
         <Tabs
-          value={searchParams.get("tab") || (isTeacher ? "teaching" : "learning")}
+          value={
+            searchParams.get("tab") || (isTeacher ? "teaching" : "learning")
+          }
           onValueChange={(value) => {
             const params = new URLSearchParams(searchParams);
             params.set("tab", value);
@@ -195,7 +263,9 @@ const Dashboard = () => {
           }}
         >
           <TabsList>
-            {isTeacher && <TabsTrigger value="teaching">My Courses</TabsTrigger>}
+            {isTeacher && (
+              <TabsTrigger value="teaching">My Courses</TabsTrigger>
+            )}
             <TabsTrigger value="learning">Enrolled</TabsTrigger>
             <TabsTrigger value="live">
               <Video className="mr-1.5 h-3.5 w-3.5" /> Live Classes
@@ -205,6 +275,11 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Analytics
+            </TabsTrigger>
+            <TabsTrigger value="tutoring">
+              {hasRole("teacher")
+                ? "Tutoring Management"
+                : "My Tutoring Sessions"}
             </TabsTrigger>
           </TabsList>
 
@@ -225,31 +300,60 @@ const Dashboard = () => {
                     <form onSubmit={handleCreateCourse} className="space-y-4">
                       <div>
                         <Label htmlFor="dashboard-field-1">Title</Label>
-                        <Input id="dashboard-field-1" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                        <Input
+                          id="dashboard-field-1"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          required
+                        />
                       </div>
                       <div>
                         <Label htmlFor="dashboard-field-2">Description</Label>
-                        <Textarea id="dashboard-field-2" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+                        <Textarea
+                          id="dashboard-field-2"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          rows={3}
+                        />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="dashboard-field-3">Category</Label>
-                          <Input id="dashboard-field-3" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Web Development" />
+                          <Input
+                            id="dashboard-field-3"
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            placeholder="e.g. Web Development"
+                          />
                         </div>
                         <div>
                           <Label htmlFor="dashboard-select-4">Difficulty</Label>
-                          <Select value={difficulty} onValueChange={setDifficulty}>
-                            <SelectTrigger id="dashboard-select-4"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <Select
+                            value={difficulty}
+                            onValueChange={setDifficulty}
+                          >
+                            <SelectTrigger id="dashboard-select-4">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="beginner">Beginner</SelectItem>
-                              <SelectItem value="intermediate">Intermediate</SelectItem>
+                              <SelectItem value="intermediate">
+                                Intermediate
+                              </SelectItem>
                               <SelectItem value="advanced">Advanced</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
-                      <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creating}>
-                        {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create Course
+                      <Button
+                        type="submit"
+                        className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90"
+                        disabled={creating}
+                      >
+                        {creating && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}{" "}
+                        Create Course
                       </Button>
                     </form>
                   </DialogContent>
@@ -259,7 +363,9 @@ const Dashboard = () => {
               {teacherCourses.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border py-16 text-center">
                   <GraduationCap className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                  <p className="text-muted-foreground">You haven't created any courses yet</p>
+                  <p className="text-muted-foreground">
+                    You haven't created any courses yet
+                  </p>
                 </div>
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -275,13 +381,27 @@ const Dashboard = () => {
             {enrolledCourses.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border py-16 text-center">
                 <BookOpen className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground mb-3">You're not enrolled in any courses yet</p>
-                <Button variant="outline" onClick={() => navigate("/courses")}>Browse Courses</Button>
+                <p className="text-muted-foreground mb-3">
+                  You're not enrolled in any courses yet
+                </p>
+                <Button variant="outline" onClick={() => navigate("/courses")}>
+                  Browse Courses
+                </Button>
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {enrolledCourses.map((course) => (
-                  <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} progressPercent={courseProgress[course.id]} />
+                  <CourseCard
+                    key={course.id}
+                    id={course.id}
+                    title={course.title}
+                    description={course.description}
+                    thumbnail_url={course.thumbnail_url}
+                    category={course.category}
+                    difficulty={course.difficulty}
+                    teacher_name={course.profiles?.full_name}
+                    progressPercent={courseProgress[course.id]}
+                  />
                 ))}
               </div>
             )}
@@ -292,7 +412,10 @@ const Dashboard = () => {
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Your Live Classes</h2>
                 <LiveClassScheduler
-                  courses={teacherCourses.map((c) => ({ id: c.id, title: c.title }))}
+                  courses={teacherCourses.map((c) => ({
+                    id: c.id,
+                    title: c.title,
+                  }))}
                   onCreated={(lc) => setLiveClasses((prev) => [...prev, lc])}
                 />
               </div>
@@ -302,9 +425,13 @@ const Dashboard = () => {
             {isTeacher && liveClasses.length > 0 && (
               <div className="space-y-3 mb-6">
                 {liveClasses.map((lc) => {
-                  const isExpired = lc.status === "expired" || lc.status === "completed";
+                  const isExpired =
+                    lc.status === "expired" || lc.status === "completed";
                   return (
-                    <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                    <div
+                      key={lc.id}
+                      className="flex items-center justify-between rounded-xl border border-border bg-card p-4"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-primary/10 p-2.5">
                           <Video className="h-5 w-5 text-primary" />
@@ -312,16 +439,32 @@ const Dashboard = () => {
                         <div>
                           <p className="font-medium">{lc.title}</p>
                           <p className="text-sm text-muted-foreground">
-                            {lc.courses?.title} • {format(new Date(lc.scheduled_at), "MMM d, yyyy 'at' h:mm a")}
+                            {lc.courses?.title} •{" "}
+                            {format(
+                              new Date(lc.scheduled_at),
+                              "MMM d, yyyy 'at' h:mm a",
+                            )}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={isExpired ? "destructive" : lc.status === "scheduled" ? "secondary" : "default"}>
+                        <Badge
+                          variant={
+                            isExpired
+                              ? "destructive"
+                              : lc.status === "scheduled"
+                                ? "secondary"
+                                : "default"
+                          }
+                        >
                           {isExpired ? "expired" : lc.status}
                         </Badge>
                         {!isExpired && (
-                          <Button size="sm" className="gap-1.5" onClick={() => setSelectedLiveClass(lc)}>
+                          <Button
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => setSelectedLiveClass(lc)}
+                          >
                             <Video className="h-3.5 w-3.5" /> Join
                           </Button>
                         )}
@@ -337,9 +480,13 @@ const Dashboard = () => {
               <div className="space-y-3">
                 <h2 className="text-xl font-semibold mb-3">Live Classes</h2>
                 {studentLiveClasses.map((lc) => {
-                  const isExpired = lc.status === "expired" || lc.status === "completed";
+                  const isExpired =
+                    lc.status === "expired" || lc.status === "completed";
                   return (
-                    <div key={lc.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                    <div
+                      key={lc.id}
+                      className="flex items-center justify-between rounded-xl border border-border bg-card p-4"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-primary/10 p-2.5">
                           <Calendar className="h-5 w-5 text-primary" />
@@ -347,14 +494,22 @@ const Dashboard = () => {
                         <div>
                           <p className="font-medium">{lc.title}</p>
                           <p className="text-sm text-muted-foreground">
-                            {lc.courses?.title} • {format(new Date(lc.scheduled_at), "MMM d, yyyy 'at' h:mm a")}
+                            {lc.courses?.title} •{" "}
+                            {format(
+                              new Date(lc.scheduled_at),
+                              "MMM d, yyyy 'at' h:mm a",
+                            )}
                           </p>
                         </div>
                       </div>
                       {isExpired ? (
                         <Badge variant="destructive">Expired</Badge>
                       ) : (
-                        <Button size="sm" className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => setSelectedLiveClass(lc)}>
+                        <Button
+                          size="sm"
+                          className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90"
+                          onClick={() => setSelectedLiveClass(lc)}
+                        >
                           <Video className="h-3.5 w-3.5" /> Join
                         </Button>
                       )}
@@ -368,13 +523,17 @@ const Dashboard = () => {
             {isTeacher && liveClasses.length === 0 && (
               <div className="rounded-xl border border-dashed border-border py-16 text-center">
                 <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground">No live classes scheduled yet</p>
+                <p className="text-muted-foreground">
+                  No live classes scheduled yet
+                </p>
               </div>
             )}
             {!isTeacher && studentLiveClasses.length === 0 && (
               <div className="rounded-xl border border-dashed border-border py-16 text-center">
                 <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground">No live classes available for your enrolled courses</p>
+                <p className="text-muted-foreground">
+                  No live classes available for your enrolled courses
+                </p>
               </div>
             )}
           </TabsContent>
@@ -383,13 +542,26 @@ const Dashboard = () => {
             {bookmarkedCourses.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border py-16 text-center">
                 <Bookmark className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground mb-3">No bookmarked courses yet</p>
-                <Button variant="outline" onClick={() => navigate("/courses")}>Browse Courses</Button>
+                <p className="text-muted-foreground mb-3">
+                  No bookmarked courses yet
+                </p>
+                <Button variant="outline" onClick={() => navigate("/courses")}>
+                  Browse Courses
+                </Button>
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {bookmarkedCourses.map((course) => (
-                  <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} />
+                  <CourseCard
+                    key={course.id}
+                    id={course.id}
+                    title={course.title}
+                    description={course.description}
+                    thumbnail_url={course.thumbnail_url}
+                    category={course.category}
+                    difficulty={course.difficulty}
+                    teacher_name={course.profiles?.full_name}
+                  />
                 ))}
               </div>
             )}
@@ -398,14 +570,23 @@ const Dashboard = () => {
           <TabsContent value="analytics">
             <StudentAnalytics />
           </TabsContent>
+          <TabsContent value="tutoring">
+            <Suspense fallback={<p role="status">Loading tutoring…</p>}>
+              <TutoringWorkspace />
+            </Suspense>
+          </TabsContent>
         </Tabs>
 
         <LiveClassModal
           liveClass={selectedLiveClass}
           open={!!selectedLiveClass}
-          onOpenChange={(open) => { if (!open) setSelectedLiveClass(null); }}
+          onOpenChange={(open) => {
+            if (!open) setSelectedLiveClass(null);
+          }}
           onStatusChange={(id, status) => {
-            setLiveClasses((prev) => prev.map((lc) => lc.id === id ? { ...lc, status } : lc));
+            setLiveClasses((prev) =>
+              prev.map((lc) => (lc.id === id ? { ...lc, status } : lc)),
+            );
             setStudentLiveClasses((prev) => prev.filter((lc) => lc.id !== id));
           }}
         />

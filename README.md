@@ -7,10 +7,12 @@ This repository originated in Lovable and is maintained locally. It uses **React
 ## Features and roles
 
 - **Public:** course search, category/difficulty/instructor filters, course descriptions, community, aggregate leaderboard, tutor profiles/availability, English/Bangla landing page, themes, academic attribution.
-- **Student:** email/password accounts, profile editing, recovery screen, free enrollment, Markdown/video/document lessons, progress, course and lesson bookmarks, server-graded quizzes, assignment submissions, discussions, tutoring requests and approved meeting access.
-- **Teacher:** admin-approved access, draft course creation/editing/publication, modules and lessons, uploads, quizzes, grading, student progress, live scheduling and broadcasts, tutoring approval/rejection.
-- **Administrator:** role grants/removal, teacher-request review, user/course search, platform counts, course deletion and community moderation.
-- **Existing experimental features:** browser-generated certificates/badges, recording, and a provider-dependent AI assistant. These are not claims of accredited certification or verified live-provider acceptance.
+- **Student:** email/password accounts, profile editing, recovery screen, free enrollment, Markdown/video/document lessons, progress, course and lesson bookmarks, server-graded quizzes, assignment submissions, discussions, tutoring requests, confirmed/cancelled session history and private meeting access.
+- **Teacher:** admin-approved access, draft course creation/editing/submission for admin-reviewed publication, modules and lessons, uploads, quizzes, grading, student progress, live scheduling and broadcasts, timezone-aware individual/weekly tutoring availability, approval/decline/cancellation and elapsed session completion.
+- **Administrator:** audited role grants/removal, teacher/course approval, paginated search/filtering, accurate platform counts, tutoring/support oversight, certificate revocation, course deletion and community moderation.
+- **Certificates:** authoritative automatic eligibility, durable metadata, downloadable A4 PDFs with embedded English/Bangla fonts, private-recipient public verification and administrator revocation. PDF delivery requires the configured server function.
+- **Support:** searchable FAQ, private guest/signed-in tickets, anti-spam checks and administrator notes/status workflow. Server intake requires external function configuration.
+- **Existing experimental features:** badges, recording, and a provider-dependent AI assistant. These are not claims of accredited certification or verified live-provider acceptance.
 - **Payments:** BDT prices can be presented; self-enrollment is restricted to free courses. No payment gateway, simulated purchase, or paid entitlement service is supplied.
 
 ## Architecture
@@ -45,6 +47,8 @@ Environment variable names:
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Public anon/publishable key; RLS remains mandatory |
 | `VITE_SUPABASE_PROJECT_ID` | Legacy project identifier, if required by local tooling |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `LOVABLE_API_KEY` | Server-side Edge Function configuration for the optional assistant |
+| `APP_ALLOWED_ORIGINS`, `APP_PUBLIC_ORIGIN` | Exact server browser origins / certificate verification origin; see Phase 3 guide |
+| `SUPPORT_CHALLENGE_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` | Server-only support signing/intake; never expose to Vite |
 | `E2E_BROWSER_CHANNEL` | Test browser channel, defaults to `chrome` |
 
 Never put a service-role key in the frontend. Existing `.env` contents were preserved; `.env.local` takes precedence. The browser suite overrides the backend URL and key with an isolated localhost endpoint and intercepts its HTTP/WebSocket traffic; it does not create real accounts or contact the configured project.
@@ -62,7 +66,7 @@ Never put a service-role key in the frontend. Existing `.env` contents were pres
 
 ```sh
 npm run dev                  # development server
-npm run typecheck            # app + tooling + browser-test TypeScript
+npm run typecheck            # app + tooling + browser + server-handler TypeScript
 npm run lint                 # ESLint; nine Fast Refresh warnings documented
 npm run test                 # colocated Vitest unit/component tests
 npm run test:db              # disposable PostgreSQL WASM migration/RLS integration tests
@@ -70,6 +74,7 @@ npm run test:e2e             # starts/stops Vite and executes real Chrome headle
 npm run test:e2e:headed      # visible Chrome; requires a display
 npm run test:e2e:staging     # real Supabase; explicit external opt-in, otherwise skips
 npm run test:coverage        # local Vitest coverage, no claimed percentage
+npm run test:concurrency     # disposable independent PostgreSQL races; see TESTING
 npm run build               # production assets in dist/
 npm run preview             # inspect built assets
 npm run verify              # typecheck, lint, unit, database, build, browser
@@ -82,7 +87,7 @@ See [TESTING.md](TESTING.md) for exact evidence, artifacts, scope and reproducti
 
 Deploy `dist/` to a static host with SPA history fallback to `index.html`. Set the public Vite variables **before building**. Apply reviewed migrations separately to the authorized backend, configure Auth redirects and private-only Realtime, then perform hosted role/storage/media acceptance. No deployment, push, production migration or provider configuration was performed by this audit.
 
-**Not production-cleared.** Phase 2 audits report zero known dependency findings, but external configuration, hosted migration acceptance, real email/OAuth, Storage, Realtime and TURN/NAT testing remain open. WebRTC currently has STUN servers and no configured TURN relay. Recordings use browser MediaRecorder; multi-device/screen-sharing and long recording tests remain manual.
+**Not production-cleared.** Phase 3 audits report zero known dependency findings, but external configuration, hosted migration acceptance, real email/OAuth, Storage, Realtime and TURN/NAT testing remain open. WebRTC currently has STUN servers and no configured TURN relay. Recordings use browser MediaRecorder; multi-device/screen-sharing and long recording tests remain manual.
 
 ## Verified screenshots
 
@@ -103,11 +108,13 @@ The compact landing-page team section supports both themes and English/Bangla de
 
 ## Review and demonstration
 
-Phase 2 verification (27 October 2026): see [TESTING.md](TESTING.md) for actual results, [security resolution](docs/SECURITY_RESOLUTION.md) for all 14 prior findings and nine retained lint warnings, [migration plan](docs/STAGING_MIGRATION_PLAN.md) for per-file review/preflight/recovery, and [staging acceptance](docs/STAGING_ACCEPTANCE_CHECKLIST.md) for external blockers. No hosted account, migration, deployment or provider configuration was changed.
+[Phase 3 feature guide](docs/PHASE3_FEATURE_GUIDE.md) documents tutoring, server-generated certificates, admin review/roles and support, including all routes, business rules, server secrets, font licenses and evidence boundaries. New public pages: `/faq`, `/contact`, `/tutors`, `/certificates/verify/:token`; account pages: `/dashboard?tab=tutoring`, `/certificates`, `/admin`. Five additive migrations follow the seven Phase 1 files. Deploy neither frontend nor functions without authorized staging acceptance; no deployment was performed.
+
+Phase 3 verification (27 October 2026): see [TESTING.md](TESTING.md) for actual results, [security resolution](docs/SECURITY_RESOLUTION.md) for all 14 prior findings and nine retained lint warnings, [migration plan](docs/STAGING_MIGRATION_PLAN.md) for per-file review/preflight/recovery, and [staging acceptance](docs/STAGING_ACCEPTANCE_CHECKLIST.md) for external blockers. No hosted account, migration, deployment or provider configuration was changed.
 
 - [Requirements matrix](docs/REPORT_REQUIREMENTS_MATRIX.md): evidence and limitations per major requirement. Phase 2 inspected the original 33-page PDF; printed/PDF page references and discrepancies are recorded.
 - [Audit report](docs/SHIKKHAHUB_AUDIT_REPORT.md): architecture, verification boundaries, security and remaining risks.
 - [Bug repair log](docs/BUG_FIX_LOG.md): reproducible defects, repairs and regression references.
 - [Final-year demo guide](docs/FINAL_YEAR_DEMO_GUIDE.md): safe student, teacher and administrator demonstration.
 
-Future work includes gateway-backed paid entitlements, production AI controls, accredited/automated certification, native mobile apps, TURN and scalable live delivery, fuller translation and accessibility review, lesson-specific Q&A limits/pinning, and hosted acceptance.
+Future work includes gateway-backed paid entitlements, production AI controls, accredited certification, native mobile apps, TURN and scalable live delivery, fuller translation and accessibility review, lesson-specific Q&A limits/pinning, and hosted acceptance.

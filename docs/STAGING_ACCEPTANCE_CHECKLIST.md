@@ -1,6 +1,6 @@
 # Staging and academic acceptance
 
-27 October 2026. **No real Supabase staging scenario has passed in this phase.** The separate suite discovers 11 scenarios and skips them without explicit target authorization and external credentials. Skips are blockers, never passes. Local simulated-browser and PostgreSQL WASM evidence is listed in TESTING.md.
+27 October 2026. **No real Supabase staging scenario has passed in this phase.** The separate suite now discovers 16 scenarios (eleven original plus five Phase 3) and skips them without explicit target authorization and external credentials. Skips are blockers, never passes. Local simulated-browser and PostgreSQL WASM evidence is listed in TESTING.md.
 
 ## Before enabling real tests
 
@@ -53,3 +53,18 @@ The suite uses real services without HTTP/WebSocket interception. It does not te
 - [ ] Use the selected Phase 1 screenshots only as labeled disposable-fixture examples; compare fresh browser artifacts with the interface before presentation. No real account credentials in slides or recordings.
 
 Public deployment remains blocked until the required hosted/security/operational acceptance above is completed and approved. This phase makes a local commit only.
+
+## Phase 3 additional gates
+
+The prepared real-service suite now contains **16 scenarios**. None passed against hosted Supabase during this phase; all skip without approved external settings. `STAGING_FUNCTIONS=enabled` separately enables actual PDF/support function scenarios after reviewed deployment. Realtime still has its own opt-in.
+
+- [ ] Run Phase 3 preflight, resolve certificate-number collisions and legacy booking overlaps, review legacy snapshots, then apply all five new migrations after the seven existing repairs. Verify revoked direct grants, exact policies/owners and schema cache.
+- [ ] Accept teacher review metadata workflow: draft → pending → approved/rejected; title/description/price edits return to draft. Confirm grandfathered publication and the non-versioned lesson-edit boundary.
+- [ ] Test tutor search/profile/qualifications, individual/weekly availability, IANA timezone/DST errors, unused-slot edit/removal, parallel slot and cross-participant overlaps, accept/decline/cancel/elapsed teacher completion, private links and preserved history.
+- [ ] Check actual automatic certificate issuance after all lessons/quiz passes/assignment grades, retry/concurrent uniqueness, immutable snapshots, missing/removed courses, unvalidated legacy rows, revocation and repeated server PDF downloads. Print and inspect Bangla/English fonts and verify public pages omit recipient details.
+- [ ] Configure `APP_ALLOWED_ORIGINS`, `APP_PUBLIC_ORIGIN`, `SUPPORT_CHALLENGE_SECRET`, public Supabase settings and server credentials outside source. Confirm only support intake code reads the service key; platform-injected keys are not per-function isolation. Review `deno.json`/lock and bundled static fonts; exercise the deployed functions and gateway auth on staging.
+- [ ] Confirm unauthenticated PDF calls, wrong-owner calls, revoked downloads and forged request metadata fail. `verify_jwt=false` at the gateway does not replace the handlers' explicit user JWT checks.
+- [ ] Submit guest and signed-in support, invalidate/tamper/expire proofs, replay nonce/content, hit per-email/global quotas and test invalid JWT behavior. Confirm owner-only tickets/admin-only notes, open → in_progress → resolved/reopen, timestamp/audit changes and no unsupported email claim. Add authorized edge-level abuse monitoring/limits before public exposure.
+- [ ] Verify admin server counts/search/filter/pagination, role escalation denial, self/final-admin protection (including concurrent stale snapshots), confirmed moderation/revocation and append-only audit access. Global account suspension is not offered; provider-wide suspension needs a separately reviewed mechanism.
+- [ ] Review exact-ID ignored manifests for support/booking/certificate/audit records that intentionally survive course cleanup. Dedicated staging accounts/data must remain isolated; no broad cleanup against production is authorized.
+- [ ] Complete screen-reader/touch/non-Chrome QA, high-volume performance/retention review and physical/hosted video acceptance. Basic local Chrome responsiveness is not complete accessibility or production scale proof.

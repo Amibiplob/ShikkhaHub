@@ -6,16 +6,19 @@ Verification date: **27 October 2026, Asia/Dhaka**. Exact final results are reco
 
 | Check | Result |
 | --- | --- |
-| `npm run verify` | Passed, exit 0 |
-| TypeScript | Application, tooling and browser-test configs passed |
+| Verification sequence | Types/lint/unit/SQL/build passed together; complete Chrome suite passed separately after interruption/port recovery |
+| TypeScript | Application, tooling, browser-test and server-handler configs passed |
 | ESLint | 0 errors, 9 documented Fast Refresh warnings retained; 12 hook warnings fixed |
-| Vitest | 35 tests passed in 11 files (includes six staging target safeguards) |
-| PostgreSQL WASM integration | 31 tests passed, including six new migration/adoption/recovery regressions |
+| Vitest | 53 tests passed in 16 files (includes server PDF/support, timezone, FAQ, verification navigation and six staging safeguards) |
+| PostgreSQL WASM integration | 46 tests passed; full Phase 3 migration/RLS/RPC chain and legacy adoption/recovery |
 | Production build | Passed; large-chunk warning retained |
-| Headless Chrome | 27 passed, 0 failed/skipped/flaky |
-| Real Supabase staging suite | 11 blocked/skipped; no real-service passes |
-| Vitest coverage integration | Passed, 35 tests; imported-file report only, no global coverage claim |
-| Visible Chrome recheck | Not rerun in Phase 2; Phase 1 had three passes |
+| Headless Chrome | 34 passed, 0 failed/skipped/flaky |
+| Real Supabase staging suite | 16 blocked/skipped; no real-service passes |
+| Independent PostgreSQL | 1 passed, 0 failed; four independent-connection races on PostgreSQL 18.4 |
+| Deno server compatibility | Deno 2.9.6 frozen-lock check and local PDF/support smoke passed; synthetic adapters |
+| Deno dependency graph | npm bulk-advisory check: 31 locked version entries, zero known findings |
+| Vitest coverage integration | Historical Phase 2: 35 tests; not rerun in Phase 3, no global coverage claim |
+| Visible Chrome recheck | Not rerun in Phase 3; Phase 1 had three passes |
 | Full dependency audit | Exit 0; zero known findings on final lock |
 | Production-only audit | Exit 0; zero known findings on final lock |
 | Diff/secret-pattern checks | Passed; actual `.env` unchanged |
@@ -31,7 +34,7 @@ npm ci
 npm run verify
 ```
 
-`verify` runs app/tooling/browser-test TypeScript, ESLint, Vitest, PostgreSQL WASM integration tests, a production build, then real headless browser tests. It does not run migrations against `.env`, create remote accounts, deploy or push.
+`verify` runs app/tooling/browser-test/server-handler TypeScript, ESLint, Vitest, PostgreSQL WASM integration tests, a production build, then real headless browser tests. It does not run migrations against `.env`, create remote accounts, deploy or push.
 
 ```sh
 npm run test                 # colocated unit/component tests
@@ -45,10 +48,10 @@ npm run lint
 npm run build
 npm audit                   # dated known-advisory check, currently exits 0
 npm audit --omit=dev         # production install classification, currently exits 0
-npm run test:e2e:staging     # external approved target only; otherwise 11 blocked/skipped
+npm run test:e2e:staging     # external approved target only; otherwise 16 blocked/skipped
 ```
 
-The default browser channel is installed Google Chrome. Phase 2 executed headless Chrome; headed Chrome results belong to Phase 1 only. CI uses downloadable Chromium:
+The default browser channel is installed Google Chrome. Phase 3 executed headless Chrome; headed Chrome results belong to Phase 1 only. CI uses downloadable Chromium:
 
 ```sh
 npx playwright install --with-deps chromium
@@ -67,7 +70,7 @@ E2E_BROWSER_CHANNEL=chromium npm run test:e2e
 | Live browser test | Real peer connections and decoded media in two contexts with Chrome fake devices, chat/raise-hand/leave/rejoin/end | Hosted signaling, physical microphone/camera, TURN/NAT traversal, multi-network scale, screen share or recording acceptance |
 | Optional GitHub Actions | Secret-free workflow definition committed | GitHub execution was not triggered; remote CI is unverified |
 
-Historical migrations replay into an empty disposable database. Six additional migration tests rehearse existing academic records/teacher requests, duplicate-failure atomicity, malformed legacy JSON, deferred validation, unknown broad Realtime policies and duplicate replay. `tests/staging-preflight.sql` is exercised against a legacy fixture; no hosted preflight was run. The migration that only installs `pg_cron`/`pg_net` is explicitly skipped because these hosted extensions are unavailable in WASM. Test schemas provide `auth.uid`, Storage tables and Realtime topic/send shims; service behavior is not silently substituted as hosted proof. Database tests use Node's `--test-isolation=none` to avoid the WASM worker/isolated test-process issue observed with Node 24.
+Historical migrations replay into an empty disposable database. Seven adoption/recovery tests rehearse existing academic records/teacher requests, duplicate-failure atomicity, malformed legacy JSON, deferred validation, unknown broad Realtime policies and duplicate replay. `tests/staging-preflight.sql` is exercised against a legacy fixture; no hosted preflight was run. The migration that only installs `pg_cron`/`pg_net` is explicitly skipped because these hosted extensions are unavailable in WASM. Test schemas provide `auth.uid`, Storage tables and Realtime topic/send shims; service behavior is not silently substituted as hosted proof. Database tests use Node's `--test-isolation=none` to avoid the WASM worker/isolated test-process issue observed with Node 24.
 
 ## Browser coverage
 
@@ -80,7 +83,7 @@ Covered journeys include:
 - Teacher draft/edit/module/lesson/document/video metadata authoring, sparse quiz options, assignment creation, publication, submission grading with independent student marks/feedback readback for both `graded` and legacy `reviewed`, other-teacher rejection, tutoring availability and approval/rejection.
 - Community post/comment/reply persistence; course discussion creation.
 - Two-context tutoring and live learning, microphone denial, local peer media/chat/controls/hand raising and session lifecycle.
-- Administrator user/course search, teacher-request approval and moderation view.
+- Administrator user/course search, teacher-request approval, course review, confirmed role grants, server pagination and moderation.
 - Public screens at **375, 768, 1024 and 1440px**; role screens at **375 and 768px**; English/Bangla team section, themes and basic keyboard focus.
 
 This is scenario coverage, not exhaustive coverage of every permutation, physical device, browser or screen-reader interaction. SQL tests cover additional permission boundaries: fabricated grades, answer leakage, private content, storage ownership, role lockout, badges/notifications, paid/draft enrollment, reservations and authenticated live identities.
@@ -99,7 +102,7 @@ The HTML report, traces, dependency caches, browser storage and generated artifa
 
 ## Real Supabase staging acceptance (prepared, not executed against a backend)
 
-`playwright.staging.config.ts` and `e2e/staging/` are separate from default intercepted tests and from `verify`. No HTTP/WebSocket routes are mocked in this suite. Without opt-in, `npm run test:e2e:staging` starts no application server and reports **11 skipped**. This exit-0 discovery result is not an acceptance pass.
+`playwright.staging.config.ts` and `e2e/staging/` are separate from default intercepted tests and from `verify`. No HTTP/WebSocket routes are mocked in this suite. Without opt-in, `npm run test:e2e:staging` starts no application server and reports **16 skipped**. This exit-0 discovery result is not an acceptance pass.
 
 An authorized operator must approve a disposable project containing only test data, run the [migration plan](docs/STAGING_MIGRATION_PLAN.md), and provision/confirm three dedicated identities through trusted staging Auth/SQL mechanisms. Public signup creates students; grant teacher/admin roles only through trusted server tooling. Tests neither provision accounts nor grant roles. A label or hostname cannot independently prove a project is not production; the operator's target review remains required.
 
@@ -114,6 +117,7 @@ Supply the following **process environment** values via protected local secret t
 | `STAGING_STUDENT_EMAIL`, `STAGING_STUDENT_PASSWORD` | Dedicated confirmed student (no teacher/admin role) |
 | `STAGING_TEACHER_EMAIL`, `STAGING_TEACHER_PASSWORD` | Dedicated confirmed teacher (no admin role) |
 | `STAGING_ADMIN_EMAIL`, `STAGING_ADMIN_PASSWORD` | Third distinct confirmed administrator |
+| `STAGING_FUNCTIONS` | Optional `enabled` only after both new Edge Functions are configured and deployed in the approved disposable target |
 | `STAGING_REALTIME` | Optional `enabled` only after hosted private-only settings and complete policy review |
 | `E2E_BROWSER_CHANNEL` | Optional `chromium`; defaults to installed `chrome` |
 
@@ -128,8 +132,51 @@ The suite owns a loopback Vite server on **18081**, does not reuse another serve
 
 Traces, screenshots and video are disabled for this suite. Form credentials avoid Playwright fill-argument logging. Keep ignored reports restricted anyway: assertion failures can reveal identity/record metadata. An ignored `artifacts/staging/staging-acceptance-*.json` manifest (created before writes with restricted file permissions) records exact IDs/object path for partial-run recovery. Cleanup deletes only run-owned objects and exact-ID courses; trigger-generated notifications and Auth identities remain operator cleanup. Never delete by a broad prefix across accounts. Reports are `artifacts/staging-results.json`; default fixture reports remain separate.
 
-Currently blocked: all 11 real scenarios because no approved target or external role credentials were supplied. A configured run without Realtime opt-in will still skip its Realtime scenario and cannot be described as complete acceptance. Source/type/safeguard checks and no-credential discovery do not prove selectors or service contracts work against hosted Supabase. Manual second-student/teacher isolation, full Storage bucket/MIME/size/expiry checks, Auth email/OAuth/revocation, tutoring/concurrency, physical media/TURN, screen share and recording remain outside this prepared subset.
+Currently blocked: all 16 real scenarios because no approved target or external role credentials were supplied. A configured run without Realtime opt-in will still skip its Realtime scenario and cannot be described as complete acceptance. Source/type/safeguard checks and no-credential discovery do not prove selectors or service contracts work against hosted Supabase. Manual second-student/teacher isolation, full Storage bucket/MIME/size/expiry checks, Auth email/OAuth/revocation, broader two-student hosted concurrency, physical media/TURN, screen share and recording remain outside this prepared subset.
 
 ## Release acceptance still required
 
 Complete [STAGING_ACCEPTANCE_CHECKLIST.md](docs/STAGING_ACCEPTANCE_CHECKLIST.md) and the migration/backup/restore plan before release review. Re-run dependency audits at acceptance; the dated final snapshot is `docs/dependency-audit.json`, with package applicability/patch rationale and all nine retained lint warnings in [SECURITY_RESOLUTION.md](docs/SECURITY_RESOLUTION.md). No production database, user data, account, provider setting or deployment was touched.
+
+
+## Phase 3 feature evidence
+
+The final suite adds desktop **1440px** and mobile **375px** student/teacher tutoring discovery, independent confirmation, conflict denial, private meeting access and cancellation. It completes course lessons/quizzes/graded assignments before obtaining an authoritative certificate, downloads an actual PDF, extracts its content with `pdftotext`, checks repeated issuance, opens public verification and revokes through an independent administrator context. Guest FAQ/form validation and ticket intake are followed by administrator status/internal-note actions and another user's read denial. Admin course review, user pagination and student role-escalation denial are covered. Existing 27 scenarios remain, adapted for mandatory confirmation and course review.
+
+The browser services are still intercepted fixtures. `e2e/phase3-fixture.ts` reuses the **actual shared PDF generator and support HTTP handler/proof logic**, with synthetic authorization/storage adapters. The real database tests separately enforce all eligibility/roles/RLS/state transitions. Neither layer proves hosted PostgREST serialization, actual JWT verification, gateway configuration, static-file deployment or service-key scope.
+
+New colocated unit tests cover timezone conversion including DST gaps/folds, overlap boundaries, accurate searchable FAQ, clearing stale public certificate results, bounded support validation/proof/JWT association/quotas/errors, A4 PDF generation, supported Bangla/English names and download authorization. SQL tests cover all learning prerequisites, trusted automatic/idempotent issuance, revocation/course removal, recurring availability, cross-participant conflicts, elapsed completion, cancellation history, roles/final-admin protection, approval, audited moderation/report totals, private support and reopening. `tests/phase3-preflight.sql` is read-only and is also syntax-executed locally against the pre-Phase-3 schema.
+
+### Independent PostgreSQL connections
+
+```sh
+# Optional existing PostgreSQL 18 binaries; never point this at a server or data directory.
+LOCAL_POSTGRES_BIN=/path/to/postgresql/bin npm run test:concurrency
+```
+
+The test creates, migrates, seeds, stops and removes **its own temporary cluster**, exclusively through a private Unix socket, with no TCP listener. No `.env`/`DATABASE_URL` is read. Four races check same-slot competing confirmations, the same student across overlapping tutors, simultaneous last-admin removal at READ COMMITTED, and a stale REPEATABLE READ role snapshot. All four passed, reported as **one Node integration test**, not four additional unit tests. Supabase Auth/Storage/Realtime remain explicit SQL shims. Without the binary opt-in the test skips, visibly.
+
+This phase used PostgreSQL **18.4**, acquired temporarily through `@embedded-postgres/linux-x64@18.4.0-beta.17`; that package is not a project dependency. It is a local race rehearsal, not hosted database/service acceptance.
+
+### Actual Deno compatibility
+
+With Deno **2.9.6** installed independently:
+
+```sh
+deno check --frozen --config supabase/functions/deno.json supabase/functions/certificate-pdf/index.ts supabase/functions/support-contact/index.ts
+deno run --frozen --config supabase/functions/deno.json --allow-read=supabase/functions/_shared/fonts --allow-write=artifacts/phase3-pdf tests/edge-runtime.mjs
+```
+
+The runtime smoke uses synthetic authorization/intake adapters and exercises actual request handling, Web Crypto, proof generation, a Bangla PDF, and outsider download denial. It writes only an ignored local PDF. It does not load environment credentials, contact Supabase, start a public server or deploy anything. Frozen typecheck and runtime execution passed. The 399,735-byte synthetic Bangla sample was rendered with `pdftoppm` and inspected: the maintained font engine plus explicit glyph positioning fixes Indic marks/conjuncts. Fonts are fully embedded because pdf-lib 1.x's subset-stream API differs from modern fontkit; no PDF/font code enters the SPA. English PDF text is extraction-tested; Bangla Unicode extraction order is not guaranteed.
+
+`supabase/functions/deno.lock` records the separate Edge graph. All **31 package-version entries across 29 names** were submitted to npm's bulk-advisory endpoint, grouping duplicate versions per package rather than overwriting them. It returned `{}`. This is a dated known-advisory check, not a guarantee of application security; root `npm audit --omit=dev` alone does not cover the production Edge graph.
+
+### Failures repaired and retained evidence
+
+The initial full Phase 3 browser run reported **26 passed / 8 failed**. Subsequent focused runs reported **4/4**, **2/2** and **0/1** pass/fail while selectors, fixture timestamps and independent-role context setup were repaired. They also exposed a genuine 375px course certificate-control overflow, now fixed. Traces/screenshots are preserved under ignored `artifacts/phase3-initial-browser/`, `phase3-focused-browser/` and `phase3-functions-browser/`. A later full verification run was interrupted with exit 143 after 24 browser passes; no final result was claimed for that partial run, whose log is retained in artifacts/phase3-verification/interrupted-verify.txt. The following immediate full retry passed source/database/build checks but the browser server found the test port still occupied; after it was released, the entire Chrome suite passed separately. Final suite counts above are the final component results, not a sum of all reruns.
+
+The original font adapter first failed the Bangla unit generator with a missing regenerator runtime. Actual Deno then exposed unsafe prototype inheritance despite Node passes. The final implementation replaces that adapter with `fontkit@2.0.4`, avoids the incompatible subset API and preserves shaped glyph offsets. These failures were fixed without enabling unsafe prototype behavior. Public verification navigation now clears an old result before processing another token, covered by a regression test. The standalone Deno script and PostgreSQL race counts are reported separately from Vitest/PGlite/Chrome.
+
+Selected Phase 3 screenshots, using synthetic data, are in `docs/screenshots/phase3-*`. The feature guide documents workflow bounds, unsupported account suspension/payments/email delivery, required Edge configuration and the sixteen blocked hosted scenarios. No production-readiness claim follows from local success.
+
+The 34-scenario full browser run passed. Screenshot inspection then found that independent contexts in the new mobile-labeled flows used the default desktop viewport. All feature contexts now explicitly inherit 375/1440px; a separate seven-scenario recheck verifies the real widths. That review exposed SH-032 (squeezed mobile admin search), repaired with stacked controls and a browser assertion requiring a usable input width. The final seven-scenario run is recorded separately, without counting duplicate scenarios as 41 unique tests.

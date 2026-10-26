@@ -50,3 +50,9 @@ Nine `react-refresh/only-export-components` warnings remain intentionally. These
 | `src/contexts/LanguageContext.tsx` | Language provider and `useLanguage`, existing consumer API |
 
 ESLint's actual final result is **0 errors, 9 warnings**. An optional future module split can improve hot reload; those warnings are not silently suppressed or presented as resolved.
+
+## Phase 3 dependency scope
+
+Added only development/test-side `pdf-lib@1.17.1`, `fontkit@2.0.4` and its `@types/fontkit@2.0.9` typings for shared server PDF generation. They are not imported into the SPA bundle. The production Edge Functions resolve these exact direct versions through `supabase/functions/deno.json` and the separate committed Deno lock. Full/root-production npm audits and an npm bulk-advisory check of all 31 locked Deno package-version entries (29 names) report zero known findings in this phase. Root `--omit=dev` alone would not audit the production Edge graph, so that evidence is kept separate. No service credentials are stored in source. Existing nine Fast Refresh warnings remain; generated coverage/browser artifacts are excluded from source linting, without disabling source rules.
+
+The legacy PDF font adapter was rejected after actual Deno compatibility failures; the maintained engine passes without enabling unsafe prototype mutation. Full embedding avoids the incompatible legacy subset-stream interface. See TESTING.md for frozen-lock runtime reproduction; hosted gateway and static-font packaging remain acceptance gates.

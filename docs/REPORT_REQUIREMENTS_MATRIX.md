@@ -1,10 +1,12 @@
 # Report requirements reconciliation
 
+**Phase 3 update:** the reconciliation tables retain Phase 2 findings for traceability. The Phase 3 reconciliation section at the end supersedes former tutoring, automatic-certificate, administration and support gaps; see the current feature guide and TESTING.md for acceptance boundaries.
+
 Reviewed **27 October 2026 (Asia/Dhaka)** against the original `ShikkhaHub_Report.pdf`, found at `/home/biplob/Downloads/ShikkhaHub_Report.pdf` (33 pages; SHA-256 `3e357ac98f4425ca86a53cc31326d6190017a91dee02bce152e307810c406477`). All 33 pages were inspected using extracted text and rendered pages, with individual inspection of diagrams and screenshots. The original remains outside Git because it contains student IDs. This supersedes Phase 1's limited-search statement that the PDF was unavailable.
 
 Page notation: **p.** is the printed report page; **PDF** is the physical, one-based PDF page. The cover is PDF 1; printed pages 1–32 correspond to PDF 2–33. PDF 33 is blank apart from the printed page number. References below use the report body, not merely its contents list.
 
-“Implemented locally” describes source and the stated tests; it is not hosted acceptance. `e2e/journeys.spec.ts`, `additional.spec.ts`, `public.spec.ts` and `live.spec.ts` use intercepted Auth/REST/Realtime. SQL evidence executes actual PostgreSQL WASM with Auth/Storage/Realtime shims, excluding the extension-only historical cron/net migration. The separate `e2e/staging/acceptance.spec.ts` uses real Supabase services when explicitly authorized; its 11 scenarios are currently **blocked/skipped**, not evidence of real-service success.
+“Implemented locally” describes source and the stated tests; it is not hosted acceptance. `e2e/journeys.spec.ts`, `additional.spec.ts`, `public.spec.ts` and `live.spec.ts` use intercepted Auth/REST/Realtime. SQL evidence executes actual PostgreSQL WASM with Auth/Storage/Realtime shims, excluding the extension-only historical cron/net migration. The separate `e2e/staging/acceptance.spec.ts` uses real Supabase services when explicitly authorized; its current 16 scenarios are **blocked/skipped**, not evidence of real-service success.
 
 ## Functional requirements and attribution
 
@@ -68,3 +70,17 @@ Page notation: **p.** is the printed report page; **PDF** is the physical, one-b
 | References pp.31–32 (PDF 32–33) | Bibliography inspected; final page has only page number. Citations are historical context, not live security, provider or competitor acceptance. |
 
 Prior prompt extensions (lesson bookmarks, advanced Q&A limits, full storage console, immutable/timed attempts) are retained as scoped limits where relevant, not falsely attributed to the PDF. [TESTING.md](../TESTING.md) records exact results; [STAGING_ACCEPTANCE_CHECKLIST.md](STAGING_ACCEPTANCE_CHECKLIST.md) lists the remaining external decisions. No compliance percentage is claimed.
+
+## Phase 3 reconciliation — approved implementation extensions
+
+The PDF and page references above are unchanged. The following supersedes affected Phase 2 status/remaining-gap descriptions; it does not rewrite the report or turn its future list into original completed requirements.
+
+| Original report reference | Phase 3 implementation / verified evidence | Current boundary |
+| --- | --- | --- |
+| §1.1–5 pp.7–8 (PDF 8–9), §2.3 p.13 (PDF 14) | Existing tutoring tables extended with profiles/expertise/qualifications, weekly or individual timezone-aware availability, editable unused slots, private participant dashboard and lifecycle RPCs; SQL permission/DST/conflict tests and desktop/mobile independent browser journeys | Implemented locally. Teacher credentials are self-reported, `approved` is UI confirmed, completion is elapsed teacher attestation; no payments/calendar-provider sync or private video provider proof. |
+| §5.2 p.30 (PDF 31), automated certification future work; additional explicit Phase 3 authorization | Automatic authoritative certificate records, all current required assessment gates, idempotent retry, durable snapshots, actual server-generated A4 PDFs with embedded Latin/Bangla fonts, My Certificates, public private-recipient verification and audited revocation. PDF bytes/content/layout and Bangla rendering checked locally | Approved enhancement implemented locally. Not accredited/university-issued. Edge deployment/font packaging and real JWT acceptance remain blocked; immutable assessment versions and watch-time proof remain absent. |
+| §1.5 p.8 (PDF 9), §3.1 p.14 (PDF 15), §3.8.2 p.21 (PDF 22) | Admin statistics/paginated queries, confirmed backend role management, stronger last-admin serialization, course pending/approve/reject workflow, tutoring/certificate/support oversight and private audit trail. Full-chain SQL plus real independent PostgreSQL races and browser tests | Earlier missing course-approval/audit/oversight gaps now implemented locally. Metadata/publication review is not immutable review of every lesson version. Account suspension/payment administration remain unsupported. |
+| §2.1.4 pp.10–11 (PDF 11–12), responsive customer support resources | `/faq` accessible searchable answers; `/contact` validated private guest/authenticated intake; HMAC-bound proof, honeypot and server quotas; owner ticket history, administrator status/internal notes. Unit/server/SQL and desktop/mobile browser tests | Functional local implementation. No email delivery is claimed; hosted function/JWT/CORS/quota acceptance and operational internet-scale abuse controls remain open. |
+| §3.8.3 p.22 (PDF 23), integrity/maintainability/compatibility | Five additive migrations; old migration meanings preserved. Server handlers/types checked, source tests colocated, route code split, independent-connection races and full browser regression | Local evidence only. Existing broader provider, backup, load, manual accessibility, TURN/device and operations acceptance gates remain. |
+
+See [PHASE3_FEATURE_GUIDE.md](PHASE3_FEATURE_GUIDE.md) for precise rules, routes, data structures, external setup and test boundaries, and TESTING/verification.json for final execution results. AI scoring, gateways, native apps and accredited certification remain future work.

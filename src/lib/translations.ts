@@ -5,9 +5,11 @@ type Dict = Record<string, string>;
 export const en: Dict = {
   "team.eyebrow": "Academic project",
   "team.title": "Meet the Project Team",
-  "team.description": "ShikkhaHub is a final-year project developed by students of the Department of Computer Science and Engineering, City University, Bangladesh.",
+  "team.description":
+    "ShikkhaHub is a final-year project developed by students of the Department of Computer Science and Engineering, City University, Bangladesh.",
   "team.supervisor": "Project supervisor",
-  "team.supervisorRole": "Lecturer and Coordinator, Department of CSE, City University",
+  "team.supervisorRole":
+    "Lecturer and Coordinator, Department of CSE, City University",
   "nav.tutors": "Private Tutoring",
 
   // nav
@@ -84,20 +86,25 @@ export const en: Dict = {
   "home.live.view": "Your live classes",
   "home.live.join": "Join now",
   "home.live.details": "View class",
-  "home.live.empty": "No live classes are scheduled right now. Check back soon.",
+  "home.live.empty":
+    "No live classes are scheduled right now. Check back soon.",
   "home.community.eyebrow": "From the community",
   "home.community.title": "What developers are discussing",
   "home.community.view": "Visit the forum",
   "home.credentials.eyebrow": "Proof of progress",
   "home.credentials.title": "Build skills you can show",
-  "home.credentials.subtitle": "Move from lessons to practical work, then collect clear proof of every milestone you complete.",
+  "home.credentials.subtitle":
+    "Move from lessons to practical work, then collect clear proof of every milestone you complete.",
   "home.credentials.cta": "View achievements",
   "home.credentials.certificate.title": "Course certificates",
-  "home.credentials.certificate.text": "Download a certificate after completing every lesson in a course.",
+  "home.credentials.certificate.text":
+    "Download a certificate after completing every lesson in a course.",
   "home.credentials.badges.title": "Skill badges",
-  "home.credentials.badges.text": "Unlock badges as your practice, participation, and progress grow.",
+  "home.credentials.badges.text":
+    "Unlock badges as your practice, participation, and progress grow.",
   "home.credentials.proof.title": "Practical progress",
-  "home.credentials.proof.text": "Quizzes, assignments, and feedback help turn concepts into demonstrable skill.",
+  "home.credentials.proof.text":
+    "Quizzes, assignments, and feedback help turn concepts into demonstrable skill.",
 
   // featured
   "featured.eyebrow": "Popular",
@@ -108,42 +115,55 @@ export const en: Dict = {
   // categories section
   "categories.eyebrow": "Browse",
   "categories.title": "Explore by category",
-  "categories.subtitle": "Pick a track and start with the fundamentals or jump straight to advanced topics.",
+  "categories.subtitle":
+    "Pick a track and start with the fundamentals or jump straight to advanced topics.",
 
   // features
   "features.eyebrow": "Features",
   "features.title1": "Everything you need to",
   "features.title2": "level up",
-  "features.subtitle": "A complete platform for learning, teaching, and building together.",
+  "features.subtitle":
+    "A complete platform for learning, teaching, and building together.",
   "features.f1.title": "Structured Courses",
-  "features.f1.desc": "Learn with organized modules and lessons — videos, articles, and downloadable resources.",
+  "features.f1.desc":
+    "Learn with organized modules and lessons — videos, articles, and downloadable resources.",
   "features.f2.title": "Live Classes",
-  "features.f2.desc": "Join real-time video sessions with screen sharing, whiteboard, and interactive Q&A.",
+  "features.f2.desc":
+    "Join real-time video sessions with screen sharing, whiteboard, and interactive Q&A.",
   "features.f3.title": "Interactive Content",
-  "features.f3.desc": "Read beautifully formatted articles with code blocks, syntax highlighting, and examples.",
+  "features.f3.desc":
+    "Read beautifully formatted articles with code blocks, syntax highlighting, and examples.",
   "features.f4.title": "Assignments & Quizzes",
-  "features.f4.desc": "Submit projects, take quizzes, get teacher reviews with detailed feedback and marks.",
+  "features.f4.desc":
+    "Submit projects, take quizzes, get teacher reviews with detailed feedback and marks.",
   "features.f5.title": "Badges & Certificates",
-  "features.f5.desc": "Earn achievement badges and downloadable certificates as you complete courses.",
+  "features.f5.desc":
+    "Earn achievement badges and downloadable certificates as you complete courses.",
   "features.f6.title": "Community Forum",
-  "features.f6.desc": "Share knowledge, get career advice, and discuss tech with fellow developers.",
+  "features.f6.desc":
+    "Share knowledge, get career advice, and discuss tech with fellow developers.",
 
   // how it works
   "how.eyebrow": "How it works",
   "how.title": "From zero to certified in four steps",
   "how.s1.title": "Create your account",
-  "how.s1.desc": "Sign up free and set up your learner profile in under a minute.",
+  "how.s1.desc":
+    "Sign up free and set up your learner profile in under a minute.",
   "how.s2.title": "Enroll & learn",
-  "how.s2.desc": "Follow structured modules with lessons, articles, and live classes.",
+  "how.s2.desc":
+    "Follow structured modules with lessons, articles, and live classes.",
   "how.s3.title": "Practice & submit",
-  "how.s3.desc": "Complete quizzes and assignments, and get feedback from your teacher.",
+  "how.s3.desc":
+    "Complete quizzes and assignments, and get feedback from your teacher.",
   "how.s4.title": "Earn your certificate",
-  "how.s4.desc": "Finish the course to unlock badges and a downloadable certificate.",
+  "how.s4.desc":
+    "Finish the course to unlock badges and a downloadable certificate.",
 
   // learning paths
   "paths.eyebrow": "Learning paths",
   "paths.title": "Follow a guided roadmap",
-  "paths.subtitle": "Not sure where to begin? These paths sequence courses so each step builds on the last.",
+  "paths.subtitle":
+    "Not sure where to begin? These paths sequence courses so each step builds on the last.",
   "paths.explore": "Explore path",
   "paths.p1.title": "Frontend Developer",
   "paths.p1.level": "Beginner → Job ready",
@@ -171,11 +191,14 @@ export const en: Dict = {
     "Publish courses, host live sessions, grade assignments and grow your own learning community — all from one dashboard.",
   "teach.cta": "Start teaching",
   "teach.p1.title": "Build your course",
-  "teach.p1.text": "Create modules, lessons, quizzes and upload resources with a simple editor.",
+  "teach.p1.text":
+    "Create modules, lessons, quizzes and upload resources with a simple editor.",
   "teach.p2.title": "Teach live",
-  "teach.p2.text": "Run built-in live classes with camera, screen share, chat and recordings.",
+  "teach.p2.text":
+    "Run built-in live classes with camera, screen share, chat and recordings.",
   "teach.p3.title": "Track results",
-  "teach.p3.text": "See enrollments, progress and student performance in your analytics dashboard.",
+  "teach.p3.text":
+    "See enrollments, progress and student performance in your analytics dashboard.",
 
   // faq
   "faq.eyebrow": "FAQ",
@@ -185,13 +208,13 @@ export const en: Dict = {
     "You can create an account and browse published courses for free. Individual teachers decide what content they publish on the platform.",
   "faq.q2": "Do I get a certificate?",
   "faq.a2":
-    "Yes. When you complete all lessons in a course, a downloadable certificate is generated in your Achievements page along with any badges you earned.",
+    "Complete all lessons, pass every course quiz and obtain grades for every assignment to earn a PDF certificate in My Certificates. The server checks eligibility.",
   "faq.q3": "How do live classes work?",
   "faq.a3":
-    "Teachers schedule a live class from the course page. When it starts, you join directly in the browser — no extra app or external meeting link needed. Recordings are available afterwards.",
+    "Teachers schedule a live class from the course page. When it starts, you join directly in the browser — no extra app or external meeting link needed. Recordings are available only when the teacher records and uploads them.",
   "faq.q4": "Can I ask questions while learning?",
   "faq.a4":
-    "Every course has discussions, and the community forum is open for career advice and technical help. Enrolled students can also use the AI course assistant.",
+    "Every course has discussions, and the community forum is open for career advice and technical help. The optional AI assistant requires separate provider configuration.",
   "faq.q5": "Can I teach on ShikkhaHub?",
   "faq.a5":
     "Yes. Sign up and request a teacher account to build courses, host live classes, and grade assignments from the teacher dashboard.",
@@ -203,7 +226,8 @@ export const en: Dict = {
   "cta.button": "Get Started Free",
 
   // footer
-  "footer.tagline": "Learn to code with expert-led courses, live classes, and a thriving developer community.",
+  "footer.tagline":
+    "Learn to code with expert-led courses, live classes, and a thriving developer community.",
   "footer.platform": "Platform",
   "footer.browse": "Browse Courses",
   "footer.account": "Account",
@@ -214,7 +238,6 @@ export const en: Dict = {
   "footer.contact": "Contact",
   "footer.privacy": "Privacy Policy",
   "footer.rights": "All rights reserved.",
-  "footer.built": "Built with ❤️ for developers",
 
   // language toggle
   "lang.switch": "Switch language",
@@ -223,7 +246,8 @@ export const en: Dict = {
 export const bn: Dict = {
   "team.eyebrow": "একাডেমিক প্রকল্প",
   "team.title": "প্রকল্প দলের সাথে পরিচিত হোন",
-  "team.description": "শিক্ষাহাব বাংলাদেশের সিটি ইউনিভার্সিটির কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং বিভাগের শিক্ষার্থীদের তৈরি একটি শেষ বর্ষের প্রকল্প।",
+  "team.description":
+    "শিক্ষাহাব বাংলাদেশের সিটি ইউনিভার্সিটির কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং বিভাগের শিক্ষার্থীদের তৈরি একটি শেষ বর্ষের প্রকল্প।",
   "team.supervisor": "প্রকল্প তত্ত্বাবধায়ক",
   "team.supervisorRole": "প্রভাষক ও সমন্বয়ক, সিএসই বিভাগ, সিটি ইউনিভার্সিটি",
   "nav.tutors": "প্রাইভেট টিউটরিং",
@@ -305,14 +329,18 @@ export const bn: Dict = {
   "home.community.view": "ফোরামে যান",
   "home.credentials.eyebrow": "অগ্রগতির প্রমাণ",
   "home.credentials.title": "দেখানোর মতো দক্ষতা গড়ুন",
-  "home.credentials.subtitle": "লেসন থেকে হাতে-কলমে কাজে এগিয়ে যান, তারপর প্রতিটি অর্জনের পরিষ্কার প্রমাণ সংগ্রহ করুন।",
+  "home.credentials.subtitle":
+    "লেসন থেকে হাতে-কলমে কাজে এগিয়ে যান, তারপর প্রতিটি অর্জনের পরিষ্কার প্রমাণ সংগ্রহ করুন।",
   "home.credentials.cta": "অর্জন দেখুন",
   "home.credentials.certificate.title": "কোর্স সার্টিফিকেট",
-  "home.credentials.certificate.text": "কোর্সের সব লেসন শেষ করে ডাউনলোডযোগ্য সার্টিফিকেট পান।",
+  "home.credentials.certificate.text":
+    "কোর্সের সব লেসন শেষ করে ডাউনলোডযোগ্য সার্টিফিকেট পান।",
   "home.credentials.badges.title": "দক্ষতার ব্যাজ",
-  "home.credentials.badges.text": "চর্চা, অংশগ্রহণ ও অগ্রগতির সাথে নতুন ব্যাজ আনলক করুন।",
+  "home.credentials.badges.text":
+    "চর্চা, অংশগ্রহণ ও অগ্রগতির সাথে নতুন ব্যাজ আনলক করুন।",
   "home.credentials.proof.title": "ব্যবহারিক অগ্রগতি",
-  "home.credentials.proof.text": "কুইজ, অ্যাসাইনমেন্ট ও মতামত ধারণাকে প্রমাণযোগ্য দক্ষতায় পরিণত করে।",
+  "home.credentials.proof.text":
+    "কুইজ, অ্যাসাইনমেন্ট ও মতামত ধারণাকে প্রমাণযোগ্য দক্ষতায় পরিণত করে।",
 
   "featured.eyebrow": "জনপ্রিয়",
   "featured.title": "নির্বাচিত কোর্স",
@@ -321,24 +349,32 @@ export const bn: Dict = {
 
   "categories.eyebrow": "ব্রাউজ",
   "categories.title": "ক্যাটাগরি অনুযায়ী দেখুন",
-  "categories.subtitle": "একটি ট্র্যাক বেছে নিন — বেসিক থেকে শুরু করুন বা সরাসরি অ্যাডভান্সড বিষয়ে যান।",
+  "categories.subtitle":
+    "একটি ট্র্যাক বেছে নিন — বেসিক থেকে শুরু করুন বা সরাসরি অ্যাডভান্সড বিষয়ে যান।",
 
   "features.eyebrow": "ফিচার",
   "features.title1": "উন্নতির জন্য যা যা দরকার",
   "features.title2": "সবই এখানে",
-  "features.subtitle": "শেখা, শেখানো আর একসাথে তৈরি করার একটি সম্পূর্ণ প্ল্যাটফর্ম।",
+  "features.subtitle":
+    "শেখা, শেখানো আর একসাথে তৈরি করার একটি সম্পূর্ণ প্ল্যাটফর্ম।",
   "features.f1.title": "সাজানো কোর্স",
-  "features.f1.desc": "গোছানো মডিউল ও লেসনে শিখুন — ভিডিও, আর্টিকেল এবং ডাউনলোডযোগ্য রিসোর্স।",
+  "features.f1.desc":
+    "গোছানো মডিউল ও লেসনে শিখুন — ভিডিও, আর্টিকেল এবং ডাউনলোডযোগ্য রিসোর্স।",
   "features.f2.title": "লাইভ ক্লাস",
-  "features.f2.desc": "স্ক্রিন শেয়ার, হোয়াইটবোর্ড আর প্রশ্নোত্তরসহ রিয়েল-টাইম ভিডিও সেশনে যোগ দিন।",
+  "features.f2.desc":
+    "স্ক্রিন শেয়ার, হোয়াইটবোর্ড আর প্রশ্নোত্তরসহ রিয়েল-টাইম ভিডিও সেশনে যোগ দিন।",
   "features.f3.title": "ইন্টারঅ্যাকটিভ কনটেন্ট",
-  "features.f3.desc": "কোড ব্লক, সিনট্যাক্স হাইলাইট আর উদাহরণসহ সুন্দরভাবে সাজানো আর্টিকেল পড়ুন।",
+  "features.f3.desc":
+    "কোড ব্লক, সিনট্যাক্স হাইলাইট আর উদাহরণসহ সুন্দরভাবে সাজানো আর্টিকেল পড়ুন।",
   "features.f4.title": "অ্যাসাইনমেন্ট ও কুইজ",
-  "features.f4.desc": "প্রজেক্ট জমা দিন, কুইজ দিন এবং শিক্ষকের বিস্তারিত মতামত ও নম্বর পান।",
+  "features.f4.desc":
+    "প্রজেক্ট জমা দিন, কুইজ দিন এবং শিক্ষকের বিস্তারিত মতামত ও নম্বর পান।",
   "features.f5.title": "ব্যাজ ও সার্টিফিকেট",
-  "features.f5.desc": "কোর্স শেষ করে অর্জনের ব্যাজ আর ডাউনলোডযোগ্য সার্টিফিকেট পান।",
+  "features.f5.desc":
+    "কোর্স শেষ করে অর্জনের ব্যাজ আর ডাউনলোডযোগ্য সার্টিফিকেট পান।",
   "features.f6.title": "কমিউনিটি ফোরাম",
-  "features.f6.desc": "জ্ঞান ভাগ করুন, ক্যারিয়ার পরামর্শ নিন এবং সহ-ডেভেলপারদের সাথে আলোচনা করুন।",
+  "features.f6.desc":
+    "জ্ঞান ভাগ করুন, ক্যারিয়ার পরামর্শ নিন এবং সহ-ডেভেলপারদের সাথে আলোচনা করুন।",
 
   "how.eyebrow": "কীভাবে কাজ করে",
   "how.title": "চার ধাপে শূন্য থেকে সার্টিফায়েড",
@@ -349,11 +385,13 @@ export const bn: Dict = {
   "how.s3.title": "চর্চা ও জমা দেওয়া",
   "how.s3.desc": "কুইজ ও অ্যাসাইনমেন্ট শেষ করুন এবং শিক্ষকের মতামত নিন।",
   "how.s4.title": "সার্টিফিকেট নিন",
-  "how.s4.desc": "কোর্স সম্পূর্ণ করে ব্যাজ ও ডাউনলোডযোগ্য সার্টিফিকেট আনলক করুন।",
+  "how.s4.desc":
+    "কোর্স সম্পূর্ণ করে ব্যাজ ও ডাউনলোডযোগ্য সার্টিফিকেট আনলক করুন।",
 
   "paths.eyebrow": "লার্নিং পাথ",
   "paths.title": "একটি গাইডেড রোডম্যাপ অনুসরণ করুন",
-  "paths.subtitle": "কোথা থেকে শুরু করবেন বুঝছেন না? এই পাথগুলোতে প্রতিটি ধাপ আগের ধাপের ওপর তৈরি।",
+  "paths.subtitle":
+    "কোথা থেকে শুরু করবেন বুঝছেন না? এই পাথগুলোতে প্রতিটি ধাপ আগের ধাপের ওপর তৈরি।",
   "paths.explore": "পাথ দেখুন",
   "paths.p1.title": "ফ্রন্টএন্ড ডেভেলপার",
   "paths.p1.level": "শুরু → চাকরির উপযোগী",
@@ -380,11 +418,14 @@ export const bn: Dict = {
     "কোর্স প্রকাশ করুন, লাইভ সেশন নিন, অ্যাসাইনমেন্ট মূল্যায়ন করুন এবং নিজের শেখার কমিউনিটি গড়ুন — সবই এক ড্যাশবোর্ড থেকে।",
   "teach.cta": "শেখানো শুরু করুন",
   "teach.p1.title": "আপনার কোর্স তৈরি করুন",
-  "teach.p1.text": "সহজ এডিটরে মডিউল, লেসন, কুইজ তৈরি করুন এবং রিসোর্স আপলোড করুন।",
+  "teach.p1.text":
+    "সহজ এডিটরে মডিউল, লেসন, কুইজ তৈরি করুন এবং রিসোর্স আপলোড করুন।",
   "teach.p2.title": "লাইভ পড়ান",
-  "teach.p2.text": "ক্যামেরা, স্ক্রিন শেয়ার, চ্যাট ও রেকর্ডিংসহ বিল্ট-ইন লাইভ ক্লাস নিন।",
+  "teach.p2.text":
+    "ক্যামেরা, স্ক্রিন শেয়ার, চ্যাট ও রেকর্ডিংসহ বিল্ট-ইন লাইভ ক্লাস নিন।",
   "teach.p3.title": "ফলাফল দেখুন",
-  "teach.p3.text": "অ্যানালিটিকস ড্যাশবোর্ডে ভর্তি, অগ্রগতি ও শিক্ষার্থীর ফলাফল দেখুন।",
+  "teach.p3.text":
+    "অ্যানালিটিকস ড্যাশবোর্ডে ভর্তি, অগ্রগতি ও শিক্ষার্থীর ফলাফল দেখুন।",
 
   "faq.eyebrow": "প্রশ্নোত্তর",
   "faq.title": "সাধারণ জিজ্ঞাসা",
@@ -393,10 +434,10 @@ export const bn: Dict = {
     "আপনি ফ্রিতে অ্যাকাউন্ট তৈরি করে প্রকাশিত কোর্স দেখতে পারেন। কোন কনটেন্ট প্রকাশ হবে তা প্রতিটি শিক্ষক নিজে ঠিক করেন।",
   "faq.q2": "সার্টিফিকেট কি পাওয়া যায়?",
   "faq.a2":
-    "হ্যাঁ। কোর্সের সব লেসন শেষ করলে আপনার অর্জন পাতায় ডাউনলোডযোগ্য সার্টিফিকেট এবং অর্জিত ব্যাজ তৈরি হয়ে যায়।",
+    "সব লেসন শেষ, সব কুইজে পাস এবং সব অ্যাসাইনমেন্টে গ্রেড পাওয়ার পর সার্ভার যোগ্যতা যাচাই করে My Certificates পাতায় PDF সার্টিফিকেট দেয়।",
   "faq.q3": "লাইভ ক্লাস কীভাবে কাজ করে?",
   "faq.a3":
-    "শিক্ষক কোর্স পাতা থেকে লাইভ ক্লাস নির্ধারণ করেন। ক্লাস শুরু হলে ব্রাউজারেই সরাসরি যোগ দিতে পারবেন — আলাদা অ্যাপ বা বাইরের লিংক লাগে না। পরে রেকর্ডিংও পাওয়া যায়।",
+    "শিক্ষক কোর্স পাতা থেকে লাইভ ক্লাস নির্ধারণ করেন। ক্লাস শুরু হলে ব্রাউজারেই সরাসরি যোগ দিতে পারবেন — আলাদা অ্যাপ বা বাইরের লিংক লাগে না। শিক্ষক রেকর্ড করে আপলোড করলে রেকর্ডিং পাওয়া যায়।",
   "faq.q4": "শেখার সময় প্রশ্ন করা যাবে?",
   "faq.a4":
     "প্রতিটি কোর্সে আলোচনা আছে, আর কমিউনিটি ফোরামে ক্যারিয়ার ও কৌশলগত সাহায্য পাওয়া যায়। ভর্তি শিক্ষার্থীরা এআই কোর্স সহকারীও ব্যবহার করতে পারেন।",
@@ -409,7 +450,8 @@ export const bn: Dict = {
   "cta.subtitle": "প্রতিদিন নতুন দক্ষতা শেখা হাজারো ডেভেলপারের সাথে যোগ দিন।",
   "cta.button": "ফ্রিতে শুরু করুন",
 
-  "footer.tagline": "বিশেষজ্ঞ শিক্ষকের কোর্স, লাইভ ক্লাস আর সজীব ডেভেলপার কমিউনিটির সাথে কোডিং শিখুন।",
+  "footer.tagline":
+    "বিশেষজ্ঞ শিক্ষকের কোর্স, লাইভ ক্লাস আর সজীব ডেভেলপার কমিউনিটির সাথে কোডিং শিখুন।",
   "footer.platform": "প্ল্যাটফর্ম",
   "footer.browse": "কোর্স দেখুন",
   "footer.account": "অ্যাকাউন্ট",
@@ -420,7 +462,6 @@ export const bn: Dict = {
   "footer.contact": "যোগাযোগ",
   "footer.privacy": "প্রাইভেসি পলিসি",
   "footer.rights": "সর্বস্বত্ব সংরক্ষিত।",
-  "footer.built": "ডেভেলপারদের জন্য ❤️ দিয়ে তৈরি",
 
   "lang.switch": "ভাষা পরিবর্তন",
 };

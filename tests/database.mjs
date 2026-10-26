@@ -3,9 +3,7 @@ import { readdir, readFile } from 'node:fs/promises';
 
 // PostgreSQL engine in WASM. Auth/Storage schemas are small test shims, not GoTrue,
 // PostgREST, Realtime, a storage server, or evidence about a deployed Supabase project.
-export async function createDatabase({ hardening = true } = {}) {
-  const db = new PGlite();
-  await db.exec(`
+export const databaseBootstrapSQL = `
     CREATE ROLE anon NOLOGIN;
     CREATE ROLE authenticated NOLOGIN;
     CREATE ROLE service_role NOLOGIN BYPASSRLS;
@@ -34,11 +32,16 @@ export async function createDatabase({ hardening = true } = {}) {
     GRANT USAGE ON SCHEMA public, auth, storage TO anon, authenticated, service_role;
     GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO authenticated;
     GRANT SELECT ON storage.objects TO anon;
-  `);
+`;
+
+export async function createDatabase({ hardening = true, phase3 = true } = {}) {
+  const db = new PGlite();
+  await db.exec(databaseBootstrapSQL);
   for (const file of (await readdir('supabase/migrations')).filter(f => f.endsWith('.sql')).sort()) {
     // Historical migration only installs two hosted extensions unavailable in WASM.
     if (file.startsWith('20260308214544')) continue;
     if (!hardening && file.startsWith('20261026')) continue;
+    if ((!hardening || !phase3) && file.startsWith('20261027')) continue;
     await db.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
   }
   if (!hardening) await db.exec(await readFile('drizzle/migrations/0000_create_teacher_requests.sql', 'utf8'));

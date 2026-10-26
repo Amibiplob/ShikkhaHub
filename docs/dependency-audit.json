@@ -1,7 +1,7 @@
 {
   "date": "2026-10-27",
   "timezone": "Asia/Dhaka",
-  "baselineCommit": "41ab799",
+  "baselineCommit": "c5b7ddd",
   "phase1": {
     "date": "2026-10-26",
     "timezone": "Asia/Dhaka",
@@ -310,11 +310,11 @@
         },
         "dependencies": {
           "prod": 342,
-          "dev": 304,
+          "dev": 321,
           "optional": 66,
           "peer": 9,
           "peerOptional": 0,
-          "total": 647
+          "total": 664
         }
       }
     },
@@ -332,13 +332,114 @@
         },
         "dependencies": {
           "prod": 342,
-          "dev": 304,
+          "dev": 321,
           "optional": 66,
           "peer": 9,
           "peerOptional": 0,
-          "total": 647
+          "total": 664
         }
       }
+    },
+    "edgeGraph": {
+      "lock": "supabase/functions/deno.lock",
+      "lockSha256": "9a646b07f2661429744018646e2e418c1db071cd2d1fbdcd48fd6c555ab4ff2f",
+      "packageNames": 29,
+      "packageVersionEntries": 31,
+      "versions": {
+        "@pdf-lib/standard-fonts": [
+          "1.0.0"
+        ],
+        "@pdf-lib/upng": [
+          "1.0.1"
+        ],
+        "@supabase/auth-js": [
+          "2.98.0"
+        ],
+        "@supabase/functions-js": [
+          "2.98.0"
+        ],
+        "@supabase/postgrest-js": [
+          "2.98.0"
+        ],
+        "@supabase/realtime-js": [
+          "2.98.0"
+        ],
+        "@supabase/storage-js": [
+          "2.98.0"
+        ],
+        "@supabase/supabase-js": [
+          "2.98.0"
+        ],
+        "@swc/helpers": [
+          "0.5.23"
+        ],
+        "@types/fontkit": [
+          "2.0.9"
+        ],
+        "@types/node": [
+          "26.6.5"
+        ],
+        "@types/phoenix": [
+          "1.6.8"
+        ],
+        "@types/ws": [
+          "8.18.2"
+        ],
+        "base64-js": [
+          "1.5.1"
+        ],
+        "brotli": [
+          "1.3.3"
+        ],
+        "clone": [
+          "2.1.2"
+        ],
+        "dfa": [
+          "1.2.0"
+        ],
+        "fast-deep-equal": [
+          "3.1.3"
+        ],
+        "fontkit": [
+          "2.0.4"
+        ],
+        "iceberg-js": [
+          "0.8.1"
+        ],
+        "pako": [
+          "0.2.9",
+          "1.0.11"
+        ],
+        "pdf-lib": [
+          "1.17.1"
+        ],
+        "restructure": [
+          "3.0.2"
+        ],
+        "tiny-inflate": [
+          "1.0.3"
+        ],
+        "tslib": [
+          "1.14.1",
+          "2.8.1"
+        ],
+        "undici-types": [
+          "8.9.0"
+        ],
+        "unicode-properties": [
+          "1.4.1"
+        ],
+        "unicode-trie": [
+          "2.0.0"
+        ],
+        "ws": [
+          "8.22.0"
+        ]
+      },
+      "method": "POST npm registry bulk-advisory endpoint with all versions grouped per package name",
+      "advisories": {},
+      "result": "zero known findings",
+      "scope": "Separate production Edge graph; root omit=dev excludes local test PDF dependencies and is not sufficient Edge audit evidence"
     }
   },
   "findingsReviewed": [
@@ -505,5 +606,56 @@
     }
   ],
   "overrides": false,
-  "ignores": false
+  "ignores": false,
+  "phase2Historical": {
+    "date": "2026-10-27",
+    "baselineCommit": "41ab799",
+    "current": {
+      "full": {
+        "auditReportVersion": 2,
+        "vulnerabilities": {},
+        "metadata": {
+          "vulnerabilities": {
+            "info": 0,
+            "low": 0,
+            "moderate": 0,
+            "high": 0,
+            "critical": 0,
+            "total": 0
+          },
+          "dependencies": {
+            "prod": 342,
+            "dev": 304,
+            "optional": 66,
+            "peer": 9,
+            "peerOptional": 0,
+            "total": 647
+          }
+        }
+      },
+      "productionOnly": {
+        "auditReportVersion": 2,
+        "vulnerabilities": {},
+        "metadata": {
+          "vulnerabilities": {
+            "info": 0,
+            "low": 0,
+            "moderate": 0,
+            "high": 0,
+            "critical": 0,
+            "total": 0
+          },
+          "dependencies": {
+            "prod": 342,
+            "dev": 304,
+            "optional": 66,
+            "peer": 9,
+            "peerOptional": 0,
+            "total": 647
+          }
+        }
+      }
+    }
+  },
+  "phase": 3
 }

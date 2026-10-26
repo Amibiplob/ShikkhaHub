@@ -11,7 +11,7 @@ test('signup assigns student and persists teacher request without a session',asy
  await db.query(`INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES ($1,'new@example.test','{"full_name":"New teacher","wants_teacher":true}')`,[id]);
  assert.deepEqual((await sql(id,'SELECT role FROM user_roles')).rows,[{role:'student'}]);
  assert.equal((await sql(id,'SELECT status FROM teacher_requests')).rows[0].status,'pending');
- await assert.rejects(()=>sql(id,`INSERT INTO user_roles(user_id,role) VALUES ($1,'admin')`,[id]),/row-level security/);
+ await assert.rejects(()=>sql(id,`INSERT INTO user_roles(user_id,role) VALUES ($1,'admin')`,[id]),/permission denied/);
  const req=(await sql(id,'SELECT id FROM teacher_requests')).rows[0].id;
  await assert.rejects(()=>sql(id,`SELECT review_teacher_request($1,true)`,[req]),/Administrator/);
  await sql(ids.admin,`SELECT review_teacher_request($1,true)`,[req]);
@@ -66,12 +66,12 @@ test('teacher can view enrolled progress; other teachers cannot',async()=>{
  assert.equal((await sql(ids.other,'SELECT lesson_id FROM lesson_progress')).rows.length,0);
  await assert.rejects(()=>sql(ids.other,'INSERT INTO lesson_progress(user_id,lesson_id,completed) VALUES($1,$2,true)',[ids.other,ids.lesson]),/row-level security/);
 });
-test('certificate claims require all lessons and enrollment',async()=>{
- await assert.rejects(()=>sql(ids.other,'INSERT INTO certificates(user_id,course_id) VALUES($1,$2)',[ids.other,ids.course]),/row-level security/);
+test('certificate claims require all lessons, assessment results and enrollment',async()=>{
+ await assert.rejects(()=>sql(ids.other,'SELECT issue_course_certificate($1)',[ids.course]),/Complete all lessons/);
  await sql(ids.student,'DELETE FROM lesson_progress WHERE user_id=$1',[ids.student]);
- await assert.rejects(()=>sql(ids.student,'INSERT INTO certificates(user_id,course_id) VALUES($1,$2)',[ids.student,ids.course]),/row-level security/);
+ await assert.rejects(()=>sql(ids.student,'SELECT issue_course_certificate($1)',[ids.course]),/Complete all lessons/);
  await sql(ids.student,'INSERT INTO lesson_progress(user_id,lesson_id,completed) VALUES($1,$2,true)',[ids.student,ids.lesson]);
- await sql(ids.student,'INSERT INTO certificates(user_id,course_id) VALUES($1,$2)',[ids.student,ids.course]);
+ await sql(ids.student,'SELECT issue_course_certificate($1)',[ids.course]);
  assert.equal((await sql(ids.student,'SELECT id FROM certificates')).rows.length,1);
 });
 test('lesson files are private, enrolled reads work, cross-owner upload/delete fail',async()=>{
@@ -90,8 +90,9 @@ test('private assignment files are visible only to student and owner',async()=>{
  assert.equal((await sql(ids.other,"SELECT name FROM storage.objects WHERE bucket_id='submissions'")).rows.length,0);
 });
 test('self-demotion and final administrator removal fail on DELETE and UPDATE',async()=>{
- await assert.rejects(()=>sql(ids.admin,"DELETE FROM user_roles WHERE role='admin'"),/own admin/);
- assert.equal((await sql(ids.admin,"UPDATE user_roles SET role='student' WHERE role='admin' RETURNING id")).rows.length,0);
+ await assert.rejects(()=>sql(ids.admin,"DELETE FROM user_roles WHERE role='admin'"),/permission denied/);
+ await assert.rejects(()=>sql(ids.admin,"SELECT admin_set_role($1,'admin',false,'Cannot demote self')",[ids.admin]),/own admin/);
+ await assert.rejects(()=>sql(ids.admin,"UPDATE user_roles SET role='student' WHERE role='admin' RETURNING id"),/permission denied/);
  await db.query("SELECT set_config('request.jwt.claim.sub', '', false)");
  await assert.rejects(()=>db.exec("DELETE FROM user_roles WHERE role='admin'"),/At least one admin/);
 });
@@ -102,15 +103,15 @@ test('live class metadata is scoped to participants',async()=>{
  assert.equal((await sql(null,'SELECT room_name FROM live_classes')).rows.length,0);
 });
 test('tutoring approval is teacher-only and private, with a single reservation',async()=>{
- const slot=(await sql(ids.teacher,"INSERT INTO tutor_slots(teacher_id,subject,starts_at,ends_at) VALUES($1,'Programming',now()+interval '2 days',now()+interval '2 days 1 hour') RETURNING id",[ids.teacher])).rows[0].id;
- const req=(await sql(ids.student,"INSERT INTO tutoring_requests(slot_id,student_id,message) VALUES($1,$2,'Help with loops') RETURNING id",[slot,ids.student])).rows[0].id;
- await assert.rejects(()=>sql(ids.student,"UPDATE tutoring_requests SET status='approved',meeting_url='https://example.test/meeting' WHERE id=$1",[req]),/only cancel/);
- assert.equal((await sql(ids.other,'SELECT id FROM tutoring_requests')).rows.length,0);
- await sql(ids.teacher,"UPDATE tutoring_requests SET status='approved',meeting_url='https://example.test/meeting' WHERE id=$1",[req]);
+ const slot=(await sql(ids.teacher,"SELECT id FROM save_tutor_slot(NULL,'Programming',now()+interval '2 days',60,'UTC',1)")).rows[0].id;
+ const req=(await sql(ids.student,"SELECT id FROM request_tutoring($1,'Help with loops')",[slot])).rows[0].id;
+ const req2=(await sql(ids.other,"SELECT id FROM request_tutoring($1,'Another request')",[slot])).rows[0].id;
+ await assert.rejects(()=>sql(ids.student,"SELECT decide_tutoring($1,'approve','https://example.test/meeting',NULL)",[req]),/Only the teacher/);
+ assert.equal((await sql(ids.other,'SELECT id FROM tutoring_requests WHERE id=$1',[req])).rows.length,0);
+ await sql(ids.teacher,"SELECT decide_tutoring($1,'approve','https://example.test/meeting',NULL)",[req]);
  assert.equal((await sql(ids.student,'SELECT meeting_url FROM tutoring_requests WHERE id=$1',[req])).rows[0].meeting_url,'https://example.test/meeting');
- assert.equal((await sql(ids.other,'SELECT meeting_url FROM tutoring_requests')).rows.length,0);
- const req2=(await sql(ids.other,"INSERT INTO tutoring_requests(slot_id,student_id,message) VALUES($1,$2,'Another request') RETURNING id",[slot,ids.other])).rows[0].id;
- await assert.rejects(()=>sql(ids.teacher,"UPDATE tutoring_requests SET status='approved',meeting_url='https://example.test/meeting' WHERE id=$1",[req2]),/unique constraint/);
+ assert.equal((await sql(ids.other,'SELECT meeting_url FROM tutoring_requests WHERE id=$1',[req])).rows.length,0);
+ await assert.rejects(()=>sql(ids.teacher,"SELECT decide_tutoring($1,'approve','https://example.test/meeting',NULL)",[req2]),/pending booking/);
 });
 test('private signaling rejects outsiders and impersonation, stamps authenticated identity',async()=>{
  await assert.rejects(()=>sql(ids.other,"SELECT send_live_signal('private-room','join-request','{}')"),/Course access/);
