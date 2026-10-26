@@ -1,3 +1,4 @@
+import type { Tables } from "@/integrations/supabase/types";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ interface StudentProgressTrackerProps {
 }
 
 const StudentProgressTracker = ({ courseId, isTeacher }: StudentProgressTrackerProps) => {
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<(Pick<Tables<'profiles'>, 'user_id' | 'full_name' | 'avatar_url'> & { completedLessons: number; totalLessons: number; progressPercent: number })[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,10 +40,10 @@ const StudentProgressTracker = ({ courseId, isTeacher }: StudentProgressTrackerP
         supabase.from("modules").select("id, course_id, lessons(id)").eq("course_id", courseId),
       ]);
 
-      const allLessonIds = (modulesRes.data || []).flatMap((m: any) => m.lessons?.map((l: any) => l.id) || []);
+      const allLessonIds = (modulesRes.data || []).flatMap((m) => m.lessons?.map((l) => l.id) || []);
       const totalLessons = allLessonIds.length;
 
-      let progressData: any[] = [];
+      let progressData: Pick<Tables<'lesson_progress'>,'user_id'|'lesson_id'>[] = [];
       if (allLessonIds.length > 0) {
         const { data } = await supabase
           .from("lesson_progress")

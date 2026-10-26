@@ -1,3 +1,4 @@
+import type { LiveSession, Recording } from "@/lib/models";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +22,7 @@ const LiveClass = () => {
   const { roomName } = useParams<{ roomName: string }>();
   const { user, loading: authLoading, profile } = useAuth();
   const navigate = useNavigate();
-  const [liveClass, setLiveClass] = useState<any>(null);
+  const [liveClass, setLiveClass] = useState<LiveSession>(null);
   const [loading, setLoading] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [showChat, setShowChat] = useState(true);
@@ -85,7 +86,8 @@ const LiveClass = () => {
   const handleStartCamera = async () => {
     try {
       await teacher.startBroadcast("camera");
-      await supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
+      const { error } = await supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
+      if (error) { teacher.stopBroadcast(); throw error; }
       toast.success("You're now live with camera!");
     } catch {
       toast.error("Camera unavailable. Try screen share or audio-only.");
@@ -95,7 +97,8 @@ const LiveClass = () => {
   const handleStartScreen = async () => {
     try {
       await teacher.startBroadcast("screen");
-      await supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
+      const { error } = await supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
+      if (error) { teacher.stopBroadcast(); throw error; }
       toast.success("You're now live with screen share!");
     } catch {
       toast.error("Could not start screen share.");
@@ -105,7 +108,8 @@ const LiveClass = () => {
   const handleStartAudio = async () => {
     try {
       await teacher.startBroadcast("audio-only");
-      await supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
+      const { error } = await supabase.from("live_classes").update({ status: "live" }).eq("id", liveClass.id);
+      if (error) { teacher.stopBroadcast(); throw error; }
       toast.success("You're now live with audio!");
     } catch {
       toast.error("Could not access microphone.");
@@ -126,9 +130,10 @@ const LiveClass = () => {
         await handleStopRecordingAndUpload();
       }
       teacher.stopBroadcast();
-      await supabase.from("live_classes").update({ status: "expired" }).eq("id", liveClass.id);
-      setLiveClass((prev: any) => (prev ? { ...prev, status: "expired" } : prev));
-      toast.info("Meeting ended and marked as expired.");
+      const { error } = await supabase.from("live_classes").update({ status: "completed" }).eq("id", liveClass.id);
+      if (error) { toast.error("Could not end the class. Try again."); return; }
+      setLiveClass((prev) => (prev ? { ...prev, status: "completed" } : prev));
+      toast.info("Meeting ended.");
     } else {
       student.leaveBroadcast();
     }
@@ -143,29 +148,26 @@ const LiveClass = () => {
     setUploading(true);
     try {
       const blob = await teacher.stopRecording();
-      const fileName = `${user!.id}/${roomName}-${Date.now()}.webm`;
+      const fileName = `${liveClass.id}/${crypto.randomUUID()}.webm`;
       const { error: uploadError } = await supabase.storage
         .from("class-recordings")
         .upload(fileName, blob, { contentType: "video/webm" });
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from("class-recordings")
-        .getPublicUrl(fileName);
-
-      await supabase.from("class_recordings").insert({
+      const { error: recordError } = await supabase.from("class_recordings").insert({
         live_class_id: liveClass.id,
         teacher_id: user!.id,
-        file_url: urlData.publicUrl,
+        file_url: fileName,
         file_size: blob.size,
         duration_seconds: teacher.recordingDuration,
         title: `${liveClass.title} — ${format(new Date(), "MMM d, h:mm a")}`,
       });
 
+      if (recordError) throw recordError;
       toast.success("Recording saved!");
-    } catch (err: any) {
-      console.error("Upload failed:", err);
+    } catch (err) {
+
       toast.error("Failed to save recording.");
     } finally {
       setUploading(false);
@@ -324,7 +326,7 @@ const LiveClass = () => {
             <h2 className="text-xl font-semibold">This class has {liveClass.status === "expired" ? "expired" : "ended"}</h2>
             <p className="text-muted-foreground">
               {liveClass.status === "expired"
-                ? "Live classes expire 24 hours after creation. Please schedule a new class."
+                ? "This session is no longer available. Please contact the teacher."
                 : "The teacher has ended this live session."}
             </p>
             <Button variant="outline" onClick={() => navigate("/dashboard")}>
@@ -392,7 +394,7 @@ const LiveClass = () => {
 
         {/* Live view with chat */}
         {isActive && (
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
             {/* Video area */}
             <div className="flex-1 flex flex-col items-center justify-center bg-black relative min-w-0">
               {/* Teacher view */}
@@ -438,7 +440,7 @@ const LiveClass = () => {
 
             {/* Chat panel */}
             {showChat && (
-              <div className="w-80 border-l border-border bg-card flex flex-col shrink-0">
+              <div className="w-full md:w-80 border-l border-border bg-card flex flex-col shrink-0">
                 <div className="px-4 py-3 border-b border-border font-semibold text-sm flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-primary" /> Live Chat
                 </div>
@@ -464,12 +466,14 @@ const LiveClass = () => {
                 </ScrollArea>
                 <form onSubmit={handleSendChat} className="p-3 border-t border-border flex gap-2">
                   <Input
+                    aria-label="Live chat message"
+                    maxLength={2000}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Type a message..."
                     className="flex-1 text-sm h-9"
                   />
-                  <Button type="submit" size="icon" className="h-9 w-9 shrink-0" disabled={!chatInput.trim()}>
+                  <Button aria-label="Send chat message" type="submit" size="icon" className="h-9 w-9 shrink-0" disabled={!chatInput.trim()}>
                     <Send className="h-4 w-4" />
                   </Button>
                 </form>

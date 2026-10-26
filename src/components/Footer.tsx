@@ -24,6 +24,8 @@ const Footer = () => {
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider">{t("footer.platform")}</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li><Link to="/courses" className="hover:text-primary transition-colors">{t("footer.browse")}</Link></li>
+              <li><Link to="/tutors" className="hover:text-primary transition-colors">{t("nav.tutors")}</Link></li>
+              <li><Link to="/#project-team" className="hover:text-primary transition-colors">{t("footer.about")}</Link></li>
               <li><Link to="/community" className="hover:text-primary transition-colors">{t("nav.community")}</Link></li>
               <li><Link to="/leaderboard" className="hover:text-primary transition-colors">{t("nav.leaderboard")}</Link></li>
             </ul>

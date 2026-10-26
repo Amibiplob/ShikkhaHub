@@ -11,15 +11,21 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const authorization = req.headers.get("Authorization");
+    if (!authorization?.startsWith("Bearer ")) return new Response(JSON.stringify({error:"Sign in required"}), {status:401,headers:{...corsHeaders,"Content-Type":"application/json"}});
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authorization } } });
+    const { data: {user}, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) return new Response(JSON.stringify({error:"Invalid session"}), {status:401,headers:{...corsHeaders,"Content-Type":"application/json"}});
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const { messages, courseId } = await req.json();
 
-    // Fetch course context
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    if (!Array.isArray(messages) || messages.length < 1 || messages.length > 20 || messages.some(m => !m || !["user","assistant"].includes(m.role) || typeof m.content !== "string" || m.content.length > 4000)) {
+      return new Response(JSON.stringify({error:"Invalid conversation"}), {status:400,headers:{...corsHeaders,"Content-Type":"application/json"}});
+    }
+    // The caller's JWT and RLS govern all context reads; no service-role bypass.
+
 
     let courseContext = "";
     if (courseId) {
@@ -42,7 +48,7 @@ serve(async (req) => {
           for (const mod of modules) {
             courseContext += `\n\n## ${mod.title}`;
             if (mod.description) courseContext += `\n${mod.description}`;
-            for (const lesson of (mod as any).lessons || []) {
+            for (const lesson of mod.lessons || []) {
               courseContext += `\n- ${lesson.title} (${lesson.type})`;
               if (lesson.content) courseContext += `\n  Content: ${lesson.content.substring(0, 500)}`;
             }
@@ -94,7 +100,7 @@ Be concise, encouraging, and educational. Use markdown formatting for clarity. I
     });
   } catch (e) {
     console.error("course-assistant error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "Assistant unavailable. Please try again later." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

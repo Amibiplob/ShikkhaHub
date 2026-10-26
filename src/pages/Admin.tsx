@@ -1,3 +1,6 @@
+import TeacherRequests from "@/components/TeacherRequests";
+import type { Tables } from "@/integrations/supabase/types";
+import type { Course, LiveSession, Post } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,14 +31,15 @@ const Admin = () => {
   const { user, loading: authLoading, hasRole } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
 
   // Data
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [roles, setRoles] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [posts, setPosts] = useState<any[]>([]);
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [liveClasses, setLiveClasses] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<Tables<'profiles'>[]>([]);
+  const [roles, setRoles] = useState<Tables<'user_roles'>[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [enrollments, setEnrollments] = useState<(Tables<'enrollments'> & { courses?: {title: string} })[]>([]);
+  const [liveClasses, setLiveClasses] = useState<LiveSession[]>([]);
   const [searchUsers, setSearchUsers] = useState("");
   const [searchCourses, setSearchCourses] = useState("");
 
@@ -52,7 +56,7 @@ const Admin = () => {
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("*"),
         supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name)").order("created_at", { ascending: false }),
-        supabase.from("community_posts").select("*, profiles!community_posts_user_id_fkey(full_name)").order("created_at", { ascending: false }),
+        supabase.from("community_posts").select("*, profiles!community_posts_user_id_profiles_fkey(full_name)").order("created_at", { ascending: false }),
         supabase.from("enrollments").select("*, courses(title)"),
         supabase.from("live_classes").select("*, courses(title)").order("scheduled_at", { ascending: false }),
       ]);
@@ -65,7 +69,7 @@ const Admin = () => {
       setLoading(false);
     };
     fetchAll();
-  }, [user, hasRole]);
+  }, [user, hasRole, revision]);
 
   const getUserRoles = (userId: string) =>
     roles.filter((r) => r.user_id === userId).map((r) => r.role);
@@ -107,7 +111,7 @@ const Admin = () => {
   };
 
   const removeRole = async (userId: string, role: "admin" | "teacher" | "student") => {
-    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role as any);
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
     if (error) toast.error(error.message);
     else {
       setRoles((prev) => prev.filter((r) => !(r.user_id === userId && r.role === role)));
@@ -175,6 +179,7 @@ const Admin = () => {
           <StatCard icon={Flag} label="Reported Posts" value={reportedPosts.length} small accent={reportedPosts.length > 0} />
         </div>
 
+        <TeacherRequests onReviewed={() => setRevision(r => r + 1)} />
         <Tabs defaultValue="users">
           <TabsList className="mb-4">
             <TabsTrigger value="users"><Users className="mr-1.5 h-3.5 w-3.5" /> Users</TabsTrigger>
@@ -335,7 +340,7 @@ const Admin = () => {
   );
 };
 
-const StatCard = ({ icon: Icon, label, value, sub, small, accent }: any) => (
+const StatCard = ({ icon: Icon, label, value, sub, small, accent }: { icon: import("lucide-react").LucideIcon; label: string; value: string | number; sub?: string; small?: boolean; accent?: boolean }) => (
   <div className={`rounded-xl border border-border bg-card ${small ? "p-3" : "p-5"}`}>
     <Icon className={`mb-1.5 ${small ? "h-4 w-4" : "h-5 w-5"} ${accent ? "text-destructive" : "text-primary"}`} />
     <p className={`${small ? "text-xl" : "text-2xl"} font-bold`}>{value}</p>
@@ -343,7 +348,7 @@ const StatCard = ({ icon: Icon, label, value, sub, small, accent }: any) => (
   </div>
 );
 
-const PostRow = ({ post, onDelete, onPin }: { post: any; onDelete: (id: string) => void; onPin: (id: string, current: boolean) => void }) => (
+const PostRow = ({ post, onDelete, onPin }: { post: Post; onDelete: (id: string) => void; onPin: (id: string, current: boolean) => void }) => (
   <div className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2">

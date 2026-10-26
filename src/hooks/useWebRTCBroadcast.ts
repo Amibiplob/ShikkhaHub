@@ -1,3 +1,5 @@
+import type { Json } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -5,6 +7,12 @@ const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
 ];
+
+async function sendLive(room: string, message: { type: string; event: string; payload: object }) {
+  const { error } = await supabase.rpc("send_live_signal", { room, signal_event: message.event, signal_payload: message.payload as Json });
+  if (error) { toast.error("Live connection failed. Check your access and retry."); return "error"; }
+  return "ok";
+}
 
 interface PeerState {
   pc: RTCPeerConnection;
@@ -35,6 +43,7 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
   const peersRef = useRef<Map<string, PeerState>>(new Map());
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
   const activeTrackRef = useRef<MediaStreamTrack | null>(null);
 
   const startBroadcast = useCallback(async (mode: "camera" | "screen" | "audio-only") => {
@@ -55,6 +64,7 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
           ...(audioTrack ? [audioTrack] : screenStream.getAudioTracks()),
         ]);
         setScreenStream(screenStream);
+        screenStreamRef.current = screenStream;
 
         screenStream.getVideoTracks()[0].onended = () => {
           stopBroadcast();
@@ -79,6 +89,7 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
             const ss = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             stream = ss;
             setScreenStream(ss);
+            screenStreamRef.current = ss;
             ss.getVideoTracks()[0].onended = () => stopBroadcast();
           }
         }
@@ -90,7 +101,7 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
       setIsLive(true);
 
       const channel = supabase.channel(`live-${roomName}`, {
-        config: { broadcast: { self: false } },
+        config: { private: true, broadcast: { self: false } },
       });
 
       channel
@@ -109,7 +120,7 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
 
           pc.onicecandidate = (e) => {
             if (e.candidate) {
-              channel.send({
+              sendLive(roomName, {
                 type: "broadcast",
                 event: "ice-candidate",
                 payload: { candidate: e.candidate.toJSON(), targetId: studentId, fromId: userId },
@@ -128,7 +139,7 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
 
-          channel.send({
+          sendLive(roomName, {
             type: "broadcast",
             event: "offer",
             payload: { sdp: offer, targetId: studentId, fromId: userId },
@@ -145,11 +156,15 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
           if (payload.targetId !== userId) return;
           const peer = peersRef.current.get(payload.fromId);
           if (peer) {
-            try { await peer.pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch {}
+            try { await peer.pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* Stale candidate after a peer disconnect. */ }
           }
         })
         .on("broadcast", { event: "chat-message" }, ({ payload }) => {
           setChatMessages((prev) => [...prev, payload as ChatMessage]);
+        })
+        .on("broadcast", { event: "leave" }, ({ payload }) => {
+          const peer = peersRef.current.get(payload.fromId);
+          peer?.pc.close(); peersRef.current.delete(payload.fromId); setViewerCount(peersRef.current.size);
         })
         .on("broadcast", { event: "raise-hand" }, ({ payload }) => {
           setRaisedHands((prev) =>
@@ -159,17 +174,21 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
           setTimeout(() => {
             setRaisedHands((prev) => prev.filter((n) => n !== payload.userName));
           }, 10000);
-        })
-        .subscribe();
+        });
 
       channelRef.current = channel;
 
-      // Announce teacher is live
-      setTimeout(() => {
-        channel.send({ type: "broadcast", event: "teacher-live", payload: { teacherId: userId } });
-      }, 1000);
-    } catch (err: any) {
-      console.error("Failed to start broadcast:", err);
+      // Announce only after the server has authorized the private subscription.
+      await new Promise<void>((resolve, reject) => {
+        channel.subscribe(status => {
+          if (status === "SUBSCRIBED") { void sendLive(roomName, { type: "broadcast", event: "teacher-live", payload: { teacherId: userId } }); resolve(); }
+          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { stopBroadcast(); reject(new Error("Could not connect to class")); }
+        });
+      });
+    } catch (err: unknown) {
+      localStreamRef.current?.getTracks().forEach(track => track.stop());
+      screenStreamRef.current?.getTracks().forEach(track => track.stop());
+      setIsLive(false);
       throw err;
     }
   }, [roomName, userId]);
@@ -183,9 +202,9 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
       message: message.trim(),
       timestamp: Date.now(),
     };
-    channelRef.current.send({ type: "broadcast", event: "chat-message", payload: msg });
-    setChatMessages((prev) => [...prev, msg]);
-  }, [userId, userName]);
+    sendLive(roomName, { type: "broadcast", event: "chat-message", payload: msg });
+
+  }, [roomName, userId, userName]);
 
   const toggleMute = useCallback(() => {
     localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
@@ -204,6 +223,7 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
     try {
       const screen = await navigator.mediaDevices.getDisplayMedia({ video: true });
       setScreenStream(screen);
+      screenStreamRef.current = screen;
       const videoTrack = screen.getVideoTracks()[0];
 
       peersRef.current.forEach(({ pc }) => {
@@ -228,11 +248,12 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
 
   const stopBroadcast = useCallback(() => {
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStream?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
     peersRef.current.forEach(({ pc }) => pc.close());
     peersRef.current.clear();
     if (channelRef.current) {
-      channelRef.current.send({ type: "broadcast", event: "teacher-ended", payload: {} });
+      sendLive(roomName, { type: "broadcast", event: "teacher-ended", payload: {} });
       channelRef.current.unsubscribe();
     }
     setLocalStream(null);
@@ -241,11 +262,14 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
     setViewerCount(0);
     setIsMuted(false);
     setIsCamOff(false);
-  }, [screenStream]);
+  }, [roomName]);
 
   useEffect(() => {
     return () => {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
       peersRef.current.forEach(({ pc }) => pc.close());
       channelRef.current?.unsubscribe();
     };
@@ -334,24 +358,24 @@ export function useStudentViewer(roomName: string, userId: string, userName: str
       message: message.trim(),
       timestamp: Date.now(),
     };
-    channelRef.current.send({ type: "broadcast", event: "chat-message", payload: msg });
-    setChatMessages((prev) => [...prev, msg]);
-  }, [userId, userName]);
+    sendLive(roomName, { type: "broadcast", event: "chat-message", payload: msg });
+
+  }, [roomName, userId, userName]);
 
   const raiseHand = useCallback(() => {
-    channelRef.current?.send({
+    if (channelRef.current) void sendLive(roomName, {
       type: "broadcast",
       event: "raise-hand",
       payload: { userId, userName },
     });
-  }, [userId, userName]);
+  }, [roomName, userId, userName]);
 
   const joinBroadcast = useCallback(() => {
     setConnecting(true);
     setEnded(false);
 
     const channel = supabase.channel(`live-${roomName}`, {
-      config: { broadcast: { self: false } },
+      config: { private: true, broadcast: { self: false } },
     });
 
     channel
@@ -371,7 +395,7 @@ export function useStudentViewer(roomName: string, userId: string, userName: str
 
         pc.onicecandidate = (e) => {
           if (e.candidate) {
-            channel.send({
+            sendLive(roomName, {
               type: "broadcast",
               event: "ice-candidate",
               payload: { candidate: e.candidate.toJSON(), targetId: payload.fromId, fromId: userId },
@@ -390,7 +414,7 @@ export function useStudentViewer(roomName: string, userId: string, userName: str
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        channel.send({
+        sendLive(roomName, {
           type: "broadcast",
           event: "answer",
           payload: { sdp: answer, targetId: payload.fromId, fromId: userId },
@@ -399,11 +423,11 @@ export function useStudentViewer(roomName: string, userId: string, userName: str
       .on("broadcast", { event: "ice-candidate" }, async ({ payload }) => {
         if (payload.targetId !== userId) return;
         if (pcRef.current) {
-          try { await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch {}
+          try { await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* Stale candidate after a peer disconnect. */ }
         }
       })
       .on("broadcast", { event: "teacher-live" }, () => {
-        channel.send({
+        sendLive(roomName, {
           type: "broadcast",
           event: "join-request",
           payload: { studentId: userId, studentName: userName },
@@ -419,20 +443,32 @@ export function useStudentViewer(roomName: string, userId: string, userName: str
       .on("broadcast", { event: "chat-message" }, ({ payload }) => {
         setChatMessages((prev) => [...prev, payload as ChatMessage]);
       })
-      .subscribe(() => {
-        setTimeout(() => {
-          channel.send({
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { setConnecting(false); toast.error("Could not connect to class"); return; }
+        if (status !== "SUBSCRIBED") return;
+        {
+          sendLive(roomName, {
             type: "broadcast",
             event: "join-request",
             payload: { studentId: userId, studentName: userName },
           });
-        }, 500);
+        }
       });
 
     channelRef.current = channel;
   }, [roomName, userId, userName]);
 
+  useEffect(() => {
+    if (!connecting) return;
+    const timeout = setTimeout(() => {
+      setConnecting(false); pcRef.current?.close(); channelRef.current?.unsubscribe();
+      toast.error("Connection timed out. Check that the teacher is live and try again.");
+    }, 15000);
+    return () => clearTimeout(timeout);
+  }, [connecting]);
+
   const leaveBroadcast = useCallback(() => {
+    if (channelRef.current) void sendLive(roomName, { type: "broadcast", event: "leave", payload: {} });
     pcRef.current?.close();
     pcRef.current = null;
     channelRef.current?.unsubscribe();
@@ -440,7 +476,7 @@ export function useStudentViewer(roomName: string, userId: string, userName: str
     setRemoteStream(null);
     setConnected(false);
     setConnecting(false);
-  }, []);
+  }, [roomName]);
 
   useEffect(() => {
     return () => {

@@ -1,3 +1,6 @@
+import type { Assignment, Submission, Review } from "@/lib/models";
+import { allowedDocument } from "@/lib/storage";
+import PrivateFileLink from "@/components/PrivateFileLink";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,9 +31,9 @@ const AssignmentDetail = () => {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
-  const [assignment, setAssignment] = useState<any>(null);
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [mySubmission, setMySubmission] = useState<any>(null);
+  const [assignment, setAssignment] = useState<Assignment>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [mySubmission, setMySubmission] = useState<Submission>(null);
   const [loading, setLoading] = useState(true);
 
   // Submit form
@@ -89,6 +92,8 @@ const AssignmentDetail = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !assignmentId) return;
+    if (subType !== "file" && !/^https:\/\/[^\s]+$/i.test(subContent.trim())) { toast.error("Enter a valid HTTPS URL"); return; }
+    if (selectedFile && !allowedDocument(selectedFile)) { toast.error("Use a PDF, TXT, DOC, DOCX or ZIP under 10MB"); return; }
     setSubmitting(true);
 
     let fileUrl: string | null = null;
@@ -112,10 +117,7 @@ const AssignmentDetail = () => {
         setUploading(false);
         return;
       }
-      const { data: urlData } = supabase.storage
-        .from("submissions")
-        .getPublicUrl(filePath);
-      fileUrl = urlData.publicUrl;
+      fileUrl = filePath;
       content = selectedFile.name;
       setUploading(false);
     }
@@ -143,34 +145,25 @@ const AssignmentDetail = () => {
   };
 
   const handleReview = async (submissionId: string) => {
+    const value = Number(marks);
+    if (!marks.trim() || !Number.isInteger(value) || value < 0 || value > assignment.max_marks) { toast.error("Enter valid marks within the assignment range"); return; }
     setReviewing(true);
     const { error } = await supabase
       .from("submissions")
       .update({
         marks: marks ? parseInt(marks) : null,
         feedback: feedback || null,
-        status: "reviewed",
+        status: "graded",
         reviewed_at: new Date().toISOString(),
       })
       .eq("id", submissionId);
     if (error) toast.error(error.message);
     else {
       toast.success("Review saved!");
-      // Send notification to student
-      const sub = submissions.find((s) => s.id === submissionId);
-      if (sub) {
-        await supabase.from("notifications").insert({
-          user_id: sub.student_id,
-          title: "Assignment Graded",
-          message: `Your submission for "${assignment.title}" has been reviewed. ${marks ? `Score: ${marks}/${assignment.max_marks}` : ""}`,
-          type: "grade",
-          link: `/assignments/${assignmentId}`,
-        });
-      }
       setSubmissions((prev) =>
         prev.map((s) =>
           s.id === submissionId
-            ? { ...s, marks: marks ? parseInt(marks) : null, feedback, status: "reviewed", reviewed_at: new Date().toISOString() }
+            ? { ...s, marks: marks ? parseInt(marks) : null, feedback, status: "graded", reviewed_at: new Date().toISOString() }
             : s
         )
       );
@@ -220,6 +213,7 @@ const AssignmentDetail = () => {
   const statusBadge = (status: string) => {
     switch (status) {
       case "submitted": return <Badge variant="secondary"><Clock className="mr-1 h-3 w-3" />Pending</Badge>;
+      case "graded":
       case "reviewed": return <Badge className="bg-success/10 text-success border-success/20"><CheckCircle2 className="mr-1 h-3 w-3" />Reviewed</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
@@ -280,9 +274,9 @@ const AssignmentDetail = () => {
                       {mySubmission.content} <ExternalLink className="h-3 w-3" />
                     </a>
                   ) : mySubmission.submission_type === "file" && mySubmission.file_url ? (
-                    <a href={mySubmission.file_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                    <PrivateFileLink bucket="submissions" path={mySubmission.file_url}>
                       <Download className="h-3.5 w-3.5" /> {mySubmission.content}
-                    </a>
+                    </PrivateFileLink>
                   ) : (
                     <p className="text-sm">{mySubmission.content}</p>
                   )}
@@ -320,9 +314,9 @@ const AssignmentDetail = () => {
                       </DialogHeader>
                       <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                          <Label>Submission Type</Label>
+                          <Label htmlFor="assignmentdetail-select-3">Submission Type</Label>
                           <Select value={subType} onValueChange={setSubType}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectTrigger id="assignmentdetail-select-3"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {(assignment.submission_types as string[])?.map((t) => (
                                 <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>
@@ -332,7 +326,7 @@ const AssignmentDetail = () => {
                         </div>
                         {subType === "file" ? (
                           <div>
-                            <Label>Upload File (PDF, images, documents — max 10MB)</Label>
+                            <Label>Upload File (PDF, TXT, DOC, DOCX, ZIP — max 10MB)</Label>
                             <input
                               ref={fileInputRef}
                               type="file"
@@ -427,9 +421,9 @@ const AssignmentDetail = () => {
                               {sub.content} <ExternalLink className="h-3 w-3 shrink-0" />
                             </a>
                           ) : sub.submission_type === "file" && sub.file_url ? (
-                            <a href={sub.file_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm flex items-center gap-1 truncate">
+                            <PrivateFileLink bucket="submissions" path={sub.file_url}>
                               <Download className="h-3 w-3 shrink-0" /> {sub.content}
-                            </a>
+                            </PrivateFileLink>
                           ) : (
                             <span className="text-sm truncate block">{sub.content}</span>
                           )}
@@ -470,21 +464,21 @@ const AssignmentDetail = () => {
                                         {sub.content}
                                       </a>
                                     ) : sub.submission_type === "file" && sub.file_url ? (
-                                      <a href={sub.file_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                                      <PrivateFileLink bucket="submissions" path={sub.file_url}>
                                         <Download className="h-3 w-3" /> {sub.content}
-                                      </a>
+                                      </PrivateFileLink>
                                     ) : (
                                       <span>{sub.content}</span>
                                     )}
                                   </div>
                                 </div>
                                 <div>
-                                  <Label>Marks (out of {assignment.max_marks})</Label>
-                                  <Input type="number" min={0} max={assignment.max_marks} value={marks} onChange={(e) => setMarks(e.target.value)} />
+                                  <Label htmlFor="assignmentdetail-field-1">Marks (out of {assignment.max_marks})</Label>
+                                  <Input id="assignmentdetail-field-1" type="number" min={0} max={assignment.max_marks} value={marks} onChange={(e) => setMarks(e.target.value)} />
                                 </div>
                                 <div>
-                                  <Label>Feedback</Label>
-                                  <Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={3} placeholder="Write your feedback..." />
+                                  <Label htmlFor="assignmentdetail-field-2">Feedback</Label>
+                                  <Textarea id="assignmentdetail-field-2" value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={3} placeholder="Write your feedback..." />
                                 </div>
                                 <Button
                                   onClick={() => handleReview(sub.id)}

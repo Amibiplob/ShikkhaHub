@@ -44,12 +44,8 @@ const ProtectedRoute = ({ children, requiredRole, allowedRoles }: ProtectedRoute
           administrator to update your role.
         </p>
         <div className="flex gap-3">
-          <Link to="/dashboard">
-            <Button>Go to dashboard</Button>
-          </Link>
-          <Link to="/courses">
-            <Button variant="outline">Browse courses</Button>
-          </Link>
+          <Button asChild><Link to="/dashboard">Go to dashboard</Link></Button>
+          <Button asChild variant="outline"><Link to="/courses">Browse courses</Link></Button>
         </div>
       </div>
     );

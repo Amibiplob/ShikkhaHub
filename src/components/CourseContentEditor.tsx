@@ -1,3 +1,4 @@
+import type { Course, Module, Lesson } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +21,7 @@ interface CourseContentEditorProps {
 
 const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) => {
   const { user } = useAuth();
-  const [modules, setModules] = useState<any[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Module form
@@ -41,7 +42,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
   const [creatingLesson, setCreatingLesson] = useState(false);
 
   // Edit lesson
-  const [editLesson, setEditLesson] = useState<any>(null);
+  const [editLesson, setEditLesson] = useState<Lesson>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -52,7 +53,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
       .eq("course_id", courseId)
       .order("sort_order");
     const mods = data || [];
-    mods.forEach((m: any) => m.lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order));
+    mods.forEach((m) => m.lessons?.sort((a, b) => a.sort_order - b.sort_order));
     setModules(mods);
     setLoading(false);
   };
@@ -184,8 +185,8 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
             <DialogContent>
               <DialogHeader><DialogTitle>Add Module</DialogTitle></DialogHeader>
               <form onSubmit={handleCreateModule} className="space-y-4">
-                <div><Label>Title</Label><Input value={moduleTitle} onChange={(e) => setModuleTitle(e.target.value)} required /></div>
-                <div><Label>Description</Label><Textarea value={moduleDesc} onChange={(e) => setModuleDesc(e.target.value)} rows={2} /></div>
+                <div><Label htmlFor="coursecontenteditor-field-1">Title</Label><Input id="coursecontenteditor-field-1" value={moduleTitle} onChange={(e) => setModuleTitle(e.target.value)} required /></div>
+                <div><Label htmlFor="coursecontenteditor-field-2">Description</Label><Textarea id="coursecontenteditor-field-2" value={moduleDesc} onChange={(e) => setModuleDesc(e.target.value)} rows={2} /></div>
                 <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground" disabled={creating}>
                   {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Module
                 </Button>
@@ -203,20 +204,20 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
               <DialogHeader><DialogTitle>Add Lesson</DialogTitle></DialogHeader>
               <form onSubmit={handleCreateLesson} className="space-y-4">
                 <div>
-                  <Label>Module</Label>
+                  <Label htmlFor="coursecontenteditor-select-9">Module</Label>
                   <Select value={lessonModuleId} onValueChange={setLessonModuleId}>
-                    <SelectTrigger><SelectValue placeholder="Select module" /></SelectTrigger>
+                    <SelectTrigger id="coursecontenteditor-select-9"><SelectValue placeholder="Select module" /></SelectTrigger>
                     <SelectContent>
                       {modules.map((m) => <SelectItem key={m.id} value={m.id}>{m.title}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Title</Label><Input value={lessonTitle} onChange={(e) => setLessonTitle(e.target.value)} required /></div>
+                <div><Label htmlFor="coursecontenteditor-field-3">Title</Label><Input id="coursecontenteditor-field-3" value={lessonTitle} onChange={(e) => setLessonTitle(e.target.value)} required /></div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Type</Label>
+                    <Label htmlFor="coursecontenteditor-select-10">Type</Label>
                     <Select value={lessonType} onValueChange={setLessonType}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="coursecontenteditor-select-10"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="article">Article</SelectItem>
                         <SelectItem value="video">Video</SelectItem>
@@ -224,15 +225,15 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
                       </SelectContent>
                     </Select>
                   </div>
-                  <div><Label>Duration (min)</Label><Input type="number" value={lessonDuration} onChange={(e) => setLessonDuration(e.target.value)} /></div>
+                  <div><Label htmlFor="coursecontenteditor-field-4">Duration (min)</Label><Input id="coursecontenteditor-field-4" type="number" value={lessonDuration} onChange={(e) => setLessonDuration(e.target.value)} /></div>
                 </div>
                 {lessonType === "article" && (
-                  <div><Label>Content</Label><Textarea value={lessonContent} onChange={(e) => setLessonContent(e.target.value)} rows={6} placeholder="Write lesson content..." /></div>
+                  <div><Label htmlFor="coursecontenteditor-field-5">Content</Label><Textarea id="coursecontenteditor-field-5" value={lessonContent} onChange={(e) => setLessonContent(e.target.value)} rows={6} placeholder="Write lesson content..." /></div>
                 )}
                 {lessonType === "video" && (
                   <div className="space-y-2">
                     <Label>Video</Label>
-                    <LessonFileUpload accept="video/*" label="Upload Video" onUploaded={(url) => setLessonVideoUrl(url)} />
+                    <LessonFileUpload courseId={courseId} accept="video/*" label="Upload Video" onUploaded={(url) => setLessonVideoUrl(url)} />
                     {lessonVideoUrl && <p className="text-xs text-muted-foreground truncate">✓ {lessonVideoUrl.split('/').pop()}</p>}
                     <p className="text-xs text-muted-foreground">Or paste a URL:</p>
                     <Input value={lessonVideoUrl} onChange={(e) => setLessonVideoUrl(e.target.value)} placeholder="https://..." />
@@ -241,7 +242,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
                 {lessonType === "file" && (
                   <div className="space-y-2">
                     <Label>File</Label>
-                    <LessonFileUpload accept="*/*" label="Upload File" onUploaded={(url) => setLessonFileUrl(url)} />
+                    <LessonFileUpload courseId={courseId} accept="*/*" label="Upload File" onUploaded={(url) => setLessonFileUrl(url)} />
                     {lessonFileUrl && <p className="text-xs text-muted-foreground truncate">✓ {lessonFileUrl.split('/').pop()}</p>}
                     <p className="text-xs text-muted-foreground">Or paste a URL:</p>
                     <Input value={lessonFileUrl} onChange={(e) => setLessonFileUrl(e.target.value)} placeholder="https://..." />
@@ -274,7 +275,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-1 mb-2">
-                  {mod.lessons?.map((lesson: any) => (
+                  {mod.lessons?.map((lesson) => (
                     <div key={lesson.id} className="flex items-center justify-between rounded-md px-3 py-2 text-sm bg-muted/50">
                       <div className="flex items-center gap-2">
                         {lessonIcon(lesson.type)}
@@ -283,10 +284,10 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
                         {lesson.duration_minutes && <span className="text-xs text-muted-foreground">{lesson.duration_minutes}m</span>}
                       </div>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => { setEditLesson({ ...lesson }); setEditOpen(true); }}>
+                        <Button aria-label={`Edit ${lesson.title}`} size="sm" variant="ghost" onClick={() => { setEditLesson({ ...lesson }); setEditOpen(true); }}>
                           <Pencil className="h-3 w-3" />
                         </Button>
-                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteLesson(lesson.id)}>
+                        <Button aria-label={`Delete ${lesson.title}`} size="sm" variant="ghost" className="text-destructive" onClick={() => deleteLesson(lesson.id)}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
@@ -308,7 +309,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
           <DialogHeader><DialogTitle>Edit Lesson</DialogTitle></DialogHeader>
           {editLesson && (
             <form onSubmit={handleEditLesson} className="space-y-4">
-              <div><Label>Title</Label><Input value={editLesson.title} onChange={(e) => setEditLesson({ ...editLesson, title: e.target.value })} required /></div>
+              <div><Label htmlFor="coursecontenteditor-field-6">Title</Label><Input id="coursecontenteditor-field-6" value={editLesson.title} onChange={(e) => setEditLesson({ ...editLesson, title: e.target.value })} required /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Type</Label>
@@ -321,15 +322,15 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Duration (min)</Label><Input type="number" value={editLesson.duration_minutes || ""} onChange={(e) => setEditLesson({ ...editLesson, duration_minutes: e.target.value ? parseInt(e.target.value) : null })} /></div>
+                <div><Label htmlFor="coursecontenteditor-field-7">Duration (min)</Label><Input id="coursecontenteditor-field-7" type="number" value={editLesson.duration_minutes || ""} onChange={(e) => setEditLesson({ ...editLesson, duration_minutes: e.target.value ? parseInt(e.target.value) : null })} /></div>
               </div>
               {editLesson.type === "article" && (
-                <div><Label>Content</Label><Textarea value={editLesson.content || ""} onChange={(e) => setEditLesson({ ...editLesson, content: e.target.value })} rows={6} /></div>
+                <div><Label htmlFor="coursecontenteditor-field-8">Content</Label><Textarea id="coursecontenteditor-field-8" value={editLesson.content || ""} onChange={(e) => setEditLesson({ ...editLesson, content: e.target.value })} rows={6} /></div>
               )}
               {editLesson.type === "video" && (
                 <div className="space-y-2">
                   <Label>Video</Label>
-                  <LessonFileUpload accept="video/*" label="Upload Video" onUploaded={(url) => setEditLesson({ ...editLesson, video_url: url })} />
+                  <LessonFileUpload courseId={courseId} accept="video/*" label="Upload Video" onUploaded={(url) => setEditLesson({ ...editLesson, video_url: url })} />
                   {editLesson.video_url && <p className="text-xs text-muted-foreground truncate">✓ {editLesson.video_url.split('/').pop()}</p>}
                   <Input value={editLesson.video_url || ""} onChange={(e) => setEditLesson({ ...editLesson, video_url: e.target.value })} placeholder="https://..." />
                 </div>
@@ -337,7 +338,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
               {editLesson.type === "file" && (
                 <div className="space-y-2">
                   <Label>File</Label>
-                  <LessonFileUpload accept="*/*" label="Upload File" onUploaded={(url) => setEditLesson({ ...editLesson, file_url: url })} />
+                  <LessonFileUpload courseId={courseId} accept="*/*" label="Upload File" onUploaded={(url) => setEditLesson({ ...editLesson, file_url: url })} />
                   {editLesson.file_url && <p className="text-xs text-muted-foreground truncate">✓ {editLesson.file_url.split('/').pop()}</p>}
                   <Input value={editLesson.file_url || ""} onChange={(e) => setEditLesson({ ...editLesson, file_url: e.target.value })} placeholder="https://..." />
                 </div>

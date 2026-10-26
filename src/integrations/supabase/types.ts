@@ -14,6 +14,11 @@ export type Database = {
   }
   public: {
     Tables: {
+      lesson_bookmarks: { Row: {id:string;user_id:string;lesson_id:string;created_at:string}; Insert: {id?:string;user_id:string;lesson_id:string;created_at?:string}; Update: {id?:string;user_id?:string;lesson_id?:string;created_at?:string}; Relationships: [] }
+      tutoring_requests: { Row: { id: string; slot_id: string; student_id: string; message: string; status: string; meeting_url: string | null; created_at: string }; Insert: { id?: string; slot_id: string; student_id: string; message: string; status?: string; meeting_url?: string | null; created_at?: string }; Update: { id?: string; slot_id?: string; student_id?: string; message?: string; status?: string; meeting_url?: string | null; created_at?: string }; Relationships: [] }
+
+      tutor_slots: { Row: { id: string; teacher_id: string; subject: string; starts_at: string; ends_at: string; created_at: string }; Insert: { id?: string; teacher_id: string; subject: string; starts_at: string; ends_at: string; created_at?: string }; Update: { id?: string; teacher_id?: string; subject?: string; starts_at?: string; ends_at?: string; created_at?: string }; Relationships: [] }
+
       assignments: {
         Row: {
           course_id: string
@@ -435,6 +440,7 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          { foreignKeyName: "course_reviews_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["user_id"] },
           {
             foreignKeyName: "course_reviews_course_id_fkey"
             columns: ["course_id"]
@@ -446,6 +452,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          price_bdt: number
           category: string | null
           created_at: string
           description: string | null
@@ -458,6 +465,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          price_bdt?: number
           category?: string | null
           created_at?: string
           description?: string | null
@@ -470,6 +478,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          price_bdt?: number
           category?: string | null
           created_at?: string
           description?: string | null
@@ -924,6 +933,7 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          { foreignKeyName: "submissions_student_id_fkey"; columns: ["student_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["user_id"] },
           {
             foreignKeyName: "submissions_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -1015,6 +1025,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_leaderboard: { Args: Record<PropertyKey, never>; Returns: { user_id: string; full_name: string; completedCourses: number; certificates: number; lessonsCompleted: number }[] }
+      send_live_signal: { Args: { room: string; signal_event: string; signal_payload: Json }; Returns: undefined }
+      read_quiz_questions: { Args: { target_quiz: string }; Returns: Json }
+      submit_quiz: { Args: { target_quiz: string; submitted_answers: Json }; Returns: Database["public"]["Tables"]["quiz_attempts"]["Row"] }
+      review_teacher_request: { Args: { request_id: string; approve: boolean }; Returns: undefined }
+
       expire_old_live_classes: { Args: never; Returns: undefined }
       get_platform_stats: { Args: never; Returns: Json }
       has_role: {

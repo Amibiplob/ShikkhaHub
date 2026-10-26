@@ -1,3 +1,4 @@
+import type { LiveSession } from "@/lib/models";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 interface LiveClassModalProps {
-  liveClass: any;
+  liveClass: LiveSession;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusChange?: (id: string, status: string) => void;

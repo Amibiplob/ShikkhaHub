@@ -53,16 +53,12 @@ const HeroSection = () => {
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link to="/auth?tab=signup">
-              <Button size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow gap-2 px-8 h-12 text-base">
+            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow gap-2 px-8 h-12 text-base"><Link to="/auth?tab=signup">
                 {t("hero.ctaPrimary")} <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/courses">
-              <Button size="lg" variant="outline" className="gap-2 border-border/50 bg-card/5 backdrop-blur-sm h-12 text-base">
+              </Link></Button>
+            <Button asChild size="lg" variant="outline" className="gap-2 border-border/50 bg-card/5 backdrop-blur-sm h-12 text-base"><Link to="/courses">
                 <Play className="h-5 w-5" /> {t("hero.ctaSecondary")}
-              </Button>
-            </Link>
+              </Link></Button>
           </div>
 
           </div>

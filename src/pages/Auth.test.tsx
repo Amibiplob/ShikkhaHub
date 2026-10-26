@@ -19,7 +19,7 @@ describe("Auth page", () => {
   it("?tab=signup&role=teacher preselects teacher signup", () => {
     at("/auth?tab=signup&role=teacher");
     expect(screen.getByLabelText("Full Name")).toBeRequired();
-    expect(screen.getByRole("radio", { name: /teacher/i })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /teacher/i })).toBeChecked();
     expect(screen.getByLabelText("Password")).toHaveAttribute("minLength", "6");
   });
 });

@@ -6,11 +6,12 @@ import { toast } from "sonner";
 
 interface LessonFileUploadProps {
   onUploaded: (url: string) => void;
+  courseId: string;
   accept?: string;
   label?: string;
 }
 
-const LessonFileUpload = ({ onUploaded, accept, label = "Upload File" }: LessonFileUploadProps) => {
+const LessonFileUpload = ({ onUploaded, courseId, accept, label = "Upload File" }: LessonFileUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -24,16 +25,16 @@ const LessonFileUpload = ({ onUploaded, accept, label = "Upload File" }: LessonF
       return;
     }
 
+    if (!/\.(pdf|txt|doc|docx|mp4|webm)$/i.test(file.name)) { toast.error("Unsupported file type"); return; }
     setUploading(true);
     const ext = file.name.split(".").pop();
-    const path = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+    const path = `${courseId}/${crypto.randomUUID()}.${ext}`;
 
     const { error } = await supabase.storage.from("lesson-files").upload(path, file);
     if (error) {
       toast.error("Upload failed: " + error.message);
     } else {
-      const { data: urlData } = supabase.storage.from("lesson-files").getPublicUrl(path);
-      onUploaded(urlData.publicUrl);
+      onUploaded(path);
       toast.success("File uploaded!");
     }
     setUploading(false);

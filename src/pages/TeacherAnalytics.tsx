@@ -1,3 +1,6 @@
+import { scopeTeacherActivity } from "@/lib/teacherActivity";
+import type { Tables } from "@/integrations/supabase/types";
+import type { Course, Module, Lesson, Submission, Quiz, Attempt } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,22 +28,24 @@ const TeacherAnalytics = () => {
   const { user, loading: authLoading, hasRole } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [lessonProgress, setLessonProgress] = useState<any[]>([]);
-  const [modules, setModules] = useState<any[]>([]);
-  const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [enrollments, setEnrollments] = useState<Tables<'enrollments'>[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [reviews, setReviews] = useState<Tables<'course_reviews'>[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<Tables<'lesson_progress'>[]>([]);
+  const [modules, setModules] = useState<(Pick<Module, 'id' | 'course_id'> & { lessons?: Pick<Lesson, 'id'>[] })[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<Attempt[]>([]);
+  const [assignmentCourses,setAssignmentCourses] = useState<Record<string,string>>({});
+  const [quizCourses,setQuizCourses] = useState<Record<string,string>>({});
   const [selectedCourse, setSelectedCourse] = useState<string>("all");
-  const [studentProfiles, setStudentProfiles] = useState<any[]>([]);
+  const [studentProfiles, setStudentProfiles] = useState<Pick<Tables<'profiles'>, 'user_id' | 'full_name' | 'avatar_url'>[]>([]);
 
   useEffect(() => {
-    if (!authLoading && (!user || !hasRole("teacher"))) navigate("/dashboard");
+    if (!authLoading && (!user || !(hasRole("teacher") || hasRole("admin")))) navigate("/dashboard");
   }, [authLoading, user, hasRole, navigate]);
 
   useEffect(() => {
-    if (!user || !hasRole("teacher")) return;
+    if (!user || !(hasRole("teacher") || hasRole("admin"))) return;
     const fetchData = async () => {
       const { data: coursesData } = await supabase
         .from("courses").select("*").eq("teacher_id", user.id);
@@ -59,12 +64,14 @@ const TeacherAnalytics = () => {
         supabase.from("quizzes").select("id, course_id").in("course_id", courseIds),
       ]);
 
+      setAssignmentCourses(Object.fromEntries((assignRes.data || []).map(a=>[a.id,a.course_id])));
+      setQuizCourses(Object.fromEntries((quizRes.data || []).map(q=>[q.id,q.course_id])));
       setEnrollments(enrollRes.data || []);
       setModules(modulesRes.data || []);
       setReviews(reviewsRes.data || []);
 
       // Lesson progress
-      const allLessonIds = (modulesRes.data || []).flatMap((m: any) => m.lessons?.map((l: any) => l.id) || []);
+      const allLessonIds = (modulesRes.data || []).flatMap((m) => m.lessons?.map((l) => l.id) || []);
       if (allLessonIds.length > 0) {
         const { data: progressData } = await supabase
           .from("lesson_progress").select("*").in("lesson_id", allLessonIds).eq("completed", true);
@@ -112,28 +119,19 @@ const TeacherAnalytics = () => {
   }
 
   // Filter by selected course
-  const filtered = selectedCourse === "all"
-    ? { enrollments, submissions, reviews, lessonProgress, modules, quizAttempts }
-    : {
-        enrollments: enrollments.filter(e => e.course_id === selectedCourse),
-        submissions: submissions, // filtered via assignments later
-        reviews: reviews.filter(r => r.course_id === selectedCourse),
-        lessonProgress,
-        modules: modules.filter(m => m.course_id === selectedCourse),
-        quizAttempts,
-      };
+  const filtered = scopeTeacherActivity(selectedCourse,{enrollments,submissions,reviews,lessonProgress,modules,quizAttempts},assignmentCourses,quizCourses);
 
   const totalStudents = new Set(filtered.enrollments.map((e) => e.user_id)).size;
   const totalEnrollments = filtered.enrollments.length;
   const avgRating = filtered.reviews.length > 0
-    ? (filtered.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / filtered.reviews.length).toFixed(1)
+    ? (filtered.reviews.reduce((acc: number, r) => acc + r.rating, 0) / filtered.reviews.length).toFixed(1)
     : "—";
   const totalSubmissions = filtered.submissions.length;
-  const gradedSubmissions = filtered.submissions.filter((s: any) => s.status === "graded" || s.status === "reviewed").length;
+  const gradedSubmissions = filtered.submissions.filter((s) => s.status === "graded" || s.status === "reviewed").length;
 
   // Quiz stats
-  const avgQuizScore = quizAttempts.length > 0
-    ? Math.round(quizAttempts.reduce((a: number, q: any) => a + (q.total_points > 0 ? (q.score / q.total_points) * 100 : 0), 0) / quizAttempts.length)
+  const avgQuizScore = filtered.quizAttempts.length > 0
+    ? Math.round(filtered.quizAttempts.reduce((a: number, q) => a + (q.total_points > 0 ? (q.score / q.total_points) * 100 : 0), 0) / filtered.quizAttempts.length)
     : 0;
 
   // Enrollments per course
@@ -144,15 +142,15 @@ const TeacherAnalytics = () => {
 
   // Completion rates per course
   const completionData = courses.map((c) => {
-    const courseMods = modules.filter((m: any) => m.course_id === c.id);
-    const totalLessons = courseMods.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0);
+    const courseMods = modules.filter((m) => m.course_id === c.id);
+    const totalLessons = courseMods.reduce((acc: number, m) => acc + (m.lessons?.length || 0), 0);
     const courseEnrollments = enrollments.filter((e) => e.course_id === c.id);
     if (totalLessons === 0 || courseEnrollments.length === 0) {
       return { name: c.title.length > 20 ? c.title.slice(0, 20) + "…" : c.title, rate: 0 };
     }
-    const allLessonIds = new Set(courseMods.flatMap((m: any) => m.lessons?.map((l: any) => l.id) || []));
+    const allLessonIds = new Set(courseMods.flatMap((m) => m.lessons?.map((l) => l.id) || []));
     const completedPerStudent = courseEnrollments.map((e) => {
-      const completed = lessonProgress.filter((lp: any) => allLessonIds.has(lp.lesson_id) && lp.user_id === e.user_id).length;
+      const completed = lessonProgress.filter((lp) => allLessonIds.has(lp.lesson_id) && lp.user_id === e.user_id).length;
       return completed / totalLessons;
     });
     const avgRate = Math.round((completedPerStudent.reduce((a, b) => a + b, 0) / completedPerStudent.length) * 100);
@@ -179,7 +177,7 @@ const TeacherAnalytics = () => {
   // Rating distribution
   const ratingDist = [1, 2, 3, 4, 5].map((r) => ({
     rating: `${r}★`,
-    count: filtered.reviews.filter((rev: any) => rev.rating === r).length,
+    count: filtered.reviews.filter((rev) => rev.rating === r).length,
   }));
 
   // Difficulty distribution
@@ -190,11 +188,11 @@ const TeacherAnalytics = () => {
 
   // Top students by progress
   const topStudents = (() => {
-    const allLessonIds = modules.flatMap((m: any) => m.lessons?.map((l: any) => l.id) || []);
+    const allLessonIds = modules.flatMap((m) => m.lessons?.map((l) => l.id) || []);
     const totalLessons = allLessonIds.length;
     const lessonSet = new Set(allLessonIds);
     return studentProfiles.map(p => {
-      const completed = lessonProgress.filter((lp: any) => lessonSet.has(lp.lesson_id) && lp.user_id === p.user_id).length;
+      const completed = lessonProgress.filter((lp) => lessonSet.has(lp.lesson_id) && lp.user_id === p.user_id).length;
       const percent = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
       return { ...p, progress: percent, completed, total: totalLessons };
     }).sort((a, b) => b.progress - a.progress).slice(0, 10);
@@ -393,7 +391,7 @@ const TeacherAnalytics = () => {
                       const dayStr = date.toISOString().slice(0, 10);
                       return {
                         day: date.toLocaleDateString("en", { month: "short", day: "numeric" }),
-                        completions: lessonProgress.filter((lp: any) => lp.completed_at?.startsWith(dayStr)).length,
+                        completions: lessonProgress.filter((lp) => lp.completed_at?.startsWith(dayStr)).length,
                       };
                     })}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -414,7 +412,7 @@ const TeacherAnalytics = () => {
                         ? new Set() // simplified - show all
                         : new Set();
                       const courseAttempts = quizAttempts;
-                      const passed = courseAttempts.filter((a: any) => a.passed).length;
+                      const passed = courseAttempts.filter((a) => a.passed).length;
                       const total = courseAttempts.length;
                       return {
                         name: c.title.length > 18 ? c.title.slice(0, 18) + "…" : c.title,
@@ -448,9 +446,9 @@ const TeacherAnalytics = () => {
                         {courses.map(c => {
                           const students = enrollments.filter(e => e.course_id === c.id).length;
                           const comp = completionData.find(cd => cd.name.startsWith(c.title.slice(0, 20)));
-                          const courseReviews = reviews.filter((r: any) => r.course_id === c.id);
+                          const courseReviews = reviews.filter((r) => r.course_id === c.id);
                           const cRating = courseReviews.length > 0
-                            ? (courseReviews.reduce((a: number, r: any) => a + r.rating, 0) / courseReviews.length).toFixed(1)
+                            ? (courseReviews.reduce((a: number, r) => a + r.rating, 0) / courseReviews.length).toFixed(1)
                             : "—";
                           return (
                             <tr key={c.id} className="border-b border-border/50">
@@ -485,7 +483,7 @@ const TeacherAnalytics = () => {
   );
 };
 
-const StatCard = ({ icon: Icon, label, value }: { icon: any; label: string; value: any }) => (
+const StatCard = ({ icon: Icon, label, value }: { icon: import("lucide-react").LucideIcon; label: string; value: string | number }) => (
   <div className="rounded-xl border border-border bg-card p-5">
     <Icon className="mb-2 h-5 w-5 text-primary" />
     <p className="text-2xl font-bold">{value}</p>

@@ -3,6 +3,13 @@ export type Lang = "en" | "bn";
 type Dict = Record<string, string>;
 
 export const en: Dict = {
+  "team.eyebrow": "Academic project",
+  "team.title": "Meet the Project Team",
+  "team.description": "ShikkhaHub is a final-year project developed by students of the Department of Computer Science and Engineering, City University, Bangladesh.",
+  "team.supervisor": "Project supervisor",
+  "team.supervisorRole": "Lecturer and Coordinator, Department of CSE, City University",
+  "nav.tutors": "Private Tutoring",
+
   // nav
   "nav.explore": "Explore",
   "nav.learn": "Learn",
@@ -214,6 +221,13 @@ export const en: Dict = {
 };
 
 export const bn: Dict = {
+  "team.eyebrow": "একাডেমিক প্রকল্প",
+  "team.title": "প্রকল্প দলের সাথে পরিচিত হোন",
+  "team.description": "শিক্ষাহাব বাংলাদেশের সিটি ইউনিভার্সিটির কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং বিভাগের শিক্ষার্থীদের তৈরি একটি শেষ বর্ষের প্রকল্প।",
+  "team.supervisor": "প্রকল্প তত্ত্বাবধায়ক",
+  "team.supervisorRole": "প্রভাষক ও সমন্বয়ক, সিএসই বিভাগ, সিটি ইউনিভার্সিটি",
+  "nav.tutors": "প্রাইভেট টিউটরিং",
+
   "nav.explore": "অন্বেষণ",
   "nav.learn": "শেখা",
   "nav.allCourses": "সব কোর্স",

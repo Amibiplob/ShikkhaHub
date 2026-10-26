@@ -18,56 +18,13 @@ interface LeaderboardEntry {
 const Leaderboard = () => {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      // Fetch all profiles
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name");
-      if (!profiles || profiles.length === 0) { setLoading(false); return; }
-
-      const userIds = profiles.map((p) => p.user_id);
-
-      // Fetch certificates, lesson progress, enrollments
-      const [certRes, progressRes, enrollRes] = await Promise.all([
-        supabase.from("certificates").select("user_id").in("user_id", userIds),
-        supabase.from("lesson_progress").select("user_id").eq("completed", true).in("user_id", userIds),
-        supabase.from("enrollments").select("user_id, course_id").in("user_id", userIds),
-      ]);
-
-      const certs = certRes.data || [];
-      const progress = progressRes.data || [];
-
-      // Build leaderboard
-      const map: Record<string, LeaderboardEntry> = {};
-      profiles.forEach((p) => {
-        map[p.user_id] = {
-          user_id: p.user_id,
-          full_name: p.full_name || "Anonymous",
-          completedCourses: 0,
-          certificates: 0,
-          lessonsCompleted: 0,
-        };
-      });
-
-      certs.forEach((c) => {
-        if (map[c.user_id]) map[c.user_id].certificates++;
-      });
-
-      progress.forEach((p) => {
-        if (map[p.user_id]) map[p.user_id].lessonsCompleted++;
-      });
-
-      // Count certificates as completed courses proxy
-      Object.values(map).forEach((e) => {
-        e.completedCourses = e.certificates;
-      });
-
-      // Sort by certificates desc, then lessons desc
-      const sorted = Object.values(map)
-        .filter((e) => e.lessonsCompleted > 0 || e.certificates > 0)
-        .sort((a, b) => b.certificates - a.certificates || b.lessonsCompleted - a.lessonsCompleted);
-
-      setEntries(sorted);
+      const { data, error } = await supabase.rpc("get_leaderboard");
+      if (error) { setError(true); setEntries([]); }
+      else { setError(false); setEntries(data || []); }
       setLoading(false);
     };
     fetchLeaderboard();
@@ -90,6 +47,7 @@ const Leaderboard = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
+        {error && <p role="alert" className="mb-4 text-destructive">Could not load the leaderboard. Please try again later.</p>}
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Trophy className="h-7 w-7 text-primary" /> Leaderboard

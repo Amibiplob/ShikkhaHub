@@ -1,3 +1,4 @@
+import type { Discussion, Post } from "@/lib/models";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +40,7 @@ const Community = () => {
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -110,7 +111,7 @@ const Community = () => {
     setLoading(true);
     const select = "*, profiles!community_posts_user_id_profiles_fkey(full_name, avatar_url)";
 
-    const applyFilters = (q: any) => {
+    const applyFilters = (q) => {
       if (category !== "all") q = q.eq("category", category);
       if (search) q = q.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
       return q;
@@ -127,14 +128,14 @@ const Community = () => {
         setLoading(false);
         return;
       }
-      const all = data || [];
-      const ids = all.map((p: any) => p.id);
+      const all: Post[] = data || [];
+      const ids = all.map((p) => p.id);
       const { data: ups } = ids.length
         ? await supabase.from("community_upvotes").select("post_id").in("post_id", ids)
-        : { data: [] as any[] };
+        : { data: [] as { post_id: string }[] };
       if (isStale()) return;
       const counts: Record<string, number> = {};
-      ups?.forEach((u: any) => { if (u.post_id) counts[u.post_id] = (counts[u.post_id] || 0) + 1; });
+      ups?.forEach((u) => { if (u.post_id) counts[u.post_id] = (counts[u.post_id] || 0) + 1; });
       const sorted = sortPopular(all, counts);
       setTotalCount(sorted.length);
       setPosts(paginate(sorted, page, POSTS_PER_PAGE));
@@ -235,7 +236,7 @@ const Community = () => {
     // Optimistic update
     setUpvotedPosts((prev) => {
       const n = new Set(prev);
-      wasUpvoted ? n.delete(postId) : n.add(postId);
+      if (wasUpvoted) n.delete(postId); else n.add(postId);
       return n;
     });
     setUpvoteCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] || 0) + (wasUpvoted ? -1 : 1)) }));
@@ -248,7 +249,7 @@ const Community = () => {
       // Revert
       setUpvotedPosts((prev) => {
         const n = new Set(prev);
-        wasUpvoted ? n.add(postId) : n.delete(postId);
+        if (wasUpvoted) n.add(postId); else n.delete(postId);
         return n;
       });
       setUpvoteCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] || 0) + (wasUpvoted ? 1 : -1)) }));
@@ -290,13 +291,13 @@ const Community = () => {
                   </DialogHeader>
                   <form onSubmit={handleCreate} className="space-y-4">
                     <div>
-                      <Label>Title</Label>
-                      <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="What's on your mind?" />
+                      <Label htmlFor="community-field-1">Title</Label>
+                      <Input id="community-field-1" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="What's on your mind?" />
                     </div>
                     <div>
-                      <Label>Category</Label>
+                      <Label htmlFor="community-select-3">Category</Label>
                       <Select value={postCategory} onValueChange={setPostCategory}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="community-select-3"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {CATEGORIES.filter((c) => c.value !== "all").map((c) => (
                             <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
@@ -305,8 +306,8 @@ const Community = () => {
                       </Select>
                     </div>
                     <div>
-                      <Label>Content</Label>
-                      <Textarea value={content} onChange={(e) => setContent(e.target.value)} required rows={6} placeholder="Share your thoughts, questions, or ideas..." />
+                      <Label htmlFor="community-field-2">Content</Label>
+                      <Textarea id="community-field-2" value={content} onChange={(e) => setContent(e.target.value)} required rows={6} placeholder="Share your thoughts, questions, or ideas..." />
                     </div>
                     <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creating}>
                       {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post

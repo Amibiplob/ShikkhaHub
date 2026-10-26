@@ -1,3 +1,4 @@
+import type { Review } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,12 +46,12 @@ const StarRating = ({
 
 const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
   const { user } = useAuth();
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
-  const [myReview, setMyReview] = useState<any>(null);
+  const [myReview, setMyReview] = useState<Review>(null);
   const [editing, setEditing] = useState(false);
 
   const fetchReviews = async () => {
@@ -61,7 +62,7 @@ const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
       .order("created_at", { ascending: false });
     setReviews(data || []);
     if (user) {
-      const mine = data?.find((r: any) => r.user_id === user.id) || null;
+      const mine = data?.find((r) => r.user_id === user.id) || null;
       setMyReview(mine);
       if (mine) {
         setRating(mine.rating);

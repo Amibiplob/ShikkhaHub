@@ -1,3 +1,4 @@
+import type { Quiz, Question, Attempt } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +23,7 @@ interface QuizManagerProps {
 
 const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
   const { user } = useAuth();
-  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -31,16 +32,16 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
   const [passPercentage, setPassPercentage] = useState("70");
 
   // Quiz taking state
-  const [activeQuiz, setActiveQuiz] = useState<any>(null);
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [activeQuiz, setActiveQuiz] = useState<Quiz>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [attempts, setAttempts] = useState<Record<string, any>>({});
+  const [result, setResult] = useState<{ score: number; totalPoints: number; percentage: number; passed: boolean }>(null);
+  const [attempts, setAttempts] = useState<Record<string, Attempt>>({});
 
   // Question editor
   const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
-  const [editQuestions, setEditQuestions] = useState<any[]>([]);
+  const [editQuestions, setEditQuestions] = useState<Question[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
   const [newOptions, setNewOptions] = useState(["", "", "", ""]);
   const [newCorrect, setNewCorrect] = useState(0);
@@ -48,7 +49,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
 
   useEffect(() => {
     fetchQuizzes();
-  }, [courseId]);
+  }, [courseId, user?.id]);
 
   const fetchQuizzes = async () => {
     const { data } = await supabase.from("quizzes").select("*").eq("course_id", courseId).order("created_at");
@@ -62,7 +63,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
         .eq("user_id", user.id)
         .in("quiz_id", data.map((q) => q.id))
         .order("completed_at", { ascending: false });
-      const map: Record<string, any> = {};
+      const map: Record<string, Attempt> = {};
       attemptsData?.forEach((a) => { if (!map[a.quiz_id]) map[a.quiz_id] = a; });
       setAttempts(map);
     }
@@ -85,6 +86,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
       setCreateOpen(false);
       setTitle("");
       setDescription("");
+      setEditQuestions([]);
       setEditingQuizId(data.id);
     }
     setCreating(false);
@@ -92,19 +94,21 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
 
   const handleAddQuestion = async () => {
     if (!editingQuizId || !newQuestion.trim()) return;
-    const filteredOptions = newOptions.filter((o) => o.trim());
+    const filteredOptions = newOptions.map(o => o.trim()).filter(Boolean);
+    const correctAnswer = newOptions.slice(0, newCorrect).filter(o => o.trim()).length;
+    if (!newOptions[newCorrect]?.trim()) { toast.error("Select a non-empty correct answer"); return; }
     if (filteredOptions.length < 2) { toast.error("Need at least 2 options"); return; }
     setAddingQ(true);
     const { data, error } = await supabase.from("quiz_questions").insert({
       quiz_id: editingQuizId,
       question: newQuestion,
       options: filteredOptions as unknown as Json,
-      correct_answer: newCorrect,
+      correct_answer: correctAnswer,
       sort_order: editQuestions.length,
-    }).select().single();
+    }).select("id, quiz_id, question, options, points, sort_order").single();
     if (error) toast.error(error.message);
     else {
-      setEditQuestions((prev) => [...prev, data]);
+      setEditQuestions((prev) => [...prev, { ...data, correct_answer: correctAnswer }]);
       setNewQuestion("");
       setNewOptions(["", "", "", ""]);
       setNewCorrect(0);
@@ -113,19 +117,23 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
   };
 
   const handleDeleteQuestion = async (qId: string) => {
-    await supabase.from("quiz_questions").delete().eq("id", qId);
+    const { error } = await supabase.from("quiz_questions").delete().eq("id", qId);
+    if (error) { toast.error(error.message); return; }
     setEditQuestions((prev) => prev.filter((q) => q.id !== qId));
   };
 
   const openQuestionEditor = async (quizId: string) => {
     setEditingQuizId(quizId);
-    const { data } = await supabase.from("quiz_questions").select("*").eq("quiz_id", quizId).order("sort_order");
-    setEditQuestions(data || []);
+    const { data, error } = await supabase.rpc("read_quiz_questions", { target_quiz: quizId });
+    if (error) { toast.error(error.message); return; }
+    setEditQuestions(data as unknown as Question[] || []);
   };
 
-  const startQuiz = async (quiz: any) => {
-    const { data } = await supabase.from("quiz_questions").select("*").eq("quiz_id", quiz.id).order("sort_order");
-    setQuestions(data || []);
+  const startQuiz = async (quiz) => {
+    const { data, error } = await supabase.rpc("read_quiz_questions", { target_quiz: quiz.id });
+    if (error) { toast.error(error.message); return; }
+    if (!Array.isArray(data) || !data.length) { toast.error("This quiz has no questions yet"); return; }
+    setQuestions(data as unknown as Question[]);
     setActiveQuiz(quiz);
     setAnswers({});
     setResult(null);
@@ -134,29 +142,19 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
   const submitQuiz = async () => {
     if (!user || !activeQuiz) return;
     setSubmitting(true);
-    let score = 0;
-    const totalPoints = questions.reduce((acc, q) => acc + (q.points || 1), 0);
-    questions.forEach((q) => {
-      if (answers[q.id] === q.correct_answer) score += q.points || 1;
+    const { data, error } = await supabase.rpc("submit_quiz", {
+      target_quiz: activeQuiz.id,
+      submitted_answers: answers as unknown as Json,
     });
-    const percentage = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
-    const passed = percentage >= activeQuiz.pass_percentage;
-
-    const { data, error } = await supabase.from("quiz_attempts").insert({
-      quiz_id: activeQuiz.id,
-      user_id: user.id,
-      answers: answers as unknown as Json,
-      score,
-      total_points: totalPoints,
-      passed,
-    }).select().single();
 
     if (error) toast.error(error.message);
     else {
+      const { score, total_points: totalPoints, passed } = data;
+      const percentage = Math.round(score / totalPoints * 100);
       setResult({ score, totalPoints, percentage, passed });
       setAttempts((prev) => ({ ...prev, [activeQuiz.id]: data }));
-      if (passed) toast.success("Congratulations! You passed! 🎉");
-      else toast.info(`Score: ${percentage}%. You need ${activeQuiz.pass_percentage}% to pass.`);
+      if (data.passed) toast.success("Congratulations! You passed! 🎉");
+      else toast.info(`Score: ${Math.round(data.score / data.total_points * 100)}%. You need ${activeQuiz.pass_percentage}% to pass.`);
     }
     setSubmitting(false);
   };
@@ -180,9 +178,9 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
             <DialogContent>
               <DialogHeader><DialogTitle>Create Quiz</DialogTitle></DialogHeader>
               <form onSubmit={handleCreateQuiz} className="space-y-4">
-                <div><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} required /></div>
-                <div><Label>Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
-                <div><Label>Pass Percentage (%)</Label><Input type="number" value={passPercentage} onChange={(e) => setPassPercentage(e.target.value)} min={1} max={100} /></div>
+                <div><Label htmlFor="quizmanager-field-1">Title</Label><Input id="quizmanager-field-1" value={title} onChange={(e) => setTitle(e.target.value)} required /></div>
+                <div><Label htmlFor="quizmanager-field-2">Description</Label><Textarea id="quizmanager-field-2" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
+                <div><Label htmlFor="quizmanager-field-3">Pass Percentage (%)</Label><Input id="quizmanager-field-3" type="number" value={passPercentage} onChange={(e) => setPassPercentage(e.target.value)} min={1} max={100} /></div>
                 <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creating}>
                   {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create Quiz
                 </Button>
@@ -269,7 +267,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
                 <div className="grid grid-cols-2 gap-2">
                   {newOptions.map((opt, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <input type="radio" name="correct" checked={newCorrect === i} onChange={() => setNewCorrect(i)} className="accent-primary" />
+                      <input aria-label={`Correct answer option ${i + 1}`} type="radio" name="correct" checked={newCorrect === i} onChange={() => setNewCorrect(i)} className="accent-primary" />
                       <Input placeholder={`Option ${i + 1}`} value={opt} onChange={(e) => { const n = [...newOptions]; n[i] = e.target.value; setNewOptions(n); }} />
                     </div>
                   ))}

@@ -1,0 +1,10 @@
+import { createDatabase, seed, ids, asUser } from './database.mjs';
+const db = await createDatabase({hardening:false}); await seed(db);
+const leaked = await asUser(db, null, 'SELECT correct_answer FROM quiz_questions');
+const forged = await asUser(db, ids.student, `INSERT INTO quiz_attempts(quiz_id,user_id,score,total_points,passed) VALUES ($1,$2,999,1,true) RETURNING score`, [ids.quiz,ids.student]);
+const submission = await asUser(db, ids.student, `INSERT INTO submissions(assignment_id,student_id,submission_type,content,marks,status) VALUES ($1,$2,'url','https://example.test',100,'graded') RETURNING marks`, [ids.assignment,ids.student]);
+const outside = await asUser(db, ids.other, 'SELECT content FROM lessons');
+const deleted = await db.query(`INSERT INTO storage.objects(bucket_id,name) VALUES ('lesson-files','someone-else/document.pdf') RETURNING id`);
+const removal = await asUser(db, ids.student,'DELETE FROM storage.objects WHERE id=$1 RETURNING id',[deleted.rows[0].id]);
+console.log(JSON.stringify({publicAnswerKeys:leaked.rows,forgedScore:forged.rows,selfGradedSubmission:submission.rows,unenrolledLessonContent:outside.rows,crossOwnerFileDeletion:removal.rows},null,2));
+await db.close();

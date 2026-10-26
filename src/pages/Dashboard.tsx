@@ -1,3 +1,4 @@
+import type { Course, LiveSession } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import StudentAnalytics from "@/components/StudentAnalytics";
@@ -25,16 +26,16 @@ const Dashboard = () => {
   const { user, loading: authLoading, hasRole, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [courseProgress, setCourseProgress] = useState<Record<string, number>>({});
-  const [teacherCourses, setTeacherCourses] = useState<any[]>([]);
-  const [liveClasses, setLiveClasses] = useState<any[]>([]);
-  const [studentLiveClasses, setStudentLiveClasses] = useState<any[]>([]);
-  const [bookmarkedCourses, setBookmarkedCourses] = useState<any[]>([]);
+  const [teacherCourses, setTeacherCourses] = useState<Course[]>([]);
+  const [liveClasses, setLiveClasses] = useState<LiveSession[]>([]);
+  const [studentLiveClasses, setStudentLiveClasses] = useState<LiveSession[]>([]);
+  const [bookmarkedCourses, setBookmarkedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [selectedLiveClass, setSelectedLiveClass] = useState<any>(null);
+  const [selectedLiveClass, setSelectedLiveClass] = useState<LiveSession>(null);
 
   // Create course form
   const [title, setTitle] = useState("");
@@ -59,7 +60,7 @@ const Dashboard = () => {
 
       // Fetch progress for enrolled courses
       if (courses.length > 0) {
-        const courseIds = courses.map((c: any) => c.id);
+        const courseIds = courses.map((c) => c.id);
         const { data: allModules } = await supabase
           .from("modules")
           .select("id, course_id, lessons(id)")
@@ -75,7 +76,7 @@ const Dashboard = () => {
           const mods = allModules?.filter((m) => m.course_id === cid) || [];
           const totalLessons = mods.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
           const completed = mods.reduce(
-            (acc, m) => acc + (m.lessons?.filter((l: any) => completedSet.has(l.id)).length || 0), 0
+            (acc, m) => acc + (m.lessons?.filter((l) => completedSet.has(l.id)).length || 0), 0
           );
           progressMap[cid] = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
         });
@@ -83,7 +84,7 @@ const Dashboard = () => {
       }
 
       // Teacher courses
-      if (hasRole("teacher")) {
+      if (hasRole("teacher") || hasRole("admin")) {
         const [coursesRes, liveRes] = await Promise.all([
           supabase.from("courses").select("*").eq("teacher_id", user.id).order("created_at", { ascending: false }),
           supabase.from("live_classes").select("*, courses(title)").eq("teacher_id", user.id).order("scheduled_at", { ascending: true }),
@@ -126,7 +127,7 @@ const Dashboard = () => {
       description,
       category: category || null,
       difficulty: difficulty || null,
-      is_published: true,
+      is_published: false,
     }).select().single();
 
     if (error) toast.error(error.message);
@@ -146,7 +147,7 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col"><Header /><div className="flex flex-1 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></div>
   );
 
-  const isTeacher = hasRole("teacher");
+  const isTeacher = hasRole("teacher") || hasRole("admin");
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -223,22 +224,22 @@ const Dashboard = () => {
                     </DialogHeader>
                     <form onSubmit={handleCreateCourse} className="space-y-4">
                       <div>
-                        <Label>Title</Label>
-                        <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+                        <Label htmlFor="dashboard-field-1">Title</Label>
+                        <Input id="dashboard-field-1" value={title} onChange={(e) => setTitle(e.target.value)} required />
                       </div>
                       <div>
-                        <Label>Description</Label>
-                        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+                        <Label htmlFor="dashboard-field-2">Description</Label>
+                        <Textarea id="dashboard-field-2" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label>Category</Label>
-                          <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Web Development" />
+                          <Label htmlFor="dashboard-field-3">Category</Label>
+                          <Input id="dashboard-field-3" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Web Development" />
                         </div>
                         <div>
-                          <Label>Difficulty</Label>
+                          <Label htmlFor="dashboard-select-4">Difficulty</Label>
                           <Select value={difficulty} onValueChange={setDifficulty}>
-                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                            <SelectTrigger id="dashboard-select-4"><SelectValue placeholder="Select" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="beginner">Beginner</SelectItem>
                               <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -279,7 +280,7 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {enrolledCourses.map((course: any) => (
+                {enrolledCourses.map((course) => (
                   <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} progressPercent={courseProgress[course.id]} />
                 ))}
               </div>
@@ -387,7 +388,7 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {bookmarkedCourses.map((course: any) => (
+                {bookmarkedCourses.map((course) => (
                   <CourseCard key={course.id} id={course.id} title={course.title} description={course.description} thumbnail_url={course.thumbnail_url} category={course.category} difficulty={course.difficulty} teacher_name={course.profiles?.full_name} />
                 ))}
               </div>

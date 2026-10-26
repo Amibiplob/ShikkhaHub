@@ -1,3 +1,5 @@
+import type { Tables } from "@/integrations/supabase/types";
+import type { Course, Quiz, Attempt } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +16,14 @@ import { Award, BookOpen, CheckCircle, Clock, Flame, Target, TrendingUp, Loader2
 const StudentAnalytics = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<{
+    enrollments: { course_id: string; courses: Pick<Course,'title'|'category'|'difficulty'> }[];
+    progress: Pick<Tables<'lesson_progress'>,'lesson_id'|'completed'|'completed_at'>[];
+    quizAttempts: (Pick<Attempt,'quiz_id'|'score'|'total_points'|'passed'|'completed_at'> & { quizzes: {title: string; course_id: string} })[];
+    badges: { badge_id: string; earned_at: string; badges: {name: string; icon: string} }[];
+    certificates: Pick<Tables<'certificates'>,'id'|'course_id'>[];
+    modules: { id: string; course_id: string; lessons: {id:string}[] }[];
+  }>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -29,7 +38,7 @@ const StudentAnalytics = () => {
 
       // Get total lessons per enrolled course
       const courseIds = (enrollRes.data || []).map(e => e.course_id);
-      let modulesData: any[] = [];
+      let modulesData: { id: string; course_id: string; lessons: {id:string}[] }[] = [];
       if (courseIds.length > 0) {
         const { data: mods } = await supabase.from("modules").select("id, course_id, lessons(id)").in("course_id", courseIds);
         modulesData = mods || [];
@@ -54,11 +63,11 @@ const StudentAnalytics = () => {
   const { enrollments, progress, quizAttempts, badges, certificates, modules } = data;
 
   // Per-course progress
-  const courseProgress = enrollments.map((e: any) => {
-    const courseMods = modules.filter((m: any) => m.course_id === e.course_id);
-    const totalLessons = courseMods.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0);
-    const lessonIds = new Set(courseMods.flatMap((m: any) => m.lessons?.map((l: any) => l.id) || []));
-    const completed = progress.filter((p: any) => lessonIds.has(p.lesson_id)).length;
+  const courseProgress = enrollments.map((e) => {
+    const courseMods = modules.filter((m) => m.course_id === e.course_id);
+    const totalLessons = courseMods.reduce((acc: number, m) => acc + (m.lessons?.length || 0), 0);
+    const lessonIds = new Set(courseMods.flatMap((m) => m.lessons?.map((l) => l.id) || []));
+    const completed = progress.filter((p) => lessonIds.has(p.lesson_id)).length;
     const percent = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
     return {
       name: e.courses?.title?.length > 18 ? e.courses.title.slice(0, 18) + "…" : (e.courses?.title || "Course"),
@@ -70,10 +79,10 @@ const StudentAnalytics = () => {
 
   // Quiz performance
   const avgQuizScore = quizAttempts.length > 0
-    ? Math.round(quizAttempts.reduce((a: number, q: any) => a + (q.total_points > 0 ? (q.score / q.total_points) * 100 : 0), 0) / quizAttempts.length)
+    ? Math.round(quizAttempts.reduce((a: number, q) => a + (q.total_points > 0 ? (q.score / q.total_points) * 100 : 0), 0) / quizAttempts.length)
     : 0;
   const quizPassRate = quizAttempts.length > 0
-    ? Math.round((quizAttempts.filter((q: any) => q.passed).length / quizAttempts.length) * 100)
+    ? Math.round((quizAttempts.filter((q) => q.passed).length / quizAttempts.length) * 100)
     : 0;
 
   // Learning streak (completed lessons by day, last 14 days)
@@ -82,7 +91,7 @@ const StudentAnalytics = () => {
     const date = new Date(today);
     date.setDate(date.getDate() - (13 - i));
     const dayStr = date.toISOString().slice(0, 10);
-    const count = progress.filter((p: any) => p.completed_at?.startsWith(dayStr)).length;
+    const count = progress.filter((p) => p.completed_at?.startsWith(dayStr)).length;
     return { day: date.toLocaleDateString("en", { weekday: "short", month: "short", day: "numeric" }), lessons: count };
   });
 
@@ -94,11 +103,11 @@ const StudentAnalytics = () => {
   }
 
   // Skills radar (by category)
-  const categories = [...new Set(enrollments.map((e: any) => e.courses?.category).filter(Boolean))];
+  const categories = [...new Set(enrollments.map((e) => e.courses?.category).filter(Boolean))];
   const radarData = categories.map((cat: string) => {
-    const catCourses = enrollments.filter((e: any) => e.courses?.category === cat);
-    const catProgress = catCourses.map((e: any) => {
-      const cp = courseProgress.find((cp: any) => cp.name.startsWith(e.courses?.title?.slice(0, 18)));
+    const catCourses = enrollments.filter((e) => e.courses?.category === cat);
+    const catProgress = catCourses.map((e) => {
+      const cp = courseProgress.find((cp) => cp.name.startsWith(e.courses?.title?.slice(0, 18)));
       return cp?.progress || 0;
     });
     const avg = catProgress.length > 0 ? Math.round(catProgress.reduce((a: number, b: number) => a + b, 0) / catProgress.length) : 0;
@@ -108,12 +117,12 @@ const StudentAnalytics = () => {
   // Difficulty breakdown
   const diffData = ["beginner", "intermediate", "advanced"].map(d => ({
     name: d.charAt(0).toUpperCase() + d.slice(1),
-    count: enrollments.filter((e: any) => e.courses?.difficulty === d).length,
+    count: enrollments.filter((e) => e.courses?.difficulty === d).length,
   })).filter(d => d.count > 0);
 
   const totalCompleted = progress.length;
   const overallProgress = courseProgress.length > 0
-    ? Math.round(courseProgress.reduce((a: number, c: any) => a + c.progress, 0) / courseProgress.length)
+    ? Math.round(courseProgress.reduce((a: number, c) => a + c.progress, 0) / courseProgress.length)
     : 0;
 
   return (
@@ -150,7 +159,7 @@ const StudentAnalytics = () => {
             <p className="text-sm text-muted-foreground text-center py-8">Enroll in courses to track progress</p>
           ) : (
             <div className="space-y-4">
-              {courseProgress.map((c: any, i: number) => (
+              {courseProgress.map((c, i: number) => (
                 <div key={i}>
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span className="font-medium truncate max-w-[200px]">{c.name}</span>
@@ -202,7 +211,7 @@ const StudentAnalytics = () => {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Quiz Performance</h3>
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={quizAttempts.slice(-10).map((q: any, i: number) => ({
+              <BarChart data={quizAttempts.slice(-10).map((q, i: number) => ({
                 name: q.quizzes?.title?.slice(0, 15) || `Quiz ${i + 1}`,
                 score: q.total_points > 0 ? Math.round((q.score / q.total_points) * 100) : 0,
                 passed: q.passed,
@@ -244,7 +253,7 @@ const StudentAnalytics = () => {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Badges Earned</h3>
             <div className="flex flex-wrap gap-3">
-              {badges.map((b: any) => (
+              {badges.map((b) => (
                 <Badge key={b.badge_id} variant="secondary" className="px-3 py-1.5 text-sm gap-1.5">
                   <Award className="h-3.5 w-3.5" />
                   {b.badges?.name || "Badge"}
@@ -258,7 +267,7 @@ const StudentAnalytics = () => {
   );
 };
 
-const StatCard = ({ icon: Icon, label, value, accent }: { icon: any; label: string; value: any; accent?: boolean }) => (
+const StatCard = ({ icon: Icon, label, value, accent }: { icon: import("lucide-react").LucideIcon; label: string; value: string | number; accent?: boolean }) => (
   <div className={`rounded-xl border border-border bg-card p-5 ${accent ? "ring-2 ring-primary/20" : ""}`}>
     <Icon className={`mb-2 h-5 w-5 ${accent ? "text-amber-500" : "text-primary"}`} />
     <p className="text-2xl font-bold">{value}</p>

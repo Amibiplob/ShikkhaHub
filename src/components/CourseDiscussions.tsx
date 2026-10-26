@@ -1,3 +1,5 @@
+import type { Tables } from "@/integrations/supabase/types";
+import type { Discussion, Post } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,8 +18,8 @@ interface CourseDiscussionsProps {
 
 const CourseDiscussions = ({ courseId, enrolled, isTeacher }: CourseDiscussionsProps) => {
   const { user } = useAuth();
-  const [discussions, setDiscussions] = useState<any[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, any>>({});
+  const [discussions, setDiscussions] = useState<Discussion[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, Pick<Tables<'profiles'>, 'full_name' | 'avatar_url'>>>({});
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
   const [posting, setPosting] = useState(false);
@@ -41,7 +43,7 @@ const CourseDiscussions = ({ courseId, enrolled, isTeacher }: CourseDiscussionsP
         .from("profiles")
         .select("user_id, full_name, avatar_url")
         .in("user_id", userIds);
-      const map: Record<string, any> = {};
+      const map: Record<string, Pick<Tables<'profiles'>, 'full_name' | 'avatar_url'>> = {};
       profilesData?.forEach((p) => { map[p.user_id] = p; });
       setProfiles(map);
     }
@@ -110,7 +112,7 @@ const CourseDiscussions = ({ courseId, enrolled, isTeacher }: CourseDiscussionsP
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Start a discussion..."
+            aria-label="Start a discussion" placeholder="Start a discussion..."
             rows={2}
             className="flex-1"
           />
@@ -176,7 +178,7 @@ const CourseDiscussions = ({ courseId, enrolled, isTeacher }: CourseDiscussionsP
                       <Textarea
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder="Write a reply..."
+                        aria-label="Write a reply" placeholder="Write a reply..."
                         rows={1}
                         className="flex-1 text-sm"
                       />

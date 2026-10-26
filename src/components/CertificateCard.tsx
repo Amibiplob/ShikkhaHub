@@ -1,3 +1,5 @@
+import type { Tables } from "@/integrations/supabase/types";
+import type { Course } from "@/lib/models";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +18,7 @@ interface CertificateCardProps {
 
 const CertificateCard = ({ courseId, courseTitle, progressPercent, teacherName }: CertificateCardProps) => {
   const { user, profile } = useAuth();
-  const [certificate, setCertificate] = useState<any>(null);
+  const [certificate, setCertificate] = useState<Tables<'certificates'>>(null);
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState(false);
 

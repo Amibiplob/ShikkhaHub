@@ -1,3 +1,10 @@
+import LessonBookmark from "@/components/LessonBookmark";
+import CourseSettings from "@/components/CourseSettings";
+import PrivateVideo from "@/components/PrivateVideo";
+import type { Course, Module, Lesson, LiveSession, Assignment, Recording, Discussion } from "@/lib/models";
+import ReactMarkdown from "react-markdown";
+import { privateFileUrl } from "@/lib/storage";
+import PrivateFileLink from "@/components/PrivateFileLink";
 import { useEffect, useState } from "react";
 import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -30,18 +37,21 @@ const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
-  const [course, setCourse] = useState<any>(null);
-  const [modules, setModules] = useState<any[]>([]);
+  const [course, setCourse] = useState<Course>(null);
+  const [modules, setModules] = useState<Module[]>([]);
   const [enrolled, setEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
   const [enrolling, setEnrolling] = useState(false);
-  const [activeLesson, setActiveLesson] = useState<any>(null);
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [activeLesson, setActiveLesson] = useState<Lesson>(null);
   const [progress, setProgress] = useState<Record<string, boolean>>({});
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [liveClasses, setLiveClasses] = useState<any[]>([]);
-  const [recordings, setRecordings] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [liveClasses, setLiveClasses] = useState<LiveSession[]>([]);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
   const [expandedRecording, setExpandedRecording] = useState<string | null>(null);
-  const [selectedLiveClass, setSelectedLiveClass] = useState<any>(null);
+  const [selectedLiveClass, setSelectedLiveClass] = useState<LiveSession>(null);
   const [createAssignOpen, setCreateAssignOpen] = useState(false);
   const [creatingAssign, setCreatingAssign] = useState(false);
   const [assignTitle, setAssignTitle] = useState("");
@@ -58,6 +68,11 @@ const CourseDetail = () => {
 
   useEffect(() => {
     if (!id) return;
+    setEnrolled(false);
+    setProgress({});
+    setActiveLesson(null);
+    setLoading(true);
+    let active = true;
     const fetch = async () => {
       const [courseRes, modulesRes, assignRes, liveRes, recRes] = await Promise.all([
         supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name)").eq("id", id).single(),
@@ -66,21 +81,22 @@ const CourseDetail = () => {
         supabase.from("live_classes").select("*").eq("course_id", id).order("scheduled_at", { ascending: false }),
         supabase.from("class_recordings").select("*, live_classes!class_recordings_live_class_id_fkey(course_id)").order("created_at", { ascending: false }),
       ]);
+      if (!active) return;
       setCourse(courseRes.data);
       setAssignments(assignRes.data || []);
       setLiveClasses(liveRes.data || []);
       // Filter recordings for this course
       const allRecs = recRes.data || [];
-      setRecordings(allRecs.filter((r: any) => r.live_classes?.course_id === id));
+      setRecordings(allRecs.filter((r) => r.live_classes?.course_id === id));
       const mods = modulesRes.data || [];
-      mods.forEach((m: any) => m.lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order));
+      mods.forEach((m) => m.lessons?.sort((a, b) => a.sort_order - b.sort_order));
       setModules(mods);
 
       if (user) {
         const { data: enrollment } = await supabase.from("enrollments").select("id").eq("user_id", user.id).eq("course_id", id).maybeSingle();
         setEnrolled(!!enrollment);
 
-        const allLessonIds = mods.flatMap((m: any) => m.lessons?.map((l: any) => l.id) || []);
+        const allLessonIds = mods.flatMap((m) => m.lessons?.map((l) => l.id) || []);
         if (allLessonIds.length > 0) {
           const { data: prog } = await supabase.from("lesson_progress").select("lesson_id, completed").eq("user_id", user.id).in("lesson_id", allLessonIds);
           const map: Record<string, boolean> = {};
@@ -96,28 +112,43 @@ const CourseDetail = () => {
       setLoading(false);
     };
     fetch();
-  }, [id, user]);
+    return () => { active = false; };
+  }, [id, user, revision]);
+
+  useEffect(() => {
+    let active = true;
+    setVideoUrl(null);
+    if (activeLesson?.video_url) privateFileUrl("lesson-files", activeLesson.video_url)
+      .then(url => { if (active) setVideoUrl(url); })
+      .catch(() => { if (active) toast.error("Could not load this video"); });
+    return () => { active = false; };
+  }, [activeLesson?.video_url]);
 
   const handleEnroll = async () => {
     if (!user) return navigate("/auth");
+    if (course?.price_bdt > 0) { toast.info("Paid enrollment is not available yet"); return; }
     setEnrolling(true);
     const { error } = await supabase.from("enrollments").insert({ user_id: user.id, course_id: id! });
     if (error) toast.error("Failed to enroll");
-    else { setEnrolled(true); toast.success("Enrolled successfully!"); checkAndAwardBadges(user.id); }
+    else { setEnrolled(true); setRevision(r => r + 1); toast.success("Enrolled successfully!"); checkAndAwardBadges(user.id); }
     setEnrolling(false);
   };
 
   const toggleComplete = async (lessonId: string) => {
-    if (!user) return;
+    if (!user || savingProgress) return;
+    setSavingProgress(true);
     const isCompleted = progress[lessonId];
     if (isCompleted) {
-      await supabase.from("lesson_progress").delete().eq("user_id", user.id).eq("lesson_id", lessonId);
+      const { error } = await supabase.from("lesson_progress").delete().eq("user_id", user.id).eq("lesson_id", lessonId);
+      if (error) { toast.error("Progress was not saved. Try again."); setSavingProgress(false); return; }
       setProgress((p) => { const n = { ...p }; delete n[lessonId]; return n; });
     } else {
-      await supabase.from("lesson_progress").upsert({ user_id: user.id, lesson_id: lessonId, completed: true, completed_at: new Date().toISOString() });
+      const { error } = await supabase.from("lesson_progress").upsert({ user_id: user.id, lesson_id: lessonId, completed: true, completed_at: new Date().toISOString() }, { onConflict: "user_id,lesson_id" });
+      if (error) { toast.error("Progress was not saved. Try again."); setSavingProgress(false); return; }
       setProgress((p) => ({ ...p, [lessonId]: true }));
       checkAndAwardBadges(user.id);
     }
+    setSavingProgress(false);
   };
 
   const handleCreateAssignment = async (e: React.FormEvent) => {
@@ -235,11 +266,11 @@ const CourseDetail = () => {
               </Button>
             )}
 
-            <div className="mt-6 flex items-center gap-4">
+            <div className="mt-6 flex flex-wrap items-center gap-4">
               {!enrolled ? (
-                 <Button onClick={handleEnroll} className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" disabled={enrolling}>
+                 <Button onClick={handleEnroll} className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" disabled={enrolling || course.price_bdt > 0}>
                    {enrolling && <Loader2 className="h-4 w-4 animate-spin" />}
-                   <PlayCircle className="h-4 w-4" /> Enroll Now
+                   <PlayCircle className="h-4 w-4" /> {course.price_bdt > 0 ? `৳${course.price_bdt} · Enrollment unavailable` : "Enroll Now"}
                  </Button>
                ) : (
                  <div className="flex items-center gap-3">
@@ -259,7 +290,7 @@ const CourseDetail = () => {
         </div>
 
         <div className="container mx-auto px-4 py-8">
-          <div className="grid gap-8 lg:grid-cols-[320px_1fr]">
+          <div className="grid min-w-0 gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
             {/* Sidebar - Module list */}
             <aside className="lg:sticky lg:top-20 lg:self-start">
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Course Content</h3>
@@ -271,7 +302,7 @@ const CourseDetail = () => {
                     </AccordionTrigger>
                     <AccordionContent>
                       <ul className="space-y-1">
-                        {mod.lessons?.map((lesson: any) => (
+                        {mod.lessons?.map((lesson) => (
                           <li key={lesson.id}>
                             <button
                               onClick={() => setActiveLesson(lesson)}
@@ -297,10 +328,11 @@ const CourseDetail = () => {
             <div>
               {activeLesson ? (
                 <div className="rounded-xl border border-border bg-card p-6">
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-xl font-bold">{activeLesson.title}</h2>
+                    {enrolled && <LessonBookmark lessonId={activeLesson.id} />}
                     {enrolled && (
-                      <Button size="sm" variant={progress[activeLesson.id] ? "default" : "outline"} onClick={() => toggleComplete(activeLesson.id)} className={progress[activeLesson.id] ? "bg-success text-success-foreground hover:bg-success/90" : ""}>
+                      <Button size="sm" variant={progress[activeLesson.id] ? "default" : "outline"} disabled={savingProgress} onClick={() => toggleComplete(activeLesson.id)} className={progress[activeLesson.id] ? "bg-success text-success-foreground hover:bg-success/90" : ""}>
                         <CheckCircle2 className="mr-1.5 h-4 w-4" />
                         {progress[activeLesson.id] ? "Completed" : "Mark Complete"}
                       </Button>
@@ -309,22 +341,18 @@ const CourseDetail = () => {
 
                   {activeLesson.type === "video" && activeLesson.video_url && (
                     <div className="mb-6 aspect-video overflow-hidden rounded-lg bg-muted">
-                      <video src={activeLesson.video_url} controls className="h-full w-full" />
+                      <video src={videoUrl || undefined} controls className="h-full w-full" />
                     </div>
                   )}
 
                   {activeLesson.type === "article" && activeLesson.content && (
                     <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <div className="code-block whitespace-pre-wrap">{activeLesson.content}</div>
+                      <ReactMarkdown>{activeLesson.content}</ReactMarkdown>
                     </div>
                   )}
 
                   {activeLesson.type === "file" && activeLesson.file_url && (
-                    <a href={activeLesson.file_url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" className="gap-2">
-                        <Download className="h-4 w-4" /> Download File
-                      </Button>
-                    </a>
+                    <PrivateFileLink bucket="lesson-files" path={activeLesson.file_url}>Download File</PrivateFileLink>
                   )}
 
                   {!activeLesson.content && !activeLesson.video_url && !activeLesson.file_url && (
@@ -333,11 +361,13 @@ const CourseDetail = () => {
                 </div>
               ) : (
                 <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-border">
-                  <p className="text-muted-foreground">Select a lesson to get started</p>
+                  <p className="text-muted-foreground">{enrolled || course.teacher_id === user?.id ? "Select a lesson to get started" : "Enroll to access course lessons"}</p>
                 </div>
               )}
             </div>
           </div>
+
+          {course.teacher_id === user?.id && <CourseSettings course={course} onSaved={setCourse} />}
 
           {/* Live Classes Section */}
           <div className="mt-8">
@@ -360,21 +390,21 @@ const CourseDetail = () => {
                     </DialogHeader>
                     <form onSubmit={handleCreateLiveClass} className="space-y-4">
                       <div>
-                        <Label>Title</Label>
-                        <Input value={liveTitle} onChange={(e) => setLiveTitle(e.target.value)} placeholder="e.g. Week 3: React Hooks Deep Dive" required />
+                        <Label htmlFor="coursedetail-field-1">Title</Label>
+                        <Input id="coursedetail-field-1" value={liveTitle} onChange={(e) => setLiveTitle(e.target.value)} placeholder="e.g. Week 3: React Hooks Deep Dive" required />
                       </div>
                       <div>
-                        <Label>Description (optional)</Label>
-                        <Textarea value={liveDesc} onChange={(e) => setLiveDesc(e.target.value)} rows={2} />
+                        <Label htmlFor="coursedetail-field-2">Description (optional)</Label>
+                        <Textarea id="coursedetail-field-2" value={liveDesc} onChange={(e) => setLiveDesc(e.target.value)} rows={2} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label>Date & Time</Label>
-                          <Input type="datetime-local" value={liveScheduledAt} onChange={(e) => setLiveScheduledAt(e.target.value)} required />
+                          <Label htmlFor="coursedetail-field-3">Date & Time</Label>
+                          <Input id="coursedetail-field-3" type="datetime-local" value={liveScheduledAt} onChange={(e) => setLiveScheduledAt(e.target.value)} required />
                         </div>
                         <div>
-                          <Label>Duration (min)</Label>
-                          <Input type="number" value={liveDuration} onChange={(e) => setLiveDuration(e.target.value)} min={15} step={15} />
+                          <Label htmlFor="coursedetail-field-4">Duration (min)</Label>
+                          <Input id="coursedetail-field-4" type="number" value={liveDuration} onChange={(e) => setLiveDuration(e.target.value)} min={15} step={15} />
                         </div>
                       </div>
                       <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creatingLive}>
@@ -457,11 +487,7 @@ const CourseDetail = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <a href={rec.file_url} download onClick={(e) => e.stopPropagation()}>
-                            <Button size="sm" variant="outline" className="gap-1.5">
-                              <Download className="h-3.5 w-3.5" /> Download
-                            </Button>
-                          </a>
+                          <PrivateFileLink bucket="class-recordings" path={rec.file_url}>Download recording</PrivateFileLink>
                           <Button size="sm" variant="outline" className="gap-1.5">
                             <PlayCircle className="h-3.5 w-3.5" /> {isExpanded ? "Collapse" : "Watch"}
                           </Button>
@@ -469,7 +495,7 @@ const CourseDetail = () => {
                       </div>
                       {isExpanded && (
                         <div className="mt-3 aspect-video rounded-lg overflow-hidden bg-black">
-                          <video src={rec.file_url} controls autoPlay className="h-full w-full" />
+                          <PrivateVideo bucket="class-recordings" path={rec.file_url} autoPlay className="h-full w-full" />
                         </div>
                       )}
                     </div>
@@ -498,21 +524,21 @@ const CourseDetail = () => {
                     </DialogHeader>
                     <form onSubmit={handleCreateAssignment} className="space-y-4">
                       <div>
-                        <Label>Title</Label>
-                        <Input value={assignTitle} onChange={(e) => setAssignTitle(e.target.value)} required />
+                        <Label htmlFor="coursedetail-field-5">Title</Label>
+                        <Input id="coursedetail-field-5" value={assignTitle} onChange={(e) => setAssignTitle(e.target.value)} required />
                       </div>
                       <div>
-                        <Label>Description</Label>
-                        <Textarea value={assignDesc} onChange={(e) => setAssignDesc(e.target.value)} rows={3} />
+                        <Label htmlFor="coursedetail-field-6">Description</Label>
+                        <Textarea id="coursedetail-field-6" value={assignDesc} onChange={(e) => setAssignDesc(e.target.value)} rows={3} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label>Due Date</Label>
-                          <Input type="datetime-local" value={assignDue} onChange={(e) => setAssignDue(e.target.value)} />
+                          <Label htmlFor="coursedetail-field-7">Due Date</Label>
+                          <Input id="coursedetail-field-7" type="datetime-local" value={assignDue} onChange={(e) => setAssignDue(e.target.value)} />
                         </div>
                         <div>
-                          <Label>Max Marks</Label>
-                          <Input type="number" value={assignMarks} onChange={(e) => setAssignMarks(e.target.value)} min={1} />
+                          <Label htmlFor="coursedetail-field-8">Max Marks</Label>
+                          <Input id="coursedetail-field-8" type="number" value={assignMarks} onChange={(e) => setAssignMarks(e.target.value)} min={1} />
                         </div>
                       </div>
                       <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creatingAssign}>

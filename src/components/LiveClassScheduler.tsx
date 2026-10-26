@@ -1,3 +1,4 @@
+import type { Course } from "@/lib/models";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 
 interface LiveClassSchedulerProps {
   courses: { id: string; title: string }[];
-  onCreated?: (liveClass: any) => void;
+  onCreated?: (liveClass) => void;
 }
 
 const LiveClassScheduler = ({ courses, onCreated }: LiveClassSchedulerProps) => {
@@ -94,9 +95,9 @@ const LiveClassScheduler = ({ courses, onCreated }: LiveClassSchedulerProps) => 
         </DialogHeader>
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
-            <Label>Course</Label>
+            <Label htmlFor="liveclassscheduler-select-4">Course</Label>
             <Select value={courseId} onValueChange={setCourseId} required>
-              <SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger>
+              <SelectTrigger id="liveclassscheduler-select-4"><SelectValue placeholder="Select course" /></SelectTrigger>
               <SelectContent>
                 {courses.map((c) => (
                   <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
@@ -105,22 +106,22 @@ const LiveClassScheduler = ({ courses, onCreated }: LiveClassSchedulerProps) => 
             </Select>
           </div>
           <div>
-            <Label>Title</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Week 3: React Hooks Deep Dive" required />
+            <Label htmlFor="liveclassscheduler-field-1">Title</Label>
+            <Input id="liveclassscheduler-field-1" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Week 3: React Hooks Deep Dive" required />
           </div>
           <div>
-            <Label>Description (optional)</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="What will be covered..." />
+            <Label htmlFor="liveclassscheduler-field-2">Description (optional)</Label>
+            <Textarea id="liveclassscheduler-field-2" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="What will be covered..." />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Date & Time</Label>
-              <Input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} required />
+              <Label htmlFor="liveclassscheduler-field-3">Date & Time</Label>
+              <Input id="liveclassscheduler-field-3" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} required />
             </div>
             <div>
-              <Label>Duration (min)</Label>
+              <Label htmlFor="liveclassscheduler-select-5">Duration (min)</Label>
               <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="liveclassscheduler-select-5"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="30">30 min</SelectItem>
                   <SelectItem value="45">45 min</SelectItem>

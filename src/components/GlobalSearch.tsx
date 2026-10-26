@@ -1,3 +1,5 @@
+import { useAuth } from "@/contexts/AuthContext";
+import type { Course, Assignment, Post } from "@/lib/models";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,9 +9,10 @@ import { Button } from "@/components/ui/button";
 
 const GlobalSearch = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ courses: any[]; posts: any[]; assignments: any[] }>({ courses: [], posts: [], assignments: [] });
+  const [results, setResults] = useState<{ courses: Pick<Course,'id'|'title'|'category'>[]; posts: Pick<Post,'id'|'title'|'category'>[]; assignments: Pick<Assignment,'id'|'title'|'course_id'>[] }>({ courses: [], posts: [], assignments: [] });
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -21,7 +24,7 @@ const GlobalSearch = () => {
       const [coursesRes, postsRes, assignRes] = await Promise.all([
         supabase.from("courses").select("id, title, category").eq("is_published", true).ilike("title", `%${query}%`).limit(5),
         supabase.from("community_posts").select("id, title, category").ilike("title", `%${query}%`).limit(5),
-        supabase.from("assignments").select("id, title, course_id").ilike("title", `%${query}%`).limit(5),
+        user ? supabase.from("assignments").select("id, title, course_id").ilike("title", `%${query}%`).limit(5) : Promise.resolve({data:[]}),
       ]);
       setResults({
         courses: coursesRes.data || [],
@@ -31,7 +34,7 @@ const GlobalSearch = () => {
       setLoading(false);
     }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, user]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

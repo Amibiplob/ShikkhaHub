@@ -1,3 +1,5 @@
+import type { Tables } from "@/integrations/supabase/types";
+import type { Course } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +16,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, import("lucide-react").LucideIcon> = {
   footprints: Footprints,
   zap: Zap,
   brain: Brain,
@@ -31,11 +33,11 @@ const Achievements = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [allBadges, setAllBadges] = useState<any[]>([]);
+  const [allBadges, setAllBadges] = useState<Tables<'badges'>[]>([]);
   const [earnedBadgeIds, setEarnedBadgeIds] = useState<Set<string>>(new Set());
   const [earnedMap, setEarnedMap] = useState<Record<string, string>>({});
-  const [certificates, setCertificates] = useState<any[]>([]);
-  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<(Tables<'certificates'> & { courses?: Pick<Course, 'title' | 'category' | 'difficulty'> })[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [courseProgress, setCourseProgress] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -67,7 +69,7 @@ const Achievements = () => {
       setEnrolledCourses(courses);
 
       if (courses.length > 0) {
-        const courseIds = courses.map((c: any) => c.id);
+        const courseIds = courses.map((c) => c.id);
         const { data: allModules } = await supabase
           .from("modules").select("id, course_id, lessons(id)").in("course_id", courseIds);
         const { data: completedLessons } = await supabase
@@ -77,7 +79,7 @@ const Achievements = () => {
         courseIds.forEach((cid: string) => {
           const mods = allModules?.filter((m) => m.course_id === cid) || [];
           const total = mods.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
-          const done = mods.reduce((acc, m) => acc + (m.lessons?.filter((l: any) => completedSet.has(l.id)).length || 0), 0);
+          const done = mods.reduce((acc, m) => acc + (m.lessons?.filter((l) => completedSet.has(l.id)).length || 0), 0);
           progressMap[cid] = total > 0 ? Math.round((done / total) * 100) : 0;
         });
         setCourseProgress(progressMap);
@@ -87,7 +89,7 @@ const Achievements = () => {
     fetchData();
   }, [user]);
 
-  const completedCourses = enrolledCourses.filter((c: any) => courseProgress[c.id] === 100);
+  const completedCourses = enrolledCourses.filter((c) => courseProgress[c.id] === 100);
 
   if (authLoading || loading) {
     return (
@@ -214,7 +216,7 @@ const Achievements = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {enrolledCourses.map((course: any) => {
+              {enrolledCourses.map((course) => {
                 const progress = courseProgress[course.id] || 0;
                 return (
                   <Link key={course.id} to={`/courses/${course.id}`}>

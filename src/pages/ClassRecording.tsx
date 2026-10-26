@@ -1,3 +1,5 @@
+import PrivateVideo from "@/components/PrivateVideo";
+import type { LiveSession, Recording } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,8 +13,8 @@ import { format } from "date-fns";
 const ClassRecording = () => {
   const { classId } = useParams<{ classId: string }>();
   const navigate = useNavigate();
-  const [recordings, setRecordings] = useState<any[]>([]);
-  const [liveClass, setLiveClass] = useState<any>(null);
+  const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [liveClass, setLiveClass] = useState<LiveSession>(null);
   const [loading, setLoading] = useState(true);
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
 
@@ -67,7 +69,7 @@ const ClassRecording = () => {
 
         {playingUrl && (
           <div className="mb-8 rounded-xl overflow-hidden bg-black">
-            <video src={playingUrl} controls autoPlay className="w-full max-h-[60vh]" />
+            <PrivateVideo bucket="class-recordings" path={playingUrl} autoPlay className="w-full max-h-[60vh]" />
           </div>
         )}
 

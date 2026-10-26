@@ -46,17 +46,6 @@ export const checkAndAwardBadges = async (userId: string) => {
   const inserts = toAward.map((b) => ({ user_id: userId, badge_id: b.id }));
   const { error } = await supabase.from("user_badges").insert(inserts);
   
-  if (!error && toAward.length > 0) {
-    // Create notification for each badge earned
-    const notifications = toAward.map((b) => ({
-      user_id: userId,
-      title: "Badge Earned! 🎉",
-      message: `You earned the "${b.name}" badge: ${b.description}`,
-      type: "badge",
-      link: "/achievements",
-    }));
-    await supabase.from("notifications").insert(notifications);
-  }
 
   return toAward;
 };

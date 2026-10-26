@@ -54,23 +54,15 @@ const Auth = () => {
       email: signupEmail,
       password: signupPassword,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName.trim(), wants_teacher: wantsTeacher },
         emailRedirectTo: window.location.origin,
       },
     });
     if (error) {
       toast.error(error.message);
     } else if (data.user) {
-      // Everyone starts as a student; teacher access requires admin approval.
-      await supabase.from("user_roles").insert({ user_id: data.user.id, role: "student" });
-      if (wantsTeacher) {
-        const { error: requestError } = await supabase.from("teacher_requests").insert({
-          user_id: data.user.id,
-          full_name: fullName,
-          email: signupEmail,
-        });
-        if (requestError) toast.error(`Could not submit your teacher request: ${requestError.message}`);
-      }
+      // The database trigger assigns student access and records teacher requests,
+      // including when email confirmation means signup has no session yet.
       toast.success(
         wantsTeacher
           ? "Account created! Check your email to confirm. Your teacher request will be reviewed by an admin."

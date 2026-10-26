@@ -60,9 +60,7 @@ const CourseCard = ({ id, title, description, thumbnail_url, category, difficult
                   {title}
                 </h3>
               </div>
-              <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
-                <BookmarkButton courseId={id} />
-              </div>
+
             </div>
             {description && (
               <p className="mb-3 text-sm text-muted-foreground line-clamp-2">{description}</p>
@@ -88,6 +86,7 @@ const CourseCard = ({ id, title, description, thumbnail_url, category, difficult
           </div>
         </div>
       </Link>
+      <div className="absolute top-3 left-3 rounded-full bg-card/90"><BookmarkButton courseId={id} /></div>
     </div>
   );
 };

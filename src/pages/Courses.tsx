@@ -1,3 +1,4 @@
+import type { Course } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -15,11 +16,15 @@ const difficulties = ["All", "beginner", "intermediate", "advanced"];
 
 const Courses = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "All");
   const [difficulty, setDifficulty] = useState(searchParams.get("level") || "All");
+  const [error, setError] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const instructor = searchParams.get("instructor") || "All";
+  const [instructors, setInstructors] = useState<{id:string;name:string}[]>([]);
   const sort = searchParams.get("sort") || "newest";
 
   useEffect(() => {
@@ -29,13 +34,24 @@ const Courses = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    supabase.from("courses").select("teacher_id, profiles!courses_teacher_id_profiles_fkey(full_name)").eq("is_published",true).then(({data})=>{
+      const unique = new Map((data || []).map(c=>[c.teacher_id,{id:c.teacher_id,name:c.profiles?.full_name||"Teacher"}]));
+      setInstructors([...unique.values()]);
+    });
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     const fetchCourses = async () => {
       setLoading(true);
       let query = supabase.from("courses").select("*, profiles!courses_teacher_id_profiles_fkey(full_name), enrollments(count)").eq("is_published", true);
+      if (instructor !== "All") query = query.eq("teacher_id", instructor);
       if (category !== "All") query = query.eq("category", category);
       if (difficulty !== "All") query = query.eq("difficulty", difficulty);
       if (search) query = query.ilike("title", `%${search}%`);
-      const { data } = await query.order("created_at", { ascending: sort === "oldest" });
+      const { data, error } = await query.order("created_at", { ascending: sort === "oldest" });
+      if (!active) return;
+      setError(!!error);
       const ordered = sort === "popular"
         ? [...(data || [])].sort((a, b) => (b.enrollments?.[0]?.count || 0) - (a.enrollments?.[0]?.count || 0))
         : (data || []);
@@ -43,9 +59,10 @@ const Courses = () => {
       setLoading(false);
     };
     fetchCourses();
-  }, [search, category, difficulty, sort]);
+    return () => { active = false; };
+  }, [search, category, difficulty, sort, instructor, revision]);
 
-  const updateFilters = (next: { search?: string; category?: string; level?: string }) => {
+  const updateFilters = (next: { search?: string; category?: string; level?: string; instructor?: string }) => {
     const params = new URLSearchParams(searchParams);
     Object.entries(next).forEach(([key, value]) => {
       if (!value || value === "All") params.delete(key);
@@ -67,6 +84,7 @@ const Courses = () => {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
+                  aria-label="Search courses"
                   placeholder="Search courses..."
                   value={search}
                   onChange={(e) => {
@@ -76,6 +94,10 @@ const Courses = () => {
                   className="pl-10"
                 />
               </div>
+              <Select value={instructor} onValueChange={value=>updateFilters({instructor:value})}>
+                <SelectTrigger aria-label="Instructor" className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="All">All Instructors</SelectItem>{instructors.map(i=><SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}</SelectContent>
+              </Select>
               <Select value={difficulty} onValueChange={(value) => updateFilters({ level: value })}>
                 <SelectTrigger className="w-[160px]">
                   <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
@@ -108,6 +130,7 @@ const Courses = () => {
         </div>
 
         <div className="container mx-auto px-4 py-10">
+          {error && <p role="alert" className="mb-6 text-destructive">Could not load courses. <Button variant="outline" onClick={()=>setRevision(r=>r+1)}>Retry</Button></p>}
           {!loading && courses.length > 0 && (
             <p className="mb-4 text-sm text-muted-foreground">{courses.length} course{courses.length !== 1 ? "s" : ""} found</p>
           )}

@@ -74,6 +74,7 @@ const Header = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
               <DropdownMenuLabel>{t("nav.learn")}</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigate("/tutors")}>{t("nav.tutors")}</DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/courses")}>
                 <BookOpen className="mr-2 h-4 w-4" /> {t("nav.allCourses")}
               </DropdownMenuItem>
@@ -99,11 +100,9 @@ const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link to="/courses">
-            <Button variant={isActive("/courses") ? "secondary" : "ghost"} size="sm">
+          <Button asChild variant={isActive("/courses") ? "secondary" : "ghost"} size="sm"><Link to="/courses">
               <BookOpen className="mr-1.5 h-4 w-4" /> {t("nav.courses")}
-            </Button>
-          </Link>
+            </Link></Button>
 
           <Button variant="ghost" size="sm" className="hidden xl:inline-flex" onClick={() => goHomeSection("learning-paths")}>
               <Map className="mr-1.5 h-4 w-4" /> {t("nav.paths")}
@@ -158,7 +157,7 @@ const Header = () => {
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                   <LayoutDashboard className="mr-2 h-4 w-4" /> {t("nav.dashboard")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/dashboard?tab=courses")}>
+                <DropdownMenuItem onClick={() => navigate("/dashboard?tab=learning")}>
                   <BookOpen className="mr-2 h-4 w-4" /> {t("nav.myCourses")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/dashboard?tab=bookmarks")}>
@@ -202,11 +201,9 @@ const Header = () => {
           )}
 
           {!(user && (hasRole("teacher") || hasRole("admin"))) && (
-            <Link to="/auth?tab=signup">
-              <Button variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm"><Link to="/auth?tab=signup&role=teacher">
                 <GraduationCap className="mr-1.5 h-4 w-4" /> {t("nav.teach")}
-              </Button>
-            </Link>
+              </Link></Button>
           )}
         </nav>
 
@@ -220,7 +217,7 @@ const Header = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Button aria-label="Account menu" variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={profile?.avatar_url || ""} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-sm">
@@ -252,14 +249,10 @@ const Header = () => {
             </DropdownMenu>
           ) : (
             <>
-              <Link to="/auth">
-                <Button variant="ghost" size="sm">{t("nav.signIn")}</Button>
-              </Link>
-              <Link to="/auth?tab=signup">
-                <Button size="sm" className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+              <Button asChild variant="ghost" size="sm"><Link to="/auth">{t("nav.signIn")}</Link></Button>
+              <Button asChild size="sm" className="bg-gradient-primary text-primary-foreground hover:opacity-90"><Link to="/auth?tab=signup">
                   {t("nav.getStarted")}
-                </Button>
-              </Link>
+                </Link></Button>
             </>
           )}
         </div>
@@ -344,6 +337,7 @@ const Header = () => {
 
             {user ? (
               <>
+                <Link to="/tutors" onClick={() => setMobileOpen(false)}><Button variant="ghost" className="w-full justify-start">{t("nav.tutors")}</Button></Link>
                 <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t("nav.myLearning")}
                 </p>

@@ -1,3 +1,5 @@
+import type { Tables } from "@/integrations/supabase/types";
+import type { Course } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,9 +17,9 @@ interface CoursePrerequisitesProps {
 
 const CoursePrerequisites = ({ courseId, isTeacher }: CoursePrerequisitesProps) => {
   const { user } = useAuth();
-  const [prerequisites, setPrerequisites] = useState<any[]>([]);
+  const [prerequisites, setPrerequisites] = useState<(Tables<'course_prerequisites'> & { courses?: { id: string; title: string } })[]>([]);
   const [completedCourseIds, setCompletedCourseIds] = useState<Set<string>>(new Set());
-  const [allCourses, setAllCourses] = useState<any[]>([]);
+  const [allCourses, setAllCourses] = useState<Pick<Course, 'id' | 'title'>[]>([]);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -42,8 +44,8 @@ const CoursePrerequisites = ({ courseId, isTeacher }: CoursePrerequisitesProps) 
     if (user && prereqs && prereqs.length > 0) {
       const prereqIds = prereqs.map((p) => p.prerequisite_course_id);
       const { data: enrollments } = await supabase
-        .from("enrollments").select("course_id").eq("user_id", user.id).in("course_id", prereqIds);
-      // Simple check: enrolled = "completed" (could be enhanced with actual progress check)
+        .from("certificates").select("course_id").eq("user_id", user.id).in("course_id", prereqIds);
+      // A verified completion record is required; enrollment alone is not completion.
       const completed = new Set(enrollments?.map((e) => e.course_id) || []);
       setCompletedCourseIds(completed);
     }

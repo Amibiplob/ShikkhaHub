@@ -1,3 +1,4 @@
+import type { Discussion, Post } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +40,7 @@ interface Comment {
   replies: Comment[];
 }
 
-const buildTree = (flat: any[]): Comment[] => {
+const buildTree = (flat: Omit<Comment, 'replies'>[]): Comment[] => {
   const byId = new Map<string, Comment>();
   flat.forEach((c) => byId.set(c.id, { ...c, replies: [] }));
   const roots: Comment[] = [];
@@ -58,7 +59,7 @@ const CommunityPost = () => {
   const { id } = useParams<{ id: string }>();
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<Post>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState("");
@@ -81,7 +82,7 @@ const CommunityPost = () => {
     const flat = data || [];
     setComments(buildTree(flat));
 
-    const commentIds = flat.map((c: any) => c.id);
+    const commentIds = flat.map((c) => c.id);
     if (commentIds.length > 0) {
       const { data: cUpvotes } = await supabase.from("community_upvotes").select("*").in("comment_id", commentIds);
       const counts: Record<string, number> = {};
@@ -152,7 +153,7 @@ const CommunityPost = () => {
     const was = commentUpvotes.has(commentId);
     setCommentUpvotes((prev) => {
       const n = new Set(prev);
-      was ? n.delete(commentId) : n.add(commentId);
+      if (was) n.delete(commentId); else n.add(commentId);
       return n;
     });
     setCommentUpvoteCounts((prev) => ({ ...prev, [commentId]: Math.max(0, (prev[commentId] || 0) + (was ? -1 : 1)) }));
@@ -164,7 +165,7 @@ const CommunityPost = () => {
     if (error) {
       setCommentUpvotes((prev) => {
         const n = new Set(prev);
-        was ? n.add(commentId) : n.delete(commentId);
+        if (was) n.add(commentId); else n.delete(commentId);
         return n;
       });
       setCommentUpvoteCounts((prev) => ({ ...prev, [commentId]: Math.max(0, (prev[commentId] || 0) + (was ? 1 : -1)) }));
@@ -308,7 +309,7 @@ const CommunityPost = () => {
                 rows={2}
                 className="text-sm"
               />
-              <Button size="sm" onClick={() => handleReply(c.id)} disabled={submitting} className="bg-gradient-primary text-primary-foreground shrink-0">
+              <Button aria-label="Send reply" size="sm" onClick={() => handleReply(c.id)} disabled={submitting} className="bg-gradient-primary text-primary-foreground shrink-0">
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
@@ -378,7 +379,7 @@ const CommunityPost = () => {
                 rows={3}
                 required
               />
-              <Button type="submit" disabled={submitting} className="bg-gradient-primary text-primary-foreground shrink-0 self-end">
+              <Button aria-label="Post comment" type="submit" disabled={submitting} className="bg-gradient-primary text-primary-foreground shrink-0 self-end">
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </form>

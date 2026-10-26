@@ -16,7 +16,7 @@ const BookmarkButton = ({ courseId, size = "icon" }: BookmarkButtonProps) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) { setBookmarked(false); return; }
     supabase.from("course_bookmarks").select("id").eq("user_id", user.id).eq("course_id", courseId).maybeSingle()
       .then(({ data }) => setBookmarked(!!data));
   }, [user, courseId]);
@@ -24,14 +24,11 @@ const BookmarkButton = ({ courseId, size = "icon" }: BookmarkButtonProps) => {
   const toggle = async () => {
     if (!user) { toast.error("Sign in to bookmark"); return; }
     setLoading(true);
-    if (bookmarked) {
-      await supabase.from("course_bookmarks").delete().eq("user_id", user.id).eq("course_id", courseId);
-      setBookmarked(false);
-    } else {
-      await supabase.from("course_bookmarks").insert({ user_id: user.id, course_id: courseId });
-      setBookmarked(true);
-      toast.success("Bookmarked!");
-    }
+    const { error } = bookmarked
+      ? await supabase.from("course_bookmarks").delete().eq("user_id", user.id).eq("course_id", courseId)
+      : await supabase.from("course_bookmarks").insert({ user_id: user.id, course_id: courseId });
+    if (error) toast.error("Bookmark was not saved. Try again.");
+    else { setBookmarked(!bookmarked); if (!bookmarked) toast.success("Bookmarked!"); }
     setLoading(false);
   };
 

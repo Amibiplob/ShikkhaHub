@@ -168,8 +168,8 @@ const ProfileEditor = ({ onUpdated }: ProfileEditorProps) => {
 
           {/* Email (read-only) */}
           <div>
-            <Label>Email</Label>
-            <Input value={user?.email || ""} disabled className="opacity-60" />
+            <Label htmlFor="profileeditor-field-1">Email</Label>
+            <Input id="profileeditor-field-1" value={user?.email || ""} disabled className="opacity-60" />
           </div>
 
           <Button
