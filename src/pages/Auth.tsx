@@ -6,13 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
-import type { Database } from "@/integrations/supabase/types";
-
-type AppRole = Database["public"]["Enums"]["app_role"];
 
 const Auth = () => {
   const { user } = useAuth();
@@ -31,7 +28,7 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<AppRole>(searchParams.get("role") === "teacher" ? "teacher" : "student");
+  const [wantsTeacher, setWantsTeacher] = useState(searchParams.get("role") === "teacher");
   const destination = typeof location.state?.from === "string" ? location.state.from : "/dashboard";
 
   // Forgot password
@@ -64,8 +61,21 @@ const Auth = () => {
     if (error) {
       toast.error(error.message);
     } else if (data.user) {
-      await supabase.from("user_roles").insert({ user_id: data.user.id, role });
-      toast.success("Account created! Check your email to confirm.");
+      // Everyone starts as a student; teacher access requires admin approval.
+      await supabase.from("user_roles").insert({ user_id: data.user.id, role: "student" });
+      if (wantsTeacher) {
+        const { error: requestError } = await supabase.from("teacher_requests").insert({
+          user_id: data.user.id,
+          full_name: fullName,
+          email: signupEmail,
+        });
+        if (requestError) toast.error(`Could not submit your teacher request: ${requestError.message}`);
+      }
+      toast.success(
+        wantsTeacher
+          ? "Account created! Check your email to confirm. Your teacher request will be reviewed by an admin."
+          : "Account created! Check your email to confirm."
+      );
       setTab("signin");
     }
     setLoading(false);
@@ -183,17 +193,22 @@ const Auth = () => {
                         <Input id="signupPassword" type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required minLength={6} />
                       </div>
                       <div>
-                        <Label>I want to</Label>
-                        <RadioGroup value={role} onValueChange={(v) => setRole(v as AppRole)} className="mt-2 flex gap-4">
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="student" id="student" />
-                            <Label htmlFor="student" className="cursor-pointer">Learn (Student)</Label>
+                        <div className="flex items-start gap-2.5 rounded-lg border border-border bg-background/50 p-3">
+                          <Checkbox
+                            id="teacherRequest"
+                            checked={wantsTeacher}
+                            onCheckedChange={(checked) => setWantsTeacher(checked === true)}
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <Label htmlFor="teacherRequest" className="cursor-pointer font-normal">
+                              I want to be a teacher
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              You start as a student; an admin approves teacher access.
+                            </p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="teacher" id="teacher" />
-                            <Label htmlFor="teacher" className="cursor-pointer">Teach (Teacher)</Label>
-                          </div>
-                        </RadioGroup>
+                        </div>
                       </div>
                       <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={loading}>
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create Account
