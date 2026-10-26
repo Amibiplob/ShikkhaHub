@@ -1,5 +1,5 @@
 import type { Review } from "@/lib/models";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
   const [myReview, setMyReview] = useState<Review>(null);
   const [editing, setEditing] = useState(false);
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     const { data } = await supabase
       .from("course_reviews")
       .select("*, profiles!course_reviews_user_id_fkey(full_name, avatar_url)")
@@ -70,11 +70,11 @@ const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
       }
     }
     setLoading(false);
-  };
+  }, [courseId, user]);
 
   useEffect(() => {
     fetchReviews();
-  }, [courseId, user]);
+  }, [fetchReviews]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

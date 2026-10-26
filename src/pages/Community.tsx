@@ -1,5 +1,5 @@
 import type { Discussion, Post } from "@/lib/models";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,7 +61,7 @@ const Community = () => {
   const [content, setContent] = useState("");
   const [postCategory, setPostCategory] = useState("general");
 
-  const isAdmin = useMemo(() => hasRole("admin"), [hasRole, user]);
+  const isAdmin = hasRole("admin");
 
   // Debounce the search box so we don't fire a query per keystroke
   useEffect(() => {
@@ -105,7 +105,7 @@ const Community = () => {
 
   const requestId = useRef(0);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     const myId = ++requestId.current;
     const isStale = () => myId !== requestId.current;
     setLoading(true);
@@ -155,9 +155,13 @@ const Community = () => {
     setPosts(data || []);
     setTotalCount(count || 0);
     setLoading(false);
-  };
+  }, [category, search, sortBy, page]);
 
-  const fetchUpvotes = async () => {
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  const fetchUpvotes = useCallback(async () => {
     if (!user) {
       setUpvotedPosts(new Set());
       return;
@@ -168,20 +172,16 @@ const Community = () => {
       .eq("user_id", user.id)
       .not("post_id", "is", null);
     setUpvotedPosts(new Set(data?.map((u) => u.post_id!).filter(Boolean) || []));
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchUpvotes();
+  }, [fetchUpvotes]);
 
   // Reset to first page whenever filters change
   useEffect(() => {
     setPage(0);
   }, [category, search, sortBy]);
-
-  useEffect(() => {
-    fetchPosts();
-  }, [category, search, user, sortBy, page]);
-
-  useEffect(() => {
-    fetchUpvotes();
-  }, [user]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });

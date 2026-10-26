@@ -1,19 +1,180 @@
 {
-  "date": "2026-10-26",
+  "date": "2026-10-27",
   "timezone": "Asia/Dhaka",
-  "implementationCommit": "6ad01db8309d941fa135a4f4c28352dc45ec785a",
+  "phase": 2,
+  "baselineCommits": [
+    "6ad01db",
+    "41ab799"
+  ],
+  "phase1HistoricalEvidence": {
+    "date": "2026-10-26",
+    "timezone": "Asia/Dhaka",
+    "implementationCommit": "6ad01db8309d941fa135a4f4c28352dc45ec785a",
+    "environment": {
+      "node": "24.22.1",
+      "npm": "11.19.1",
+      "browser": "Google Chrome 156.0.8078.47",
+      "display": ":0",
+      "headedExecuted": true,
+      "headlessExecuted": true
+    },
+    "verificationCommand": {
+      "command": "npm run verify",
+      "exitCode": 0,
+      "result": "passed"
+    },
+    "checks": {
+      "typescript": {
+        "configs": [
+          "tsconfig.app.json",
+          "tsconfig.node.json",
+          "tsconfig.e2e.json"
+        ],
+        "result": "passed"
+      },
+      "lint": {
+        "errors": 0,
+        "warnings": 21,
+        "result": "passed with warnings"
+      },
+      "unitComponent": {
+        "passed": 29,
+        "files": 10,
+        "failed": 0
+      },
+      "database": {
+        "passed": 25,
+        "failed": 0,
+        "engine": "PostgreSQL WASM / PGlite",
+        "shims": [
+          "auth.uid / roles",
+          "storage tables",
+          "realtime.topic / send"
+        ],
+        "skippedMigration": "20260308214544 extension-only pg_cron / pg_net setup"
+      },
+      "build": {
+        "result": "passed",
+        "warning": "application JS chunk approximately 1.55 MB uncompressed"
+      },
+      "browser": {
+        "startTime": "2026-10-26T15:51:32.425Z",
+        "duration": 208006.141,
+        "expected": 27,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0,
+        "uniqueScenarios": 27,
+        "serviceMode": "simulated Auth / REST / Realtime; actual Chrome and local WebRTC"
+      },
+      "headedRecheck": {
+        "passed": 3,
+        "failed": 0,
+        "scenarios": [
+          "login and logout",
+          "Bangla/light-theme team section and keyboard",
+          "teacher/student local WebRTC"
+        ]
+      },
+      "dependencyAudit": {
+        "full": {
+          "info": 0,
+          "low": 0,
+          "moderate": 10,
+          "high": 2,
+          "critical": 2,
+          "total": 14
+        },
+        "productionOnly": {
+          "info": 0,
+          "low": 0,
+          "moderate": 3,
+          "high": 1,
+          "critical": 0,
+          "total": 4
+        },
+        "result": "findings remain"
+      },
+      "gitDiffCheck": "passed",
+      "stagedSecretPatternScan": "no flags",
+      "originalEnvironmentFile": "unchanged"
+    },
+    "requirements": {
+      "reference": "user-supplied requirements; report PDF unavailable",
+      "implemented": 13,
+      "partial": 6,
+      "missingMajorGroups": 0,
+      "futureWork": 1,
+      "note": "Grouped statuses are not a compliance percentage; specific incomplete features are listed in partial/future rows."
+    },
+    "repairedDefectGroups": 25,
+    "screenshots": [
+      {
+        "path": "docs/screenshots/home-desktop.png",
+        "sha256": "344ac601ee7517ee95533165b29cb83e02be448b4ec27c930451be33901fa4f4"
+      },
+      {
+        "path": "docs/screenshots/student-assignment.png",
+        "sha256": "775d26676b7e3bc43acc109b1e5a6b87c7bb5b137065d513e0e69c5db611d7d3"
+      },
+      {
+        "path": "docs/screenshots/student-live.png",
+        "sha256": "7d7587e963505d077f94b312cdfabd2aeffa0b7de5a3402d5fdbf6bb4a467734"
+      },
+      {
+        "path": "docs/screenshots/teacher-live.png",
+        "sha256": "3aa96e2437d25914b751708a8fdc5818740dada54477cb31b87bf4a1240db423"
+      },
+      {
+        "path": "docs/screenshots/team-bangla-light.png",
+        "sha256": "98664f83e34104e56d1f8f15f623b9187bfa492f313290ca962ebd9c2f826ae6"
+      },
+      {
+        "path": "docs/screenshots/team-mobile.png",
+        "sha256": "289bcba22f2dbfa2fac8e2504197335ba6745e99d8215d865ac269d1cbab1066"
+      }
+    ],
+    "evidence": {
+      "fullBrowserReport": "playwright-report/index.html",
+      "fullBrowserResults": "test-results/results.json",
+      "localLogs": "artifacts/verification/",
+      "headedArtifacts": "artifacts/headed-results/",
+      "earlierFailures": [
+        "artifacts/initial-browser-run/",
+        "artifacts/second-browser-run/",
+        "artifacts/third-browser-run/",
+        "artifacts/verify-interrupted-screenshot/",
+        "artifacts/verify-network-interruption/"
+      ]
+    },
+    "limitations": [
+      "No hosted Supabase / real-account acceptance",
+      "Historical storage paths and duplicate submissions require staging rollout review",
+      "No real OAuth/email/payment/AI-provider/device/TURN acceptance",
+      "Screen sharing and recording acceptance pending",
+      "14 full dependency findings, including 4 production findings",
+      "Optional course-completion badge automation remains incomplete",
+      "Manual accessibility / full translation / scale acceptance pending"
+    ],
+    "remoteActions": {
+      "push": false,
+      "deploy": false,
+      "productionMigration": false,
+      "realAccountProvisioning": false,
+      "artifactUpload": false
+    }
+  },
   "environment": {
-    "node": "24.22.1",
+    "node": "v24.22.1",
     "npm": "11.19.1",
     "browser": "Google Chrome 156.0.8078.47",
-    "display": ":0",
-    "headedExecuted": true,
-    "headlessExecuted": true
+    "headlessExecuted": true,
+    "headedExecuted": false
   },
   "verificationCommand": {
     "command": "npm run verify",
     "exitCode": 0,
-    "result": "passed"
+    "result": "passed with documented lint/build warnings"
   },
   "checks": {
     "typescript": {
@@ -26,32 +187,36 @@
     },
     "lint": {
       "errors": 0,
-      "warnings": 21,
-      "result": "passed with warnings"
+      "warnings": 9,
+      "warningsResolved": 12,
+      "retainedRule": "react-refresh/only-export-components"
     },
     "unitComponent": {
-      "passed": 29,
-      "files": 10,
+      "passed": 35,
+      "files": 11,
       "failed": 0
     },
     "database": {
-      "passed": 25,
+      "passed": 31,
       "failed": 0,
+      "newMigrationTests": 6,
       "engine": "PostgreSQL WASM / PGlite",
       "shims": [
-        "auth.uid / roles",
-        "storage tables",
-        "realtime.topic / send"
+        "Auth identity / roles",
+        "Storage tables",
+        "Realtime topic/send"
       ],
-      "skippedMigration": "20260308214544 extension-only pg_cron / pg_net setup"
+      "skippedMigration": "20260308214544 extension-only pg_cron / pg_net setup",
+      "hostedExecution": false
     },
     "build": {
       "result": "passed",
-      "warning": "application JS chunk approximately 1.55 MB uncompressed"
+      "warning": "application JS approximately 1593 kB uncompressed; chunk warning retained",
+      "css": "index-CJDFYpOZ.css"
     },
     "browser": {
-      "startTime": "2026-10-26T15:51:32.425Z",
-      "duration": 208006.141,
+      "startTime": "2026-10-26T20:46:49.400Z",
+      "duration": 148611.06600000002,
       "expected": 27,
       "skipped": 0,
       "unexpected": 0,
@@ -59,47 +224,68 @@
       "uniqueScenarios": 27,
       "serviceMode": "simulated Auth / REST / Realtime; actual Chrome and local WebRTC"
     },
-    "headedRecheck": {
-      "passed": 3,
-      "failed": 0,
-      "scenarios": [
-        "login and logout",
-        "Bangla/light-theme team section and keyboard",
-        "teacher/student local WebRTC"
-      ]
+    "staging": {
+      "startTime": "2026-10-26T20:44:09.922Z",
+      "duration": 227.28999999999996,
+      "expected": 0,
+      "skipped": 11,
+      "unexpected": 0,
+      "flaky": 0,
+      "result": "BLOCKED - no approved target / external role credentials",
+      "realServicePassed": 0,
+      "serviceMode": "prepared real Supabase (no interception); not executed against any backend"
+    },
+    "coverageIntegration": {
+      "command": "npm run test:coverage",
+      "passed": 35,
+      "result": "passed; imported-file coverage only, no global coverage percentage claim"
     },
     "dependencyAudit": {
       "full": {
         "info": 0,
         "low": 0,
-        "moderate": 10,
-        "high": 2,
-        "critical": 2,
-        "total": 14
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
       },
       "productionOnly": {
         "info": 0,
         "low": 0,
-        "moderate": 3,
-        "high": 1,
+        "moderate": 0,
+        "high": 0,
         "critical": 0,
-        "total": 4
+        "total": 0
       },
-      "result": "findings remain"
+      "fullExitCode": 0,
+      "productionExitCode": 0
     },
     "gitDiffCheck": "passed",
-    "stagedSecretPatternScan": "no flags",
-    "originalEnvironmentFile": "unchanged"
+    "originalEnvironmentFile": "unchanged",
+    "octoberMigrations": "all seven unchanged from 6ad01db",
+    "stagedSecretPatternScan": "no credentials found; one explicit dummy service-key rejection-test string reviewed"
   },
-  "requirements": {
-    "reference": "user-supplied requirements; report PDF unavailable",
-    "implemented": 13,
-    "partial": 6,
-    "missingMajorGroups": 0,
-    "futureWork": 1,
-    "note": "Grouped statuses are not a compliance percentage; specific incomplete features are listed in partial/future rows."
+  "report": {
+    "fileFound": "/home/biplob/Downloads/ShikkhaHub_Report.pdf",
+    "pagesInspected": 33,
+    "sha256": "3e357ac98f4425ca86a53cc31326d6190017a91dee02bce152e307810c406477",
+    "originalIncludedInGit": false,
+    "reference": "exact printed / physical pages in REPORT_REQUIREMENTS_MATRIX.md"
   },
-  "repairedDefectGroups": 25,
+  "repairedDefectGroups": {
+    "phase1": 25,
+    "phase2Application": "SH-026 student graded marks / feedback display; reproduced before fix"
+  },
+  "expectedFailureReproduction": {
+    "command": "npm run test:e2e -- --grep 'teacher grades a student'",
+    "beforeRepairFailed": 1,
+    "cause": "student panel accepted only legacy reviewed status",
+    "artifacts": "artifacts/phase2-grade-before/"
+  },
+  "environmentFailures": {
+    "registry": "restricted DNS request failed; final audits retried successfully with network permission",
+    "browser": "restricted webServer startup failed; final local suite retried successfully with loopback/browser permission"
+  },
   "screenshots": [
     {
       "path": "docs/screenshots/home-desktop.png",
@@ -129,30 +315,33 @@
   "evidence": {
     "fullBrowserReport": "playwright-report/index.html",
     "fullBrowserResults": "test-results/results.json",
-    "localLogs": "artifacts/verification/",
-    "headedArtifacts": "artifacts/headed-results/",
-    "earlierFailures": [
-      "artifacts/initial-browser-run/",
-      "artifacts/second-browser-run/",
-      "artifacts/third-browser-run/",
-      "artifacts/verify-interrupted-screenshot/",
-      "artifacts/verify-network-interruption/"
-    ]
+    "stagingResults": "artifacts/staging-results.json",
+    "localLogs": "artifacts/phase2-verification/",
+    "beforeFixFailure": "artifacts/phase2-grade-before/"
+  },
+  "migrationHashes": {
+    "202610260001_authorization_and_assessments.sql": "911082ea4a784a8538f9f93e008897685053d2be561979396e7fa19a1abfd96d",
+    "202610260002_storage_and_tutoring.sql": "f04cda09050c0f536966cf4fed43a82f1bb1472c52e6a360e3d6e9e5bdd07326",
+    "202610260003_private_live_signaling.sql": "f2973f7d68370c0510464a7134b6f56a600ec7a26b7f6bcb625ca76e616d57d8",
+    "202610260004_activity_integrity.sql": "a717b499e0c4bbfe3cc0b810344d75358a14e530b893f011237a07ddee853131",
+    "202610260005_catalog_and_leaderboard.sql": "536685c8a1dc111df3dd57fcfbd8d0f00839d461d26eb011fd911db4be8ee55a",
+    "202610260006_lesson_bookmarks.sql": "4d6a3958198bf5679e64f89649d33d57b25540fd57237ebd49a1c16fe689dc42",
+    "202610260007_course_child_ownership.sql": "70a573efea30333a31e44c13aa5235f4f755a4f29d8bd3d5205e2e7fe90d4b8b"
   },
   "limitations": [
-    "No hosted Supabase / real-account acceptance",
-    "Historical storage paths and duplicate submissions require staging rollout review",
-    "No real OAuth/email/payment/AI-provider/device/TURN acceptance",
-    "Screen sharing and recording acceptance pending",
-    "14 full dependency findings, including 4 production findings",
-    "Optional course-completion badge automation remains incomplete",
-    "Manual accessibility / full translation / scale acceptance pending"
+    "No approved staging target or role credentials; 11 real-service scenarios skipped",
+    "No hosted migration / Auth / PostgREST / Storage / Realtime acceptance",
+    "Legacy data, constraints, object paths and existing permissive policies need staging preflight",
+    "No email / OAuth / TURN / physical-device / screen-share / recording acceptance",
+    "Manual accessibility / full translation / load / backup restore / operational acceptance pending",
+    "Optional AI provider / rate limiting unverified"
   ],
   "remoteActions": {
     "push": false,
     "deploy": false,
     "productionMigration": false,
     "realAccountProvisioning": false,
+    "providerMutation": false,
     "artifactUpload": false
   }
 }

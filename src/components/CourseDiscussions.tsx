@@ -1,6 +1,6 @@
 import type { Tables } from "@/integrations/supabase/types";
 import type { Discussion, Post } from "@/lib/models";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ const CourseDiscussions = ({ courseId, enrolled, isTeacher }: CourseDiscussionsP
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
 
-  const fetchDiscussions = async () => {
+  const fetchDiscussions = useCallback(async () => {
     const { data } = await supabase
       .from("course_discussions")
       .select("*")
@@ -48,11 +48,11 @@ const CourseDiscussions = ({ courseId, enrolled, isTeacher }: CourseDiscussionsP
       setProfiles(map);
     }
     setLoading(false);
-  };
+  }, [courseId]);
 
   useEffect(() => {
     fetchDiscussions();
-  }, [courseId]);
+  }, [fetchDiscussions]);
 
   const handlePost = async (parentId: string | null = null) => {
     if (!user) return;

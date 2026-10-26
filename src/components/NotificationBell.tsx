@@ -17,7 +17,7 @@ const NotificationBell = () => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const { data } = await supabase
@@ -30,7 +30,7 @@ const NotificationBell = () => {
     setNotifications(items);
     setUnreadCount(items.filter((n) => !n.is_read).length);
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchNotifications();
@@ -53,7 +53,7 @@ const NotificationBell = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user, fetchNotifications]);
 
   const markAllRead = async () => {
     if (!user) return;

@@ -1,3 +1,4 @@
+import { mockOrigin } from './target';
 import { test, expect, login, users, C, L } from './fixture';
 
 test('an expired session with rejected refresh returns to authentication',async({page,backend})=>{
@@ -12,7 +13,7 @@ test('instructor filter and paid presentation survive navigation',async({page,ba
 test('student media lesson actually plays a local deterministic audio fixture',async({page,backend})=>{
  const samples=8000;const wav=Buffer.alloc(44+samples*2);wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(samples,24);wav.writeUInt32LE(samples*2,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(samples*2,40);for(let i=0;i<samples;i++)wav.writeInt16LE(Math.round(1000*Math.sin(i*2*Math.PI*440/samples)),44+i*2);
  await page.route('**/test-media.wav',route=>route.fulfill({contentType:'audio/wav',body:wav}));
- backend.rows.enrollments.push({id:'enrolled',user_id:users.student.id,course_id:C});backend.rows.lessons.push({id:'test-audio',module_id:backend.rows.modules[0].id,title:'Practice audio',type:'video',video_url:'http://127.0.0.1:8080/test-media.wav',sort_order:1});
+ backend.rows.enrollments.push({id:'enrolled',user_id:users.student.id,course_id:C});backend.rows.lessons.push({id:'test-audio',module_id:backend.rows.modules[0].id,title:'Practice audio',type:'video',video_url:`${mockOrigin}/test-media.wav`,sort_order:1});
  await login(page,backend,'student');await page.goto(`/courses/${C}`);await page.getByRole('button',{name:'Practice audio',exact:true}).click();await expect.poll(()=>page.locator('video').evaluate((v:HTMLVideoElement)=>v.readyState)).toBeGreaterThanOrEqual(2);await page.locator('video').evaluate((v:HTMLVideoElement)=>v.play());await expect.poll(()=>page.locator('video').evaluate((v:HTMLVideoElement)=>v.currentTime)).toBeGreaterThan(0);
 });
 test('teacher edits article, attaches PDF and adds video metadata',async({page,backend})=>{

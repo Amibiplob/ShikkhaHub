@@ -1,77 +1,60 @@
-# ShikkhaHub audit and completion report
+# ShikkhaHub stabilization and staging audit
 
-Date: **26 October 2026 (Asia/Dhaka)**. Starting revision: `403fd27`. The working tree was clean before changes. No production account/data/provider mutations, deployment or push were performed. Existing `.env` contents were preserved.
+**Phase 2: 27 October 2026 (Asia/Dhaka). Local preparation complete; real Supabase acceptance remains blocked.** Both npm audits report zero known findings. Twelve hook warnings were fixed; nine documented Fast Refresh warnings remain. The original 33-page university report was located and inspected. No push, deployment, production migration, real account provisioning or provider configuration occurred.
 
-## Architecture and discovery
+## Basis and scope
 
-The application is a React 18 / TypeScript / Vite 5 SPA, with React Router 6, Tailwind, shadcn/ui, TanStack Query and Supabase. `src/App.tsx` defines 18 route patterns including the fallback; public routes cover landing/catalog/community/leaderboard/tutoring/auth/recovery, authenticated routes cover dashboards/profile/assignments/live/recordings/achievements, and role guards protect analytics/admin. PostgreSQL RLS is the data-layer authority. Supabase Storage holds uploads; private Realtime plus WebRTC supports one-to-many live broadcasting. An optional Deno Edge Function calls a third-party AI gateway.
+Verified local history: `6ad01db` (implementation) and `41ab799` (documentation/evidence). The initial working tree already contained Phase 2 dependency, hook, migration-test and staging-test work. These task-related changes were reviewed, preserved and verified; the existing application architecture and original `.env` were preserved. No unrelated files or secret-bearing browser artifacts are included in the local commit.
 
-Inspected source, scripts/locks, public assets, routes, current tests, Supabase migrations and policies, the older Drizzle teacher-request migration, environment variable names, auth/role behavior and content/assessment/community/live flows. Home discovery now remains in focused presentation components, with the route expressing section composition. Unit tests are colocated; browser tests remain in `e2e/`.
+Phase 1's evidence is retained as historical data in `verification.json` and `dependency-audit.json`: 29 unit/component + 25 PostgreSQL + 27 fixture-browser scenarios, 21 lint warnings, 14 full dependency package findings and four production package findings. Its three headed rechecks are historical, not Phase 2 execution.
 
-`ShikkhaHub_Report.pdf` was unavailable locally. The supplied requirements are the functional reference; the matrix labels all chapter references accordingly. No PDF chapter or report-compliance percentage was invented.
+The app remains a React 18/TypeScript/Vite SPA with React Router, Tailwind/shadcn, Query and Supabase. The Phase 2 security updates move to Vite 6, Router 7 and Vitest/coverage 4 without changing framework architecture. Focused discovery sections keep `Index.tsx` as composition. Canonical migrations remain `supabase/migrations/`; historical Drizzle SQL stays as reference/adoption evidence, while the unused CLI/config/dependencies were removed.
 
-## Implemented changes
+## University report and demonstration
 
-- Draft course creation and course information editing; instructor filtering; BDT price presentation with direct paid enrollment blocked.
-- Structured Markdown/document/video lessons, private signed-resource access, confirmed progress updates, course and lesson bookmarks.
-- Role-aware quiz reads with hidden answer keys and authoritative server grading; valid sparse answer options.
-- Consistent assignment grading/notifications, grade/identity/content protection, profile relationships and single-submission integrity.
-- A private tutoring MVP: teacher profiles, subject/teacher search, future availability, student requests, teacher approval/rejection, private HTTPS meeting links and single accepted reservation.
-- Atomic teacher-request handling, session/role race repair, ownership/private content/storage/notification/badge/certificate checks.
-- Private live signaling through an authenticated RPC that validates roles and stamps sender identity; scheduled-time expiry and recoverable lifecycle states.
-- Public aggregate leaderboard without exposing raw progress; selected-course teacher activity metrics.
-- Academic team and supervisor section in a responsive grid, with English/Bangla descriptions and both themes; associated form/action labels and semantic interactive controls.
-- npm as the canonical package manager, Playwright infrastructure, PostgreSQL WASM integration tests, and optional secret-free CI definition.
+`/home/biplob/Downloads/ShikkhaHub_Report.pdf` contains 33 pages, SHA-256 `3e357ac98f4425ca86a53cc31326d6190017a91dee02bce152e307810c406477`. Extracted text and rendered pages were inspected, including all diagrams/screenshots. The matrix now cites exact sections, printed pages and physical PDF pages for roles, authentication, courses, enrollment/progress, assessments, tutoring, live classes, community, administration, schema, attribution and every nonfunctional requirement. The original PDF/student IDs remain outside Git.
 
-The detailed log contains **25 repaired defect groups**, with original behavior, reproduction, expected behavior, root cause, files and regression references. New features are listed separately from bugs.
+Material discrepancies: §3.3's resource-oriented ER figure does not depict this LMS; §3.5's conceptual schema differs from the actual Auth/roles/modules/JSON-assessment model; §3.7 lists Next.js but the source is a Vite SPA. The abstract's Zod integration and deployed-provider claims are not current source/live evidence. Report screenshots use earlier CodeCampus branding and historical content. Current home, mobile team and assignment captures were compared with the existing labeled fixture examples and agree with the current interface; no screenshot is presented as real-provider acceptance.
 
-## Verification and artifacts
+The public team names/title/supervisor agree with the cover; no student IDs are exposed in the team UI. Payments appear in requirements and in §5.2 future work: the matrix records the missing gateway, paid entitlements, discounts and payment admin without adding simulated purchases. Admin course approval is missing; tutoring is a slot/request/private-link MVP. AI scoring, mobile apps and automated certification remain future work. Existing deterministic SQL grading, partial Bangla/English UI and platform-generated completion images do not establish those future capabilities.
 
-Final `npm run verify` exited 0: **29 unit/component tests, 25 PostgreSQL tests, 27 headless browser scenarios**, with zero failed/skipped/flaky browser scenarios. Three further visible Chrome rechecks passed. TypeScript and production build passed; lint retained 21 warnings and zero errors. Full audit: 14 findings; production-only: 4. `git diff --check` and staged secret-pattern checks passed.
+## Application repairs and lint
 
-Read `verification.json` for exact final command results/counts and `TESTING.md` for commands and boundaries. Earlier runs exposed application and test-fixture problems; failures were investigated and retained under ignored `artifacts/`. Fixture omissions/selector corrections are not counted as application defects.
+The 25 Phase 1 defect groups remain in `BUG_FIX_LOG.md`. Phase 2 identified **SH-026**: teacher grading writes `graded`, while the student marks/feedback panel only accepted legacy `reviewed`. An independent student readback regression failed before repair. The one-line render condition now supports both statuses, preserving historical rows and SQL authorization.
 
-Real installed Chrome was launched visibly and headlessly. The browser suite opens the SPA, submits login forms for student/teacher/admin fixture identities, navigates protected pages, restores/expires sessions, creates courses/modules/lessons/quizzes/assignments/discussions, submits/grades work, operates tutoring, reloads persisted fixture records, and verifies responsive screens. It uses generated disposable passwords and intercepts backend traffic; it does not authenticate real Supabase accounts.
+Twelve hook-dependency warnings were resolved using stable callbacks/complete dependencies, direct role computation and captured peer cleanup. Nine Fast Refresh mixed-export warnings remain intentionally: seven existing shadcn UI modules and the Auth/Language provider-hook modules. They affect development refresh boundaries; no hook warning, runtime error or lint rule was suppressed. Exact files/reasons appear in `SECURITY_RESOLUTION.md`.
 
-The live test uses independent teacher/student contexts and actual RTCPeerConnection transport with fake browser devices. It verifies decoded media, chat, controls, raised hand, leave/rejoin, teacher end and denied microphone. **Signaling/Auth/REST are simulated service contracts**, so this is local WebRTC integration evidence, not hosted provider/TURN proof. A separate local audio fixture verifies lesson playback. PDF upload exercises the browser/SDK contract, not the real Storage service.
+## Dependency security
 
-PostgreSQL WASM executes ordered migrations, RLS, constraints, triggers and RPCs under scoped roles. The test schemas explicitly shim Auth identity, Storage tables and Realtime send/topic functions; the extension-only historical cron/net migration is skipped. These tests do not prove JWT validation, PostgREST server serialization/schema-cache behavior, actual object storage, Realtime policy caching, extension operations or multi-connection races.
+All 14 prior package/meta findings were investigated by installed version, dependency path, applicability and patch/removal option. The production high finding was unused Zod; it and unused resolvers were removed. Router 7.18.2 addresses the remaining navigation/SSR advisory range; Vite 6.4.5 and Vitest/coverage 4.1.12 address affected dev/mock/worker dependencies. Unused Drizzle loader tooling and unregistered Typography were removed, and Tailwind's existing range now resolves parser 6.1.5. Production CSS hash stayed `index-CJDFYpOZ.css` across removal, confirming the plugin was not active.
 
-Passing screenshots cover landing/team at 375/768/1024/1440px, role screens at 375/768px, a student assignment and teacher/student live views. Selected inspected examples are in `docs/screenshots/`. Failure PNGs/traces and per-test browser-event attachments are generated by Playwright. Reports and transient credentials stay out of Git.
+Full and production-only `npm audit` both exit 0 with zero known findings on the final lock. Latest old-major branches were still affected, so the three scoped branch upgrades were necessary; npm's larger Vite 8/Vitest 5 jumps were avoided. No ignore, blanket override or forced audit fix was used. Compatibility evidence includes types, build, unit/coverage and complete Chrome workflows. Dated registry results do not establish the absence of undisclosed vulnerabilities, application authorization flaws or provider misconfiguration.
 
-## Security findings and repairs
+## Seven-migration review
 
-Historical disposable SQL reproduction accepted a fabricated score of 999, a student's own grade, public answer-key reads, unenrolled private lesson reads and cross-owner lesson-file deletion. These behaviors are now rejected by local regressions. Additional checks cover draft/paid enrollment, ownership swaps, cross-course replies, badge/notification forgery, private-file access, course-owner thumbnail updates, certificate eligibility, tutoring reservations and spoofed live events. UI role guards supplement these SQL checks.
+All seven October SQL files were reviewed and left unchanged from `6ad01db`. `STAGING_MIGRATION_PLAN.md` covers dependencies/order, existing data, grants/RLS and OR-policy conflicts, ownership, constraints, object/index collisions, locks, object paths, safe application and recovery. `tests/staging-preflight.sql` inventories blockers in a read-only transaction. The old documentation JSON-array check was corrected to handle malformed legacy objects safely.
 
-The optional assistant authenticates the caller and uses their JWT/RLS for context rather than a service-role read. Its Deno/provider deployment, cost controls and application rate limiting are still unverified. Do not include it in claims of completed production AI functionality.
+Six added PostgreSQL regressions cover preflight safety, legacy teacher-request adoption/academic record preservation, four deferred-constraint validations, atomic duplicate-submission failure, malformed legacy quiz repair, surviving broad Realtime policies and duplicate-replay rejection (some scenarios combine related checks). The local tests demonstrate that unknown permissive policies survive and can defeat restrictive ones: hosted policy review is a required gate. Unique-index creation intentionally rejects duplicate submissions rather than deleting academic work.
 
-Realtime setup follows [official Supabase authorization guidance](https://supabase.com/docs/guides/realtime/authorization). Private-only dashboard configuration and review of other permissive policies remain required; join authorization is cached, so immediate revocation of existing receivers needs hosted review. The outgoing RPC checks each send. No TURN relay is configured.
+All **31 PostgreSQL WASM tests pass**. Auth identity/roles, Storage tables and Realtime topic/send functions are explicit shims. Historical `pg_cron`/`pg_net` installation is skipped because extensions are unavailable in WASM. This does not verify hosted migration roles/extensions, real JWTs/PostgREST, object bytes, Realtime authorization caching or multi-connection races. No hosted migration ran and the remote migration ledger was not queried.
 
-## Dependency audit
+## Real Supabase tests and verification boundaries
 
-Compatible updates reduced the full npm advisory package count from **30** to **14**: **2 critical, 2 high, 10 moderate** remain. See `dependency-audit.json` for affected package ranges, actual advisory links and suggested fixes. Counts include transitive/meta findings; they are not 14 independently demonstrated exploits.
+The separate opt-in suite prepares 11 scenarios: three role login/reload/logout journeys, private/draft denial, teacher course edit, enrollment/progress, quiz integrity, submission/grading/student readback, cross-user access, real Storage and separately enabled private Realtime. It uses ordinary authenticated JWTs, no service-role provisioning or client role grant. Credentials/approved exact host are external; account creation and staff roles require trusted staging mechanisms. Browser traces/video/screenshots are disabled, credential entry avoids fill-call credential logging, and a private ignored manifest records exact cleanup IDs before writes. Cleanup targets only this run's objects/courses; trigger notifications and identities require a staging operator.
 
-Remaining groups include Vitest/tinypool and coverage/mocker tooling, Vite/esbuild/legacy Drizzle tooling, React Router, Zod and typography/parser dependencies. The production-only audit reports **4 findings (1 high, 3 moderate, 0 critical)**; runtime findings must not be dismissed as development-only. Some require a deliberate major-version migration or tool replacement; no forced audit fix, blanket override or unrelated framework migration was performed. This is not a vulnerability-free result. Test/dev servers must not be exposed publicly.
+No approved target or role credentials were supplied: **11 skipped/blocked, zero real-service passes**. The default browser suite never reads those credentials and intercepts backend HTTP/WebSockets at a localhost endpoint. It executes the actual SPA/SDK, navigation, form operations, reloads and browser persistence across contexts. Live tests use actual local peer connections/fake media but simulated signaling. SQL tests independently execute policies/constraints/RPCs. Neither layer substitutes for real Auth, Storage, PostgREST, Realtime or physical-device acceptance.
 
-TypeScript checks include application and Playwright configuration/tests. ESLint reports zero errors, with 21 preexisting-style hook/fast-refresh warnings still visible. The production build passes with a roughly 1.55 MB uncompressed application JS chunk; code splitting/performance work remains advisable. Warnings were not disabled to produce a passing result.
+Current executed results and artifacts are in [TESTING.md](../TESTING.md) and [verification.json](verification.json). Required checks cover TypeScript, ESLint, unit/component, PostgreSQL, production build, local Chrome, dependency audits and Git diff/secret-pattern review. Coverage integration was also executed to validate the upgraded coverage package; its imported-file report is not an application-wide coverage claim. A new grading-display failure was deliberately reproduced and retained before repair. Initial sandbox-only registry/server failures were retried with the required network/loopback permissions; they are environment failures, not successful checks. Remote CI and headed Chrome were not rerun in Phase 2.
 
-## Remaining limitations and release status
+## Release blockers and handoff
 
-**Not production-cleared.** The local app, SQL and browser regressions are evidence within their stated boundaries. Required external work:
+**Not production-cleared.** External work remains:
 
-1. Apply seven October migrations to explicitly authorized staging, resolve duplicate/orphan/legacy-file preflight findings, refresh generated types/schema cache and validate constraints. No production migration ran.
-2. Migrate historical root-level lesson and teacher-prefixed recording object paths before relying on new private policies. Long-media signed-URL renewal is incomplete; reopen resources on expiry.
-3. Verify real Auth confirmation/recovery and approved Google OAuth, Storage upload/read/MIME/size rules, Realtime private-only policies and physical-device/multi-network media. Recording/screen-sharing acceptance remains manual.
-4. Review remaining dependency advisories; optional AI rate limiting/provider quotas and platform-scale abuse/operational controls remain open.
-5. Complete manual screen-reader, touch, contrast, full translation and physical-device QA. The automated keyboard check is basic focus evidence.
-6. Course approval queue, lesson-specific Q&A limits/pinning, timed/proctored attempts, immutable assessment versions, complete storage reporting, platform-wide popularity ranking, real paid entitlements, accredited certification and native apps remain incomplete/future work as detailed in the matrix.
+1. Identify/approve disposable Supabase staging, trusted migration credentials, three isolated test identities and Auth origins/redirects. Never infer staging authority from the existing `.env`.
+2. Complete read-only preflight, backup/restore rehearsal, migration ledger/schema/policy review and seven-file staging rollout. Resolve duplicate/orphan/malformed rows, intended price backfill, deferred constraints, missing buckets and legacy object paths.
+3. Run the real suite and manual second-student/second-teacher matrix. Verify real email/recovery/OAuth, JWT expiry/revocation, named profile joins/RPC serialization, all private Storage buckets/MIME/size/expiry and tutoring/role concurrency.
+4. Enforce private-only Realtime and review all permissive policies/publications. Validate outsider/direct-send rejection and cached receiver revocation. Test physical-device/multi-network WebRTC, TURN, screen share and recording. No TURN relay is configured.
+5. Complete provider/operational monitoring, cron expiry, abuse/rate controls, optional AI Deno/provider/cost acceptance, hosted backup restoration, load/performance and accessibility/device/browser review. The production build retains its large-chunk warning.
+6. Keep missing/future/report discrepancies explicit: paid entitlements, course approval, advanced Q&A, assessment timing/versioning, full translation, certificate accreditation and native apps are not completed acceptance claims.
 
-Prerequisite completion indicators now use certificate records, but prerequisites are advisory rather than an enrollment gate. Automatic course-completion badge counting remains incomplete; other activity criteria are supported. Teacher analytics headline metrics are scoped; some overview charts deliberately remain platform/owned-course summaries and need further product specification. Tutoring uses discrete slots and external meeting links, not calendar synchronization or provider admission control.
-
-## Documentation and delivery
-
-Replaced the generic README; updated TESTING; added the requirements matrix, bug log, demo guide, rollout notes, dependency summary and machine-readable verification evidence. Academic attribution uses exactly the supplied names/title/supervisor; no portraits, student IDs, biographies or endorsement claims were added.
-
-The optional GitHub Actions workflow is prepared but not executed remotely. Action versions follow the official [checkout](https://github.com/actions/checkout), [setup-node](https://github.com/actions/setup-node), and [upload-artifact](https://github.com/actions/upload-artifact) examples checked during this work. No artifact was uploaded.
-
-A reviewed local commit uses the requested message. The resulting hash and final tracked working-tree state are reported in the completion response; generated evidence remains ignored locally.
+Updated README, TESTING, audit report, requirements matrix, bug log, rollout notes and demo guide; added security resolution, staging migration plan, acceptance checklist and supporting tests. This handoff authorizes no deployment, push, production connection or remote data mutation. The completion response reports the reviewed local commit and final working-tree status.

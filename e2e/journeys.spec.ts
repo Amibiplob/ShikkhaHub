@@ -50,9 +50,19 @@ test('teacher creates draft, edits course, module and lesson, adds quiz, assignm
  await page.getByRole('button',{name:'Publish',exact:true}).click();expect(created.is_published).toBe(true);await page.reload();await expect(page.getByRole('button',{name:'Unpublish',exact:true})).toBeVisible();
  await page.goto(`/courses/${D}`);await expect(page.getByText('Course not found',{exact:true})).toBeVisible();
 });
-test('teacher grades a student submission and persists feedback',async({page,backend})=>{
+test('teacher grades a student submission and student sees marks and feedback after reload',async({page,backend,browser})=>{
  backend.rows.submissions.push({id:'grade-me',assignment_id:A,student_id:users.student.id,submission_type:'url',content:'https://example.test/project',marks:null,status:'submitted',submitted_at:new Date().toISOString()});
  await login(page,backend,'teacher');await page.goto(`/assignments/${A}`);await page.getByRole('button',{name:'Review',exact:true}).click();await page.getByLabel('Marks (out of 100)').fill('90');await page.getByLabel('Feedback',{exact:true}).fill('Good work');await page.getByRole('button',{name:'Save Review',exact:true}).click();await expect(page.getByText('90/100',{exact:true})).toBeVisible();expect(backend.rows.submissions[0]).toMatchObject({status:'graded',marks:90,feedback:'Good work'});await page.reload();await expect(page.getByText('90/100',{exact:true})).toBeVisible();
+ const studentContext=await browser.newContext();await backend.install(studentContext);const student=await studentContext.newPage();
+ try {
+  await login(student,backend,'student');await student.goto(`/assignments/${A}`);await student.reload();
+  await expect(student.getByText('Marks: 90/100',{exact:true})).toBeVisible();
+  await expect(student.getByText('Good work',{exact:true})).toBeVisible();
+  // Retain read compatibility for historical grades without changing stored data.
+  backend.rows.submissions[0].status='reviewed';await student.reload();
+  await expect(student.getByText('Marks: 90/100',{exact:true})).toBeVisible();
+  await expect(student.getByText('Good work',{exact:true})).toBeVisible();
+ } finally {await studentContext.close();}
 });
 test('student requests tutoring, teacher approves, private meeting persists across contexts',async({page,backend,browser})=>{
  await login(page,backend,'student');await page.goto('/tutors');await page.getByRole('button',{name:'Request tutoring'}).click();await page.getByLabel('What would you like to learn?').fill('I need help understanding loops.');await page.getByRole('button',{name:'Send request'}).click();await expect(page.getByText('Status: pending')).toBeVisible();

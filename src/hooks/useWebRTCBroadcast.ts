@@ -46,6 +46,24 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
   const screenStreamRef = useRef<MediaStream | null>(null);
   const activeTrackRef = useRef<MediaStreamTrack | null>(null);
 
+  const stopBroadcast = useCallback(() => {
+    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
+    peersRef.current.forEach(({ pc }) => pc.close());
+    peersRef.current.clear();
+    if (channelRef.current) {
+      sendLive(roomName, { type: "broadcast", event: "teacher-ended", payload: {} });
+      channelRef.current.unsubscribe();
+    }
+    setLocalStream(null);
+    setScreenStream(null);
+    setIsLive(false);
+    setViewerCount(0);
+    setIsMuted(false);
+    setIsCamOff(false);
+  }, [roomName]);
+
   const startBroadcast = useCallback(async (mode: "camera" | "screen" | "audio-only") => {
     try {
       let stream: MediaStream;
@@ -191,7 +209,7 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
       setIsLive(false);
       throw err;
     }
-  }, [roomName, userId]);
+  }, [roomName, userId, stopBroadcast]);
 
   const sendChat = useCallback((message: string) => {
     if (!channelRef.current || !message.trim()) return;
@@ -246,31 +264,15 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
     }
   }, []);
 
-  const stopBroadcast = useCallback(() => {
-    localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current = null;
-    peersRef.current.forEach(({ pc }) => pc.close());
-    peersRef.current.clear();
-    if (channelRef.current) {
-      sendLive(roomName, { type: "broadcast", event: "teacher-ended", payload: {} });
-      channelRef.current.unsubscribe();
-    }
-    setLocalStream(null);
-    setScreenStream(null);
-    setIsLive(false);
-    setViewerCount(0);
-    setIsMuted(false);
-    setIsCamOff(false);
-  }, [roomName]);
-
   useEffect(() => {
+    const peers = peersRef.current;
     return () => {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       screenStreamRef.current?.getTracks().forEach((t) => t.stop());
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
       if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
-      peersRef.current.forEach(({ pc }) => pc.close());
+      peers.forEach(({ pc }) => pc.close());
+      peers.clear();
       channelRef.current?.unsubscribe();
     };
   }, []);

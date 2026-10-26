@@ -1,5 +1,5 @@
 import type { Quiz, Question, Attempt } from "@/lib/models";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -47,11 +47,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
   const [newCorrect, setNewCorrect] = useState(0);
   const [addingQ, setAddingQ] = useState(false);
 
-  useEffect(() => {
-    fetchQuizzes();
-  }, [courseId, user?.id]);
-
-  const fetchQuizzes = async () => {
+  const fetchQuizzes = useCallback(async () => {
     const { data } = await supabase.from("quizzes").select("*").eq("course_id", courseId).order("created_at");
     setQuizzes(data || []);
 
@@ -68,7 +64,11 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
       setAttempts(map);
     }
     setLoading(false);
-  };
+  }, [courseId, user]);
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, [fetchQuizzes]);
 
   const handleCreateQuiz = async (e: React.FormEvent) => {
     e.preventDefault();

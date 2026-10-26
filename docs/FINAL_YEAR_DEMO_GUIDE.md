@@ -4,7 +4,7 @@
 
 **ShikkhaHub — An Online Based Educational Platform** is a final-year CSE project by Md Biplob Hossain, Leon Khan, Al Amin, and Asif Khan at City University, Bangladesh. Supervisor: Ahsan Habib, Lecturer and Coordinator, Department of CSE.
 
-Demonstrate a course authoring → student learning → assessment → tutoring → moderation sequence. Do not imply university endorsement, accredited certification, live payments, or that the unavailable PDF was read.
+Demonstrate a course authoring → student learning → assessment → tutoring → moderation sequence. Do not imply university endorsement, accredited certification, live payments, or hosted acceptance from simulated service fixtures.
 
 ## Architecture explanation
 
@@ -75,5 +75,7 @@ Mention what each layer proves: components and race guards (Vitest), SQL policie
 - **Is live video production-ready?** Local peer transport has automated evidence. Hosted Realtime, TURN/NAT, physical-device, recording and scale acceptance remain open.
 - **Do tutoring links enforce provider admission?** The application restricts disclosure; an external meeting provider controls admission once a link is shared.
 - **Are certificates official?** They are existing platform-generated completion images, not accredited or university-issued awards.
-- **Was the university PDF checked?** It was unavailable; the supplied requirements were reconciled explicitly in the matrix.
-- **Can it be publicly deployed now?** A build is available, but dependency advisories and hosted/security acceptance remain blockers. No deployment or push was performed.
+- **Was the university PDF checked?** Phase 2 inspected all 33 pages of the original report found in Downloads; the matrix cites printed pages and physical PDF pages. Its conceptual schema and resource-oriented ER figure differ from the implemented schema.
+- **Can it be publicly deployed now?** A build is available, but hosted/security/operational acceptance remains blocked. Dated dependency audits currently report zero known findings. No deployment or push was performed.
+
+Phase 2 real-service tests and provisioning prerequisites are described in [STAGING_ACCEPTANCE_CHECKLIST.md](STAGING_ACCEPTANCE_CHECKLIST.md). The 11 prepared real-service scenarios are blocked until external staging authorization and credentials are supplied. Report screenshots in §4.2 are historical: the current interface has renamed branding, safer controls and expanded sections. Use newly generated local fixture screenshots as labeled examples, never as real-account evidence.

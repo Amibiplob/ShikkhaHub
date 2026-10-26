@@ -23,9 +23,9 @@ SELECT s.id FROM public.submissions s LEFT JOIN public.profiles p ON p.user_id=s
 SELECT r.id FROM public.course_reviews r LEFT JOIN public.profiles p ON p.user_id=r.user_id WHERE p.user_id IS NULL;
 
 -- Review malformed legacy questions before validating the new constraints.
-SELECT id FROM public.quiz_questions WHERE jsonb_typeof(options)<>'array'
- OR jsonb_array_length(options)<2 OR correct_answer<0
- OR correct_answer>=jsonb_array_length(options) OR points<=0;
+SELECT id FROM public.quiz_questions WHERE CASE WHEN jsonb_typeof(options)='array' THEN
+ jsonb_array_length(options)<2 OR correct_answer<0
+ OR correct_answer>=jsonb_array_length(options) OR points<=0 ELSE true END;
 ```
 
 The unique submission index intentionally fails on duplicates; the migration does not delete or pick a winning submission. New question/pass-percentage and foreign-key checks use `NOT VALID` where specified, so new writes are checked while historical rows need separate validation. Older `reviewed` submission statuses remain readable in the UI; new grades use `graded`. Editing malformed historical rows may need an explicit data repair.
@@ -60,4 +60,6 @@ Deploy the optional assistant with caller-JWT authorization and RLS context read
 - Test distinct student/teacher/admin JWTs directly against REST, RPC, signed files, and private Realtime.
 - Verify Storage MIME/size enforcement, legacy object access, recording upload/metadata rollback, and long-video expiry.
 - Test WebRTC across physical devices and different networks; configure an authorized TURN relay before promising broad connectivity.
-- Review remaining dependency advisories before public deployment.
+- Re-run dependency audits before acceptance; Phase 2 reports zero known findings (see SECURITY_RESOLUTION.md).
+
+For the complete Phase 2 per-file review, transactional rehearsal, read-only preflight script, constraint validation and recovery commands, use [STAGING_MIGRATION_PLAN.md](STAGING_MIGRATION_PLAN.md).

@@ -2,7 +2,7 @@
 
 ShikkhaHub is a final-year CSE project at City University, Bangladesh. Students discover courses, learn through structured lessons, complete assessments, discuss course material, and request private tutoring. Teachers manage courses, assessments, tutoring availability, and live broadcasts. Administrators manage roles and moderate the platform.
 
-This repository originated in Lovable and is maintained locally. It uses **React 18, TypeScript, Vite 5, React Router 6, Tailwind CSS, shadcn/ui, TanStack Query, and Supabase**. It is a browser SPA, not a Next.js or Express application.
+This repository originated in Lovable and is maintained locally. It uses **React 18, TypeScript, Vite 6, React Router 7, Tailwind CSS, shadcn/ui, TanStack Query, and Supabase**. It is a browser SPA, not a Next.js or Express application.
 
 ## Features and roles
 
@@ -17,7 +17,7 @@ This repository originated in Lovable and is maintained locally. It uses **React
 
 `src/pages/` composes routed screens; `src/components/` contains presentation and workflow components. `AuthContext` waits for account roles before granting protected-route access. Browser requests use the public Supabase key and user JWT. PostgreSQL RLS, constraints, triggers and narrow RPCs enforce ownership, assessment integrity and private content access. Storage uses private buckets and short-lived signed URLs. WebRTC carries live media; Supabase private Realtime topics receive signals sent through an authenticated RPC.
 
-`supabase/migrations/` is the canonical database history. `drizzle/` contains the older teacher-request migration and an empty generated schema; it is not a separate runtime backend. New Supabase migrations adopt that table without requiring a second migration tool.
+`supabase/migrations/` is the canonical database history. `drizzle/` retains the historical teacher-request migration and empty generated schema as reference only. Supabase migrations adopt that table. The unused Drizzle CLI/config and database client dependencies have been removed; use the canonical Supabase migration history.
 
 ## Local setup
 
@@ -44,7 +44,6 @@ Environment variable names:
 | `VITE_SUPABASE_URL` | Public Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Public anon/publishable key; RLS remains mandatory |
 | `VITE_SUPABASE_PROJECT_ID` | Legacy project identifier, if required by local tooling |
-| `LOVABLE_DB_MIGRATION_URL` | Optional CLI-only legacy Drizzle connection; never put it in `VITE_*` |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `LOVABLE_API_KEY` | Server-side Edge Function configuration for the optional assistant |
 | `E2E_BROWSER_CHANNEL` | Test browser channel, defaults to `chrome` |
 
@@ -64,16 +63,17 @@ Never put a service-role key in the frontend. Existing `.env` contents were pres
 ```sh
 npm run dev                  # development server
 npm run typecheck            # app + tooling + browser-test TypeScript
-npm run lint                 # ESLint; existing hook/fast-refresh warnings documented
+npm run lint                 # ESLint; nine Fast Refresh warnings documented
 npm run test                 # colocated Vitest unit/component tests
 npm run test:db              # disposable PostgreSQL WASM migration/RLS integration tests
 npm run test:e2e             # starts/stops Vite and executes real Chrome headlessly
 npm run test:e2e:headed      # visible Chrome; requires a display
+npm run test:e2e:staging     # real Supabase; explicit external opt-in, otherwise skips
 npm run test:coverage        # local Vitest coverage, no claimed percentage
 npm run build               # production assets in dist/
 npm run preview             # inspect built assets
 npm run verify              # typecheck, lint, unit, database, build, browser
-npm audit                   # full dependency advisory report (remaining findings documented)
+npm audit                   # full dependency advisory report; dated results in docs/
 ```
 
 See [TESTING.md](TESTING.md) for exact evidence, artifacts, scope and reproduction commands. Browser tests live in `e2e/`; source tests live next to components, with shared fakes in `src/test/`. SQL integration tests and their Auth/Storage/Realtime shims live in `tests/`.
@@ -82,7 +82,7 @@ See [TESTING.md](TESTING.md) for exact evidence, artifacts, scope and reproducti
 
 Deploy `dist/` to a static host with SPA history fallback to `index.html`. Set the public Vite variables **before building**. Apply reviewed migrations separately to the authorized backend, configure Auth redirects and private-only Realtime, then perform hosted role/storage/media acceptance. No deployment, push, production migration or provider configuration was performed by this audit.
 
-**Not production-cleared.** Remaining dependency advisories, external configuration, hosted migration acceptance, real email/OAuth, Storage, Realtime and TURN/NAT testing remain open. WebRTC currently has STUN servers and no configured TURN relay. Recordings use browser MediaRecorder; multi-device/screen-sharing and long recording tests remain manual.
+**Not production-cleared.** Phase 2 audits report zero known dependency findings, but external configuration, hosted migration acceptance, real email/OAuth, Storage, Realtime and TURN/NAT testing remain open. WebRTC currently has STUN servers and no configured TURN relay. Recordings use browser MediaRecorder; multi-device/screen-sharing and long recording tests remain manual.
 
 ## Verified screenshots
 
@@ -99,11 +99,13 @@ All examples use disposable browser-fixture data, not production users or platfo
 
 Supervisor: **Ahsan Habib**, Lecturer and Coordinator, Department of CSE, City University.
 
-The compact landing-page team section supports both themes and English/Bangla descriptions. Names are supplied academic attribution, without invented biographies, portraits, student IDs, or endorsement claims.
+The compact landing-page team section supports both themes and English/Bangla descriptions. Names and supervisor match the report cover; no biographies, portraits, student IDs, or endorsement claims are added.
 
 ## Review and demonstration
 
-- [Requirements matrix](docs/REPORT_REQUIREMENTS_MATRIX.md): evidence and limitations per major requirement. The PDF report was unavailable locally; no chapter numbers are invented.
+Phase 2 verification (27 October 2026): see [TESTING.md](TESTING.md) for actual results, [security resolution](docs/SECURITY_RESOLUTION.md) for all 14 prior findings and nine retained lint warnings, [migration plan](docs/STAGING_MIGRATION_PLAN.md) for per-file review/preflight/recovery, and [staging acceptance](docs/STAGING_ACCEPTANCE_CHECKLIST.md) for external blockers. No hosted account, migration, deployment or provider configuration was changed.
+
+- [Requirements matrix](docs/REPORT_REQUIREMENTS_MATRIX.md): evidence and limitations per major requirement. Phase 2 inspected the original 33-page PDF; printed/PDF page references and discrepancies are recorded.
 - [Audit report](docs/SHIKKHAHUB_AUDIT_REPORT.md): architecture, verification boundaries, security and remaining risks.
 - [Bug repair log](docs/BUG_FIX_LOG.md): reproducible defects, repairs and regression references.
 - [Final-year demo guide](docs/FINAL_YEAR_DEMO_GUIDE.md): safe student, teacher and administrator demonstration.

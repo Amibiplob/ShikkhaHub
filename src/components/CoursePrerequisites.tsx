@@ -1,6 +1,6 @@
 import type { Tables } from "@/integrations/supabase/types";
 import type { Course } from "@/lib/models";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,11 +24,7 @@ const CoursePrerequisites = ({ courseId, isTeacher }: CoursePrerequisitesProps) 
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, [courseId, user]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const { data: prereqs } = await supabase
       .from("course_prerequisites")
       .select("*, courses!course_prerequisites_prerequisite_course_id_fkey(id, title)")
@@ -50,7 +46,11 @@ const CoursePrerequisites = ({ courseId, isTeacher }: CoursePrerequisitesProps) 
       setCompletedCourseIds(completed);
     }
     setLoading(false);
-  };
+  }, [courseId, user, isTeacher]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAdd = async () => {
     if (!selectedCourse) return;

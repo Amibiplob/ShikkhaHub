@@ -14,7 +14,8 @@ describe("community sorting & paging", () => {
     const posts = Array.from({ length: 25 }, (_, i) => p(`p${i}`, (i % 28) + 1));
     const counts = Object.fromEntries(posts.map((x, i) => [x.id, i]));
     const sorted = sortPopular(posts, counts);
-    const last1 = paginate(sorted, 0, 10).at(-1)!;
+    const firstPage = paginate(sorted, 0, 10);
+    const last1 = firstPage[firstPage.length - 1];
     const first2 = paginate(sorted, 1, 10)[0];
     expect(counts[last1.id]).toBeGreaterThanOrEqual(counts[first2.id]);
     expect(paginate(sorted, 2, 10)).toHaveLength(5);

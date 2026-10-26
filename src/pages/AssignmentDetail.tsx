@@ -281,7 +281,7 @@ const AssignmentDetail = () => {
                     <p className="text-sm">{mySubmission.content}</p>
                   )}
                 </div>
-                {mySubmission.status === "reviewed" && (
+                {(mySubmission.status === "graded" || mySubmission.status === "reviewed") && (
                   <div className="rounded-lg border border-success/20 bg-success/5 p-4 space-y-2">
                     <p className="font-semibold text-success">
                       Marks: {mySubmission.marks !== null ? `${mySubmission.marks}/${assignment.max_marks}` : "—"}

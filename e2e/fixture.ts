@@ -1,3 +1,4 @@
+import { mockOrigin } from './target';
 import { test as base, expect, type BrowserContext, type Page } from '@playwright/test';
 import { randomUUID, randomBytes } from 'node:crypto';
 
@@ -75,7 +76,7 @@ export class Backend {
     });
     await context.route('**/*', async route=>{
       const request=route.request(); const url=new URL(request.url());
-      if(url.origin==='http://127.0.0.1:8080') return route.continue();
+      if(url.origin===mockOrigin) return route.continue();
       if(url.origin!=='http://127.0.0.1:54321') return route.abort();
       const headers={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-expose-headers':'content-range','content-type':'application/json'};
       const respond=(data:unknown,status=200,extra={})=>route.fulfill({status,headers:{...headers,...extra},body:JSON.stringify(data)});

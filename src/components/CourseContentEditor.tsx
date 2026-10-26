@@ -1,5 +1,5 @@
 import type { Course, Module, Lesson } from "@/lib/models";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const fetchModules = async () => {
+  const fetchModules = useCallback(async () => {
     const { data } = await supabase
       .from("modules")
       .select("*, lessons(*)")
@@ -56,11 +56,11 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
     mods.forEach((m) => m.lessons?.sort((a, b) => a.sort_order - b.sort_order));
     setModules(mods);
     setLoading(false);
-  };
+  }, [courseId]);
 
   useEffect(() => {
     fetchModules();
-  }, [courseId]);
+  }, [fetchModules]);
 
   const handleCreateModule = async (e: React.FormEvent) => {
     e.preventDefault();

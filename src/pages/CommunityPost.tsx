@@ -1,5 +1,5 @@
 import type { Discussion, Post } from "@/lib/models";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,7 +73,7 @@ const CommunityPost = () => {
 
   const isAdmin = hasRole("admin");
 
-  const loadComments = async (postId: string) => {
+  const loadComments = useCallback(async (postId: string) => {
     const { data } = await supabase
       .from("community_comments")
       .select("*, profiles!community_comments_user_id_profiles_fkey(full_name, avatar_url)")
@@ -99,7 +99,7 @@ const CommunityPost = () => {
       setCommentUpvoteCounts({});
       setCommentUpvotes(new Set());
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (!id) return;
@@ -125,7 +125,7 @@ const CommunityPost = () => {
     };
     fetchAll();
     return () => { cancelled = true; };
-  }, [id, user]);
+  }, [id, user, loadComments]);
 
   const togglePostUpvote = async () => {
     if (!user) {
