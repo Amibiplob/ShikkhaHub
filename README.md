@@ -1,424 +1,111 @@
-# Code Campus
+# ShikkhaHub — An Online Based Educational Platform
 
-Build a modern full-stack EdTech web application similar to Programming Hero and W3Schools where teachers can publish learning content, host live classes, and students can interact through a community system.
+ShikkhaHub is a final-year CSE project at City University, Bangladesh. Students discover courses, learn through structured lessons, complete assessments, discuss course material, and request private tutoring. Teachers manage courses, assessments, tutoring availability, and live broadcasts. Administrators manage roles and moderate the platform.
 
+This repository originated in Lovable and is maintained locally. It uses **React 18, TypeScript, Vite 5, React Router 6, Tailwind CSS, shadcn/ui, TanStack Query, and Supabase**. It is a browser SPA, not a Next.js or Express application.
 
+## Features and roles
 
-Platform Goal:
+- **Public:** course search, category/difficulty/instructor filters, course descriptions, community, aggregate leaderboard, tutor profiles/availability, English/Bangla landing page, themes, academic attribution.
+- **Student:** email/password accounts, profile editing, recovery screen, free enrollment, Markdown/video/document lessons, progress, course and lesson bookmarks, server-graded quizzes, assignment submissions, discussions, tutoring requests and approved meeting access.
+- **Teacher:** admin-approved access, draft course creation/editing/publication, modules and lessons, uploads, quizzes, grading, student progress, live scheduling and broadcasts, tutoring approval/rejection.
+- **Administrator:** role grants/removal, teacher-request review, user/course search, platform counts, course deletion and community moderation.
+- **Existing experimental features:** browser-generated certificates/badges, recording, and a provider-dependent AI assistant. These are not claims of accredited certification or verified live-provider acceptance.
+- **Payments:** BDT prices can be presented; self-enrollment is restricted to free courses. No payment gateway, simulated purchase, or paid entitlement service is supplied.
 
-Create an online learning platform where teachers can publish courses with videos, articles, and documents. Students can watch lessons, read documentation, join live classes, and participate in community discussions.
+## Architecture
 
+`src/pages/` composes routed screens; `src/components/` contains presentation and workflow components. `AuthContext` waits for account roles before granting protected-route access. Browser requests use the public Supabase key and user JWT. PostgreSQL RLS, constraints, triggers and narrow RPCs enforce ownership, assessment integrity and private content access. Storage uses private buckets and short-lived signed URLs. WebRTC carries live media; Supabase private Realtime topics receive signals sent through an authenticated RPC.
 
+`supabase/migrations/` is the canonical database history. `drizzle/` contains the older teacher-request migration and an empty generated schema; it is not a separate runtime backend. New Supabase migrations adopt that table without requiring a second migration tool.
 
-User Roles:
+## Local setup
 
-1. Teacher
-
-2. Student
-
-3. Admin
-
-
-
-Authentication:
-
-- Email and password login
-
-- Google OAuth login
-
-- Role-based access control (teacher / student / admin)
-
-
-
---------------------------------
-
-
-
-COURSE SYSTEM
-
-
-
-Teachers can create structured courses.
-
-
-
-Course Structure:
-
-Course
-
-  → Modules
-
-      → Lessons
-
-
-
-Lesson Types:
-
-- Video lesson
-
-- Article / documentation (Markdown + code blocks like W3Schools)
-
-- File upload (PDF / DOC)
-
-
-
-Teacher Features:
-
-- Create and edit courses
-
-- Create modules and lessons
-
-- Upload video lessons
-
-- Write documentation articles
-
-- Upload files
-
-- Track student progress
-
-
-
-Student Features:
-
-- Enroll in courses
-
-- Watch video lessons
-
-- Read articles
-
-- Download files
-
-- Track lesson progress
-
-- Bookmark lessons
-
-
-
---------------------------------
-
-
-
-LIVE CLASS SYSTEM
-
-
-
-Teachers can create live classes similar to Google Meet.
-
-
-
-Features:
-
-- Generate meeting link
-
-- Students join meeting from course page
-
-- Screen sharing
-
-- Webcam video
-
-- Microphone audio
-
-- Chat during live class
-
-- Whiteboard for teaching
-
-
-
-Recording System:
-
-- Record screen + webcam + audio
-
-- Use browser MediaRecorder API
-
-- Automatically upload recording to server after class
-
-- Save recording as lesson video
-
-
-
-Technologies suggested:
-
-WebRTC + Socket.io for real-time communication.
-
-
-
---------------------------------
-
-
-
-LESSON DISCUSSION SYSTEM
-
-
-
-Each lesson has a discussion section.
-
-
-
-Rules:
-
-- Each student can comment maximum 2 times under a lesson.
-
-- Teachers can comment unlimited times.
-
-
-
-Features:
-
-- Ask questions
-
-- Report errors in lesson
-
-- Teacher replies
-
-- Teacher can pin important answers
-
-
-
---------------------------------
-
-
-
-GLOBAL COMMUNITY SYSTEM
-
-
-
-Create a community forum where students and teachers can post topics.
-
-
-
-Users can:
-
-- Create posts
-
-- Comment on posts
-
-- Reply to comments
-
-- Upvote helpful answers
-
-
-
-Example topics:
-
-- Best programming language for the future
-
-- Best PC for programming
-
-- Career advice
-
-- New technology discussions
-
-- Programming questions
-
-
-
-Community categories:
-
-- Programming
-
-- Career
-
-- Hardware
-
-- AI / New Technology
-
-- General Discussion
-
-
-
-Moderation:
-
-- Report spam
-
-- Admin remove posts
-
-- Teachers pin helpful posts
-
-
-
---------------------------------
-
-
-
-ASSIGNMENT SYSTEM
-
-
-
-Teachers can create assignments for lessons.
-
-
-
-Students can submit:
-
-- GitHub repository link
-
-- File upload
-
-- Website link
-
-
-
-Teachers can:
-
-- Review submissions
-
-- Give feedback
-
-- Give marks
-
-
-
---------------------------------
-
-
-
-ADMIN PANEL
-
-
-
-Admin can manage:
-
-- Users
-
-- Teachers
-
-- Courses
-
-- Community posts
-
-- Storage usage
-
-
-
---------------------------------
-
-
-
-TECH STACK
-
-
-
-Frontend:
-
-Next.js
-
-TailwindCSS
-
-TypeScript
-
-
-
-Backend:
-
-Node.js with Express or NestJS
-
-
-
-Database:
-
-PostgreSQL
-
-
-
-Real-time features:
-
-WebRTC
-
-Socket.io
-
-
-
-Storage:
-
-AWS S3 or Cloud storage
-
-
-
-Authentication:
-
-JWT + Google OAuth
-
-
-
---------------------------------
-
-
-
-UI STYLE
-
-
-
-- Clean modern UI
-
-- Developer-friendly design
-
-- Layout similar to W3Schools tutorials
-
-- Responsive for mobile and desktop
-
-
-
---------------------------------
-
-
-
-EXTRA FEATURES
-
-
-
-- Dark mode
-
-- Notification system
-
-- Course progress tracking
-
-- Search courses and lessons
-
-- Bookmark lessons
-
-- Teacher dashboard
-
-- Student dashboard
-
-
-
---------------------------------
-
-
-
-DELIVERABLES
-
-
-
-Generate:
-
-- Database schema
-
-- Backend API structure
-
-- Frontend component architecture
-
-- Live meeting architecture
-
-- Deployment plan
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/2ca213bb-ea95-40c2-8ed5-1a55f59864ce).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Use Node.js 24 and npm. `package-lock.json` is authoritative; stale Bun locks were removed.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm ci
+cp .env.example .env.local
+# Fill .env.local with a disposable Supabase project's public configuration.
 npm run dev
 ```
+
+Vite serves on port 8080. A graphical desktop and installed Google Chrome are used by the default browser tests. To use downloaded Chromium instead:
+
+```sh
+npx playwright install chromium
+E2E_BROWSER_CHANNEL=chromium npm run test:e2e
+```
+
+Environment variable names:
+
+| Name | Purpose |
+| --- | --- |
+| `VITE_SUPABASE_URL` | Public Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Public anon/publishable key; RLS remains mandatory |
+| `VITE_SUPABASE_PROJECT_ID` | Legacy project identifier, if required by local tooling |
+| `LOVABLE_DB_MIGRATION_URL` | Optional CLI-only legacy Drizzle connection; never put it in `VITE_*` |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `LOVABLE_API_KEY` | Server-side Edge Function configuration for the optional assistant |
+| `E2E_BROWSER_CHANNEL` | Test browser channel, defaults to `chrome` |
+
+Never put a service-role key in the frontend. Existing `.env` contents were preserved; `.env.local` takes precedence. The browser suite overrides the backend URL and key with an isolated localhost endpoint and intercepts its HTTP/WebSocket traffic; it does not create real accounts or contact the configured project.
+
+## Supabase setup
+
+1. Create an explicitly disposable project or local Supabase stack. Apply `supabase/migrations/` in timestamp order using the Supabase CLI. Do not apply `drizzle/migrations/` a second time on a new project.
+2. Inspect [migration rollout notes](docs/DATABASE_ROLLOUT.md) before applying the October repairs to existing data. Duplicate submissions and historical storage paths need human review. Local WASM tests do not verify hosted Storage, Auth, extensions or Realtime services.
+3. Configure Auth email confirmation/recovery redirects for your exact local/hosted origin and `/reset-password`. Google OAuth requires a separately approved test provider setup.
+4. Provision the first administrator through trusted server/SQL tooling in the disposable project. Public signup always creates a student. A teacher checkbox records a request; an administrator approves it through an atomic RPC.
+5. Enforce private-only channels in Supabase Realtime settings. Review other existing Realtime policies; permissive policies combine with OR. New application live topics only receive messages; `send_live_signal` authorizes and stamps outgoing identities.
+6. Existing private files need canonical course/class paths. Do not reopen buckets to recover access. For optional AI, deploy the repaired user-JWT-scoped function only after provider quota/rate-limit and live acceptance review.
+
+## Commands
+
+```sh
+npm run dev                  # development server
+npm run typecheck            # app + tooling + browser-test TypeScript
+npm run lint                 # ESLint; existing hook/fast-refresh warnings documented
+npm run test                 # colocated Vitest unit/component tests
+npm run test:db              # disposable PostgreSQL WASM migration/RLS integration tests
+npm run test:e2e             # starts/stops Vite and executes real Chrome headlessly
+npm run test:e2e:headed      # visible Chrome; requires a display
+npm run test:coverage        # local Vitest coverage, no claimed percentage
+npm run build               # production assets in dist/
+npm run preview             # inspect built assets
+npm run verify              # typecheck, lint, unit, database, build, browser
+npm audit                   # full dependency advisory report (remaining findings documented)
+```
+
+See [TESTING.md](TESTING.md) for exact evidence, artifacts, scope and reproduction commands. Browser tests live in `e2e/`; source tests live next to components, with shared fakes in `src/test/`. SQL integration tests and their Auth/Storage/Realtime shims live in `tests/`.
+
+## Deployment
+
+Deploy `dist/` to a static host with SPA history fallback to `index.html`. Set the public Vite variables **before building**. Apply reviewed migrations separately to the authorized backend, configure Auth redirects and private-only Realtime, then perform hosted role/storage/media acceptance. No deployment, push, production migration or provider configuration was performed by this audit.
+
+**Not production-cleared.** Remaining dependency advisories, external configuration, hosted migration acceptance, real email/OAuth, Storage, Realtime and TURN/NAT testing remain open. WebRTC currently has STUN servers and no configured TURN relay. Recordings use browser MediaRecorder; multi-device/screen-sharing and long recording tests remain manual.
+
+## Verified screenshots
+
+All examples use disposable browser-fixture data, not production users or platform metrics.
+
+[Desktop landing page](docs/screenshots/home-desktop.png) · [Mobile academic team](docs/screenshots/team-mobile.png) · [Bangla/light theme](docs/screenshots/team-bangla-light.png) · [Student assignment](docs/screenshots/student-assignment.png) · [Teacher live view](docs/screenshots/teacher-live.png) · [Student live view](docs/screenshots/student-live.png)
+
+## Academic team
+
+- Md Biplob Hossain
+- Leon Khan
+- Al Amin
+- Asif Khan
+
+Supervisor: **Ahsan Habib**, Lecturer and Coordinator, Department of CSE, City University.
+
+The compact landing-page team section supports both themes and English/Bangla descriptions. Names are supplied academic attribution, without invented biographies, portraits, student IDs, or endorsement claims.
+
+## Review and demonstration
+
+- [Requirements matrix](docs/REPORT_REQUIREMENTS_MATRIX.md): evidence and limitations per major requirement. The PDF report was unavailable locally; no chapter numbers are invented.
+- [Audit report](docs/SHIKKHAHUB_AUDIT_REPORT.md): architecture, verification boundaries, security and remaining risks.
+- [Bug repair log](docs/BUG_FIX_LOG.md): reproducible defects, repairs and regression references.
+- [Final-year demo guide](docs/FINAL_YEAR_DEMO_GUIDE.md): safe student, teacher and administrator demonstration.
+
+Future work includes gateway-backed paid entitlements, production AI controls, accredited/automated certification, native mobile apps, TURN and scalable live delivery, fuller translation and accessibility review, lesson-specific Q&A limits/pinning, and hosted acceptance.

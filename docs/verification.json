@@ -1,0 +1,158 @@
+{
+  "date": "2026-10-26",
+  "timezone": "Asia/Dhaka",
+  "implementationCommit": "6ad01db8309d941fa135a4f4c28352dc45ec785a",
+  "environment": {
+    "node": "24.22.1",
+    "npm": "11.19.1",
+    "browser": "Google Chrome 156.0.8078.47",
+    "display": ":0",
+    "headedExecuted": true,
+    "headlessExecuted": true
+  },
+  "verificationCommand": {
+    "command": "npm run verify",
+    "exitCode": 0,
+    "result": "passed"
+  },
+  "checks": {
+    "typescript": {
+      "configs": [
+        "tsconfig.app.json",
+        "tsconfig.node.json",
+        "tsconfig.e2e.json"
+      ],
+      "result": "passed"
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 21,
+      "result": "passed with warnings"
+    },
+    "unitComponent": {
+      "passed": 29,
+      "files": 10,
+      "failed": 0
+    },
+    "database": {
+      "passed": 25,
+      "failed": 0,
+      "engine": "PostgreSQL WASM / PGlite",
+      "shims": [
+        "auth.uid / roles",
+        "storage tables",
+        "realtime.topic / send"
+      ],
+      "skippedMigration": "20260308214544 extension-only pg_cron / pg_net setup"
+    },
+    "build": {
+      "result": "passed",
+      "warning": "application JS chunk approximately 1.55 MB uncompressed"
+    },
+    "browser": {
+      "startTime": "2026-10-26T15:51:32.425Z",
+      "duration": 208006.141,
+      "expected": 27,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0,
+      "uniqueScenarios": 27,
+      "serviceMode": "simulated Auth / REST / Realtime; actual Chrome and local WebRTC"
+    },
+    "headedRecheck": {
+      "passed": 3,
+      "failed": 0,
+      "scenarios": [
+        "login and logout",
+        "Bangla/light-theme team section and keyboard",
+        "teacher/student local WebRTC"
+      ]
+    },
+    "dependencyAudit": {
+      "full": {
+        "info": 0,
+        "low": 0,
+        "moderate": 10,
+        "high": 2,
+        "critical": 2,
+        "total": 14
+      },
+      "productionOnly": {
+        "info": 0,
+        "low": 0,
+        "moderate": 3,
+        "high": 1,
+        "critical": 0,
+        "total": 4
+      },
+      "result": "findings remain"
+    },
+    "gitDiffCheck": "passed",
+    "stagedSecretPatternScan": "no flags",
+    "originalEnvironmentFile": "unchanged"
+  },
+  "requirements": {
+    "reference": "user-supplied requirements; report PDF unavailable",
+    "implemented": 13,
+    "partial": 6,
+    "missingMajorGroups": 0,
+    "futureWork": 1,
+    "note": "Grouped statuses are not a compliance percentage; specific incomplete features are listed in partial/future rows."
+  },
+  "repairedDefectGroups": 25,
+  "screenshots": [
+    {
+      "path": "docs/screenshots/home-desktop.png",
+      "sha256": "344ac601ee7517ee95533165b29cb83e02be448b4ec27c930451be33901fa4f4"
+    },
+    {
+      "path": "docs/screenshots/student-assignment.png",
+      "sha256": "775d26676b7e3bc43acc109b1e5a6b87c7bb5b137065d513e0e69c5db611d7d3"
+    },
+    {
+      "path": "docs/screenshots/student-live.png",
+      "sha256": "7d7587e963505d077f94b312cdfabd2aeffa0b7de5a3402d5fdbf6bb4a467734"
+    },
+    {
+      "path": "docs/screenshots/teacher-live.png",
+      "sha256": "3aa96e2437d25914b751708a8fdc5818740dada54477cb31b87bf4a1240db423"
+    },
+    {
+      "path": "docs/screenshots/team-bangla-light.png",
+      "sha256": "98664f83e34104e56d1f8f15f623b9187bfa492f313290ca962ebd9c2f826ae6"
+    },
+    {
+      "path": "docs/screenshots/team-mobile.png",
+      "sha256": "289bcba22f2dbfa2fac8e2504197335ba6745e99d8215d865ac269d1cbab1066"
+    }
+  ],
+  "evidence": {
+    "fullBrowserReport": "playwright-report/index.html",
+    "fullBrowserResults": "test-results/results.json",
+    "localLogs": "artifacts/verification/",
+    "headedArtifacts": "artifacts/headed-results/",
+    "earlierFailures": [
+      "artifacts/initial-browser-run/",
+      "artifacts/second-browser-run/",
+      "artifacts/third-browser-run/",
+      "artifacts/verify-interrupted-screenshot/",
+      "artifacts/verify-network-interruption/"
+    ]
+  },
+  "limitations": [
+    "No hosted Supabase / real-account acceptance",
+    "Historical storage paths and duplicate submissions require staging rollout review",
+    "No real OAuth/email/payment/AI-provider/device/TURN acceptance",
+    "Screen sharing and recording acceptance pending",
+    "14 full dependency findings, including 4 production findings",
+    "Optional course-completion badge automation remains incomplete",
+    "Manual accessibility / full translation / scale acceptance pending"
+  ],
+  "remoteActions": {
+    "push": false,
+    "deploy": false,
+    "productionMigration": false,
+    "realAccountProvisioning": false,
+    "artifactUpload": false
+  }
+}
