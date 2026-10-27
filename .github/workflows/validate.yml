@@ -14,6 +14,12 @@ jobs:
           cache: npm
       - run: npm run check:secrets
       - run: npm ci
+      - name: Install and check certificate PDF tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+          command -v pdftotext
+          pdftotext -v
       - run: npx playwright install --with-deps chromium
       - run: npm run verify
         env:

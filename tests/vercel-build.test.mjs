@@ -169,3 +169,14 @@ test('credential names, privileged frontend keys and invalid/missing application
     assert.equal(files(root).some((path) => path.startsWith(join(root, 'dist'))), false, 'rejections emit no assets');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('SPA fallback covers nested client routes while reserving API and asset requests', () => {
+  const config = JSON.parse(readFileSync(join(repository, 'vercel.json'), 'utf8'));
+  const fallback = config.rewrites.find(route => route.destination === '/index.html');
+  assert.ok(fallback);
+  const source = new RegExp(`^${fallback.source}$`);
+  for (const path of ['/', '/courses/10000000-0000-4000-8000-000000000001', '/certificates/verify/token', '/dashboard', '/admin', '/reset-password', '/unknown-route'])
+    assert.ok(source.test(path), path);
+  for (const path of ['/api', '/api/example', '/assets/missing.js', '/assets', '/favicon.svg', '/robots.txt', '/images/missing.png'])
+    assert.ok(!source.test(path), path);
+});
