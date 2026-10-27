@@ -1,0 +1,212 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Asia/Dhaka",
+  "baselineCommit": "ff94074",
+  "runtime": {
+    "node": "24.22.1",
+    "npm": "11.19.1",
+    "chrome": "156.0.8078.47",
+    "deno": "2.9.6"
+  },
+  "baseline": {
+    "types": "pass",
+    "lint": {
+      "errors": 0,
+      "warnings": 9
+    },
+    "unit": {
+      "passed": 53,
+      "files": 16
+    },
+    "database": {
+      "passed": 46
+    },
+    "headless": {
+      "passed": 34,
+      "source": "unchanged archived checkout; completed JSON, wrapper later received termination status"
+    },
+    "fullAuditKnownFindings": 0,
+    "productionAuditKnownFindings": 0
+  },
+  "dependencies": {
+    "inspectedOriginalDirect": 77,
+    "upgradedInstalled": 41,
+    "removedDirect": 26,
+    "addedDirect": 3,
+    "finalDirect": 54,
+    "intentionalOlder": {
+      "typescript": {
+        "selected": "6.0.3",
+        "latest": "7.0.2",
+        "reason": "typescript-eslint 8.72.1 peer requires <6.1.0"
+      },
+      "@types/node": {
+        "selected": "24.19.2",
+        "latest": "26.6.5",
+        "reason": "match supported Node 24 runtime"
+      }
+    }
+  },
+  "final": {
+    "typecheck": "pass",
+    "additionalStrictToolingTypes": "pass",
+    "noUnusedLocals": true,
+    "lint": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "unit": {
+      "passed": 81,
+      "files": 21
+    },
+    "coverage": {
+      "scope": "Vitest imported files only; includes additional home discovery source in final test set",
+      "statements": {
+        "percent": 84.99,
+        "covered": 725,
+        "total": 853
+      },
+      "branches": {
+        "percent": 76.51,
+        "covered": 430,
+        "total": 562
+      },
+      "functions": {
+        "percent": 82.47,
+        "covered": 160,
+        "total": 194
+      },
+      "lines": {
+        "percent": 88.34,
+        "covered": 644,
+        "total": 729
+      }
+    },
+    "database": {
+      "passed": 46,
+      "failed": 0,
+      "providerShims": true,
+      "hostedCronNetExtensionMigrationExcluded": true
+    },
+    "concurrency": {
+      "passed": 1,
+      "races": 4,
+      "postgresql": "18.4",
+      "scope": "disposable Unix-socket cluster, no TCP listener; Auth/Storage/Realtime shims",
+      "withoutBinaries": {
+        "passed": 0,
+        "skipped": 1
+      },
+      "scriptFix": "--test-isolation=none prevents false file-level pass"
+    },
+    "build": "pass",
+    "npmCi": "pass",
+    "npmLs": "pass",
+    "npmOutdated": "only intentional TypeScript and Node-type exceptions",
+    "audit": {
+      "fullKnownFindings": 0,
+      "productionKnownFindings": 0,
+      "denoLockedEntries": 29,
+      "denoAdvisoryPackages": 0
+    },
+    "deno": {
+      "frozenEntryPointsChecked": 3,
+      "runtimeSmoke": {
+        "runtime": "2.9.6",
+        "pdfBytes": 399735,
+        "checksPassed": [
+          "Bangla PDF",
+          "PDF handler authorization",
+          "support proof and guest ownership"
+        ],
+        "hosted": false
+      }
+    },
+    "browser": {
+      "headlessCompleteSuite": {
+        "startTime": "2026-10-27T05:25:44.950Z",
+        "duration": 404992.778,
+        "expected": 39,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "headedCompleteSuite": {
+        "startTime": "2026-10-27T05:05:15.137Z",
+        "duration": 499535.417,
+        "expected": 38,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "headedAdditionalAnalytics": {
+        "passed": 1
+      },
+      "headlessAfterIdentityGuard": {
+        "startTime": "2026-10-27T05:34:04.230Z",
+        "duration": 98719.517,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "scope": "The complete 39-scenario headless suite follows dependency/import/metric/badge cleanup. The final account-identity guard then passed the new unit regression and five affected-route headless rechecks. The complete headed 38-scenario suite precedes final cleanup; its additional actual chart regression passed afterward. All services are intercepted fixtures; not hosted acceptance.",
+      "isolatedReloadStability": {
+        "passed": 3,
+        "assertionsUnchanged": true
+      },
+      "priorIntermittentAbort": "One earlier full attempt had 38 passes and ERR_ABORTED on a quiz-result reload; trace retained. Subsequent isolated runs and a complete 39-scenario run passed.",
+      "unexpectedErrorsInPassingRuns": 0
+    },
+    "staging": {
+      "skipped": 16,
+      "passed": 0,
+      "optInExplicitlyDisabled": true
+    },
+    "runtimeSmoke": {
+      "checks": [
+        "CSS HMR without document reload",
+        "built SPA /, /courses, /faq, /contact",
+        "1400px container at desktop",
+        "production preview light theme and 375px overflow",
+        "zero console/page errors"
+      ],
+      "backend": "intercepted synthetic responses",
+      "hosted": false
+    }
+  },
+  "bundle": {
+    "units": "decimal kB reported by Vite; minified production output",
+    "before": {
+      "entryJs": 1570.42,
+      "entryGzip": 436.4,
+      "css": 79.18,
+      "cssGzip": 13.89,
+      "largestJs": 1570.42
+    },
+    "after": {
+      "entryJs": 351.96,
+      "entryGzip": 106.31,
+      "css": 71.78,
+      "cssGzip": 12.73,
+      "largestJs": 380.24
+    },
+    "warningThreshold": 500,
+    "scope": "Entry reduction is not total initial network-byte reduction"
+  },
+  "preservation": {
+    "actualEnvUnchanged": true,
+    "supabaseMigrationsUnchanged": 41,
+    "generatedDatabaseTypesUnchanged": true,
+    "historicalDrizzleUnchanged": true,
+    "academicAttributionPreserved": true
+  },
+  "release": {
+    "hostedAcceptance": false,
+    "productionCleared": false,
+    "pushed": false,
+    "deployed": false,
+    "remoteDataMutated": false
+  },
+  "implementationCommit": "bfe833bd2aa8d176ce030d69253b0a5fb281bcc8"
+}

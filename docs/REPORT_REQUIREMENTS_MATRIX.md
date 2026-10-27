@@ -1,5 +1,8 @@
 # Report requirements reconciliation
 
+> **Modernization update, 27 October 2026:** React 19, Vite 8, Tailwind 4 and current compatible dependencies now replace the earlier tooling snapshot. All existing role/course/tutoring/certificate/support routes and Supabase migrations remain. Current implementation, original local artwork, compatibility fixes and executed test evidence are in [DEPENDENCY_UPGRADE_REPORT.md](DEPENDENCY_UPGRADE_REPORT.md), [CODEBASE_CLEANUP_REPORT.md](CODEBASE_CLEANUP_REPORT.md), [VISUAL_ASSET_AUDIT.md](VISUAL_ASSET_AUDIT.md) and [MODERNIZATION_VERIFICATION.md](MODERNIZATION_VERIFICATION.md). Statements below about React 18, earlier lint warnings, bundle warnings and test counts describe the historical Phase 3 snapshot. Hosted acceptance gates remain open.
+
+
 **Phase 3 update:** the reconciliation tables retain Phase 2 findings for traceability. The Phase 3 reconciliation section at the end supersedes former tutoring, automatic-certificate, administration and support gaps; see the current feature guide and TESTING.md for acceptance boundaries.
 
 Reviewed **27 October 2026 (Asia/Dhaka)** against the original `ShikkhaHub_Report.pdf`, found at `/home/biplob/Downloads/ShikkhaHub_Report.pdf` (33 pages; SHA-256 `3e357ac98f4425ca86a53cc31326d6190017a91dee02bce152e307810c406477`). All 33 pages were inspected using extracted text and rendered pages, with individual inspection of diagrams and screenshots. The original remains outside Git because it contains student IDs. This supersedes Phase 1's limited-search statement that the PDF was unavailable.

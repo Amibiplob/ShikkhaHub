@@ -657,5 +657,75 @@
       }
     }
   },
-  "phase": 3
+  "phase": 3,
+  "modernization": {
+    "date": "2026-10-27",
+    "timezone": "Asia/Dhaka",
+    "baselineCommit": "ff94074",
+    "full": {
+      "auditReportVersion": 2,
+      "vulnerabilities": {},
+      "metadata": {
+        "vulnerabilities": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        },
+        "dependencies": {
+          "prod": 203,
+          "dev": 312,
+          "optional": 50,
+          "peer": 9,
+          "peerOptional": 0,
+          "total": 515
+        }
+      }
+    },
+    "production": {
+      "auditReportVersion": 2,
+      "vulnerabilities": {},
+      "metadata": {
+        "vulnerabilities": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        },
+        "dependencies": {
+          "prod": 203,
+          "dev": 312,
+          "optional": 50,
+          "peer": 9,
+          "peerOptional": 0,
+          "total": 515
+        }
+      }
+    },
+    "deno": {
+      "date": "2026-10-27",
+      "lockedVersionEntries": 29,
+      "advisories": {}
+    },
+    "remainingOutdated": {
+      "@types/node": {
+        "current": "24.19.2",
+        "wanted": "24.19.2",
+        "latest": "26.6.5",
+        "dependent": "ShikkhaHub",
+        "location": "/home/biplob/Desktop/Untitled Folder/ShikkhaHub/node_modules/@types/node"
+      },
+      "typescript": {
+        "current": "6.0.3",
+        "wanted": "6.0.3",
+        "latest": "7.0.2",
+        "dependent": "ShikkhaHub",
+        "location": "/home/biplob/Desktop/Untitled Folder/ShikkhaHub/node_modules/typescript"
+      }
+    }
+  }
 }

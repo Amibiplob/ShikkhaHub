@@ -1,5 +1,8 @@
 # Tutoring, certificates, administration and support
 
+> **Modernization update, 27 October 2026:** React 19, Vite 8, Tailwind 4 and current compatible dependencies now replace the earlier tooling snapshot. All existing role/course/tutoring/certificate/support routes and Supabase migrations remain. Current implementation, original local artwork, compatibility fixes and executed test evidence are in [DEPENDENCY_UPGRADE_REPORT.md](DEPENDENCY_UPGRADE_REPORT.md), [CODEBASE_CLEANUP_REPORT.md](CODEBASE_CLEANUP_REPORT.md), [VISUAL_ASSET_AUDIT.md](VISUAL_ASSET_AUDIT.md) and [MODERNIZATION_VERIFICATION.md](MODERNIZATION_VERIFICATION.md). Statements below about React 18, earlier lint warnings, bundle warnings and test counts describe the historical Phase 3 snapshot. Hosted acceptance gates remain open.
+
+
 27 October 2026 (Asia/Dhaka). These are functioning local implementations with SQL, server-handler and browser tests. Hosted Supabase, Edge Function deployment and real-account acceptance remain unverified. No push/deployment/provider mutation was performed.
 
 ## Routes and use

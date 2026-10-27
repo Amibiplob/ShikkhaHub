@@ -2,7 +2,9 @@
 
 ShikkhaHub is a final-year CSE project at City University, Bangladesh. Students discover courses, learn through structured lessons, complete assessments, discuss course material, and request private tutoring. Teachers manage courses, assessments, tutoring availability, and live broadcasts. Administrators manage roles and moderate the platform.
 
-This repository originated in Lovable and is maintained locally. It uses **React 18, TypeScript, Vite 6, React Router 7, Tailwind CSS, shadcn/ui, TanStack Query, and Supabase**. It is a browser SPA, not a Next.js or Express application.
+ShikkhaHub is independently maintained. It uses **React 19.3, TypeScript 6, Vite 8 with Rolldown/Oxc, React Router 7, Tailwind CSS 4, Radix UI, TanStack Query, and Supabase**. The browser SPA keeps authentication, authorization and data storage in Supabase.
+
+See [dependency upgrades](docs/DEPENDENCY_UPGRADE_REPORT.md), [cleanup](docs/CODEBASE_CLEANUP_REPORT.md), [visual assets](docs/VISUAL_ASSET_AUDIT.md), and [current verification](docs/MODERNIZATION_VERIFICATION.md) for the modernization evidence and remaining hosted acceptance requirements.
 
 ## Features and roles
 
@@ -23,7 +25,7 @@ This repository originated in Lovable and is maintained locally. It uses **React
 
 ## Local setup
 
-Use Node.js 24 and npm. `package-lock.json` is authoritative; stale Bun locks were removed.
+Use **Node.js 24.22.1 or newer within Node 24**, and **npm 11.19.1 or newer within npm 11**. `package-lock.json` is authoritative; stale Bun locks were removed.
 
 ```sh
 npm ci
@@ -46,7 +48,8 @@ Environment variable names:
 | `VITE_SUPABASE_URL` | Public Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Public anon/publishable key; RLS remains mandatory |
 | `VITE_SUPABASE_PROJECT_ID` | Legacy project identifier, if required by local tooling |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `LOVABLE_API_KEY` | Server-side Edge Function configuration for the optional assistant |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Server-side Supabase configuration for the Edge Functions |
+| `AI_CHAT_COMPLETIONS_URL`, `AI_MODEL`, `AI_API_KEY` | Optional server-only HTTPS SSE chat-completions provider; see `supabase/functions/.env.example` |
 | `APP_ALLOWED_ORIGINS`, `APP_PUBLIC_ORIGIN` | Exact server browser origins / certificate verification origin; see Phase 3 guide |
 | `SUPPORT_CHALLENGE_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` | Server-only support signing/intake; never expose to Vite |
 | `E2E_BROWSER_CHANNEL` | Test browser channel, defaults to `chrome` |
@@ -67,7 +70,7 @@ Never put a service-role key in the frontend. Existing `.env` contents were pres
 ```sh
 npm run dev                  # development server
 npm run typecheck            # app + tooling + browser + server-handler TypeScript
-npm run lint                 # ESLint; nine Fast Refresh warnings documented
+npm run lint                 # ESLint; zero errors/warnings in the modernization run
 npm run test                 # colocated Vitest unit/component tests
 npm run test:db              # disposable PostgreSQL WASM migration/RLS integration tests
 npm run test:e2e             # starts/stops Vite and executes real Chrome headlessly
@@ -118,3 +121,13 @@ Phase 3 verification (27 October 2026): see [TESTING.md](TESTING.md) for actual 
 - [Final-year demo guide](docs/FINAL_YEAR_DEMO_GUIDE.md): safe student, teacher and administrator demonstration.
 
 Future work includes gateway-backed paid entitlements, production AI controls, accredited certification, native mobile apps, TURN and scalable live delivery, fuller translation and accessibility review, lesson-specific Q&A limits/pinning, and hosted acceptance.
+
+## Independent maintenance and visuals
+
+The project originally used Lovable. This history is retained as attribution; its build tagger, editor session broker, gateway dependency and visible branding have been removed. Supabase Auth, RLS, Storage, Realtime, migration history and public environment names remain in use.
+
+Original local SVG artwork is in `public/artwork/`; the favicon and social preview are also local. Uploaded course thumbnails remain teacher-owned data and fall back to topic artwork when missing or broken. Team names and the existing header identity are preserved. Theme controls work in desktop and mobile menus, retain the existing `theme` storage key and support the stored `system` setting.
+
+The optional assistant now uses the signed-in user JWT and server-configured provider. Set `AI_CHAT_COMPLETIONS_URL`, `AI_MODEL`, `AI_API_KEY` and `APP_ALLOWED_ORIGINS` only in an approved server environment. No provider endpoint or model is selected automatically; absent configuration returns 503. It retains the `course-assistant` route and streamed chat contract. Provider billing, rate limits and hosted acceptance require operator configuration; no service has been purchased or configured here.
+
+Tailwind 4 and Vite 8 target modern browsers (Chrome 111+, Firefox 128+, Safari 16.4+ for Tailwind). Older browsers need a separately reviewed support decision. For hosting, supply an SPA fallback to `index.html`, an actual approved public origin/canonical URL and absolute social-image URL; no deployment domain is invented in source. Nothing in the local verification authorizes a release or production database changes.

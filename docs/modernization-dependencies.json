@@ -1,0 +1,636 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Asia/Dhaka",
+  "baselineCommit": "ff94074",
+  "runtime": {
+    "node": "24.22.1",
+    "npm": "11.19.1"
+  },
+  "inspected": 77,
+  "upgradedInstalled": 41,
+  "removed": 26,
+  "remainingDirect": 54,
+  "added": {
+    "@tailwindcss/vite": "4.3.3",
+    "tw-animate-css": "1.4.0",
+    "@vitejs/plugin-react": "6.1.2"
+  },
+  "packages": [
+    {
+      "package": "@fontsource-variable/dm-sans",
+      "beforeRange": "^5.3.0",
+      "beforeInstalled": "5.3.0",
+      "after": "5.3.0",
+      "registryLatest": "5.3.0",
+      "status": "already current"
+    },
+    {
+      "package": "@fontsource-variable/space-grotesk",
+      "beforeRange": "^5.3.0",
+      "beforeInstalled": "5.3.0",
+      "after": "5.3.0",
+      "registryLatest": "5.3.0",
+      "status": "already current"
+    },
+    {
+      "package": "@radix-ui/react-accordion",
+      "beforeRange": "^1.2.11",
+      "beforeInstalled": "1.2.11",
+      "after": "1.3.1",
+      "registryLatest": "1.3.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-alert-dialog",
+      "beforeRange": "^1.1.14",
+      "beforeInstalled": "1.1.14",
+      "after": null,
+      "registryLatest": "1.2.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-aspect-ratio",
+      "beforeRange": "^1.1.7",
+      "beforeInstalled": "1.1.7",
+      "after": null,
+      "registryLatest": "1.2.0",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-avatar",
+      "beforeRange": "^1.1.10",
+      "beforeInstalled": "1.1.10",
+      "after": "1.3.1",
+      "registryLatest": "1.3.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-checkbox",
+      "beforeRange": "^1.3.2",
+      "beforeInstalled": "1.3.2",
+      "after": "1.4.1",
+      "registryLatest": "1.4.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-collapsible",
+      "beforeRange": "^1.1.11",
+      "beforeInstalled": "1.1.11",
+      "after": null,
+      "registryLatest": "1.2.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-context-menu",
+      "beforeRange": "^2.2.15",
+      "beforeInstalled": "2.2.15",
+      "after": null,
+      "registryLatest": "2.4.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-dialog",
+      "beforeRange": "^1.1.14",
+      "beforeInstalled": "1.1.14",
+      "after": "1.3.1",
+      "registryLatest": "1.3.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-dropdown-menu",
+      "beforeRange": "^2.1.15",
+      "beforeInstalled": "2.1.15",
+      "after": "2.2.1",
+      "registryLatest": "2.2.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-hover-card",
+      "beforeRange": "^1.1.14",
+      "beforeInstalled": "1.1.14",
+      "after": null,
+      "registryLatest": "1.2.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-label",
+      "beforeRange": "^2.1.7",
+      "beforeInstalled": "2.1.7",
+      "after": "2.1.17",
+      "registryLatest": "2.1.17",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-menubar",
+      "beforeRange": "^1.1.15",
+      "beforeInstalled": "1.1.15",
+      "after": null,
+      "registryLatest": "1.2.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-navigation-menu",
+      "beforeRange": "^1.2.13",
+      "beforeInstalled": "1.2.13",
+      "after": null,
+      "registryLatest": "1.4.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-popover",
+      "beforeRange": "^1.1.14",
+      "beforeInstalled": "1.1.14",
+      "after": null,
+      "registryLatest": "1.3.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-progress",
+      "beforeRange": "^1.1.7",
+      "beforeInstalled": "1.1.7",
+      "after": "1.2.1",
+      "registryLatest": "1.2.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-radio-group",
+      "beforeRange": "^1.3.7",
+      "beforeInstalled": "1.3.7",
+      "after": "1.5.1",
+      "registryLatest": "1.5.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-scroll-area",
+      "beforeRange": "^1.2.9",
+      "beforeInstalled": "1.2.9",
+      "after": "1.4.0",
+      "registryLatest": "1.4.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-select",
+      "beforeRange": "^2.2.5",
+      "beforeInstalled": "2.2.5",
+      "after": "2.4.1",
+      "registryLatest": "2.4.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-separator",
+      "beforeRange": "^1.1.7",
+      "beforeInstalled": "1.1.7",
+      "after": null,
+      "registryLatest": "1.2.0",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-slider",
+      "beforeRange": "^1.3.5",
+      "beforeInstalled": "1.3.5",
+      "after": null,
+      "registryLatest": "1.6.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-slot",
+      "beforeRange": "^1.2.3",
+      "beforeInstalled": "1.2.3",
+      "after": "1.5.0",
+      "registryLatest": "1.5.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-switch",
+      "beforeRange": "^1.2.5",
+      "beforeInstalled": "1.2.5",
+      "after": null,
+      "registryLatest": "1.4.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-tabs",
+      "beforeRange": "^1.1.12",
+      "beforeInstalled": "1.1.12",
+      "after": "1.2.1",
+      "registryLatest": "1.2.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-toast",
+      "beforeRange": "^1.2.14",
+      "beforeInstalled": "1.2.14",
+      "after": "1.3.1",
+      "registryLatest": "1.3.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@radix-ui/react-toggle",
+      "beforeRange": "^1.1.9",
+      "beforeInstalled": "1.1.9",
+      "after": null,
+      "registryLatest": "1.2.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-toggle-group",
+      "beforeRange": "^1.1.10",
+      "beforeInstalled": "1.1.10",
+      "after": null,
+      "registryLatest": "1.2.1",
+      "status": "removed"
+    },
+    {
+      "package": "@radix-ui/react-tooltip",
+      "beforeRange": "^1.2.7",
+      "beforeInstalled": "1.2.7",
+      "after": "1.4.1",
+      "registryLatest": "1.4.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@supabase/supabase-js",
+      "beforeRange": "^2.98.0",
+      "beforeInstalled": "2.118.0",
+      "after": "2.118.0",
+      "registryLatest": "2.118.0",
+      "status": "already current"
+    },
+    {
+      "package": "@tanstack/react-query",
+      "beforeRange": "^5.83.0",
+      "beforeInstalled": "5.83.0",
+      "after": "5.105.0",
+      "registryLatest": "5.105.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "class-variance-authority",
+      "beforeRange": "^0.7.1",
+      "beforeInstalled": "0.7.1",
+      "after": "0.7.1",
+      "registryLatest": "0.7.1",
+      "status": "already current"
+    },
+    {
+      "package": "clsx",
+      "beforeRange": "^2.1.1",
+      "beforeInstalled": "2.1.1",
+      "after": "2.1.1",
+      "registryLatest": "2.1.1",
+      "status": "already current"
+    },
+    {
+      "package": "cmdk",
+      "beforeRange": "^1.1.1",
+      "beforeInstalled": "1.1.1",
+      "after": null,
+      "registryLatest": "1.1.1",
+      "status": "removed"
+    },
+    {
+      "package": "date-fns",
+      "beforeRange": "^3.6.0",
+      "beforeInstalled": "3.6.0",
+      "after": "4.4.0",
+      "registryLatest": "4.4.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "embla-carousel-react",
+      "beforeRange": "^8.6.0",
+      "beforeInstalled": "8.6.0",
+      "after": null,
+      "registryLatest": "8.6.0",
+      "status": "removed"
+    },
+    {
+      "package": "input-otp",
+      "beforeRange": "^1.4.2",
+      "beforeInstalled": "1.4.2",
+      "after": null,
+      "registryLatest": "1.5.0",
+      "status": "removed"
+    },
+    {
+      "package": "lucide-react",
+      "beforeRange": "^0.462.0",
+      "beforeInstalled": "0.462.0",
+      "after": "1.61.0",
+      "registryLatest": "1.61.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "next-themes",
+      "beforeRange": "^0.3.0",
+      "beforeInstalled": "0.3.0",
+      "after": null,
+      "registryLatest": "0.4.6",
+      "status": "removed"
+    },
+    {
+      "package": "react",
+      "beforeRange": "^18.3.1",
+      "beforeInstalled": "18.3.1",
+      "after": "19.3.1",
+      "registryLatest": "19.3.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "react-day-picker",
+      "beforeRange": "^8.10.1",
+      "beforeInstalled": "8.10.1",
+      "after": null,
+      "registryLatest": "10.0.2",
+      "status": "removed"
+    },
+    {
+      "package": "react-dom",
+      "beforeRange": "^18.3.1",
+      "beforeInstalled": "18.3.1",
+      "after": "19.3.1",
+      "registryLatest": "19.3.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "react-hook-form",
+      "beforeRange": "^7.61.1",
+      "beforeInstalled": "7.61.1",
+      "after": null,
+      "registryLatest": "7.91.0",
+      "status": "removed"
+    },
+    {
+      "package": "react-markdown",
+      "beforeRange": "^10.1.0",
+      "beforeInstalled": "10.1.0",
+      "after": "10.1.0",
+      "registryLatest": "10.1.0",
+      "status": "already current"
+    },
+    {
+      "package": "react-resizable-panels",
+      "beforeRange": "^2.1.9",
+      "beforeInstalled": "2.1.9",
+      "after": null,
+      "registryLatest": "4.15.0",
+      "status": "removed"
+    },
+    {
+      "package": "react-router-dom",
+      "beforeRange": "7.18.2",
+      "beforeInstalled": "7.18.2",
+      "after": "7.18.4",
+      "registryLatest": "7.18.4",
+      "status": "upgraded"
+    },
+    {
+      "package": "recharts",
+      "beforeRange": "^2.15.4",
+      "beforeInstalled": "2.15.4",
+      "after": "3.10.1",
+      "registryLatest": "3.10.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "sonner",
+      "beforeRange": "^1.7.4",
+      "beforeInstalled": "1.7.4",
+      "after": "2.0.8",
+      "registryLatest": "2.0.8",
+      "status": "upgraded"
+    },
+    {
+      "package": "tailwind-merge",
+      "beforeRange": "^2.6.0",
+      "beforeInstalled": "2.6.0",
+      "after": "3.7.0",
+      "registryLatest": "3.7.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "tailwindcss-animate",
+      "beforeRange": "^1.0.7",
+      "beforeInstalled": "1.0.7",
+      "after": null,
+      "registryLatest": "1.0.7",
+      "status": "removed"
+    },
+    {
+      "package": "vaul",
+      "beforeRange": "^0.9.9",
+      "beforeInstalled": "0.9.9",
+      "after": null,
+      "registryLatest": "1.1.2",
+      "status": "removed"
+    },
+    {
+      "package": "@electric-sql/pglite",
+      "beforeRange": "^0.3.14",
+      "beforeInstalled": "0.3.14",
+      "after": "0.5.12",
+      "registryLatest": "0.5.12",
+      "status": "upgraded"
+    },
+    {
+      "package": "@eslint/js",
+      "beforeRange": "^9.32.0",
+      "beforeInstalled": "9.32.0",
+      "after": "10.0.1",
+      "registryLatest": "10.0.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@playwright/test",
+      "beforeRange": "^1.58.2",
+      "beforeInstalled": "1.58.2",
+      "after": "1.64.1",
+      "registryLatest": "1.64.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@testing-library/jest-dom",
+      "beforeRange": "^6.6.0",
+      "beforeInstalled": "6.9.1",
+      "after": "7.0.1",
+      "registryLatest": "7.0.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "@testing-library/react",
+      "beforeRange": "^16.0.0",
+      "beforeInstalled": "16.3.3",
+      "after": "16.3.3",
+      "registryLatest": "16.3.3",
+      "status": "already current"
+    },
+    {
+      "package": "@types/fontkit",
+      "beforeRange": "2.0.9",
+      "beforeInstalled": "2.0.9",
+      "after": "2.0.9",
+      "registryLatest": "2.0.9",
+      "status": "already current"
+    },
+    {
+      "package": "@types/node",
+      "beforeRange": "^22.16.5",
+      "beforeInstalled": "22.16.5",
+      "after": "24.19.2",
+      "registryLatest": "26.6.5",
+      "status": "upgraded"
+    },
+    {
+      "package": "@types/react",
+      "beforeRange": "^18.3.23",
+      "beforeInstalled": "18.3.23",
+      "after": "19.3.0",
+      "registryLatest": "19.3.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "@types/react-dom",
+      "beforeRange": "^18.3.7",
+      "beforeInstalled": "18.3.7",
+      "after": "19.3.0",
+      "registryLatest": "19.3.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "@vitejs/plugin-react-swc",
+      "beforeRange": "^3.11.0",
+      "beforeInstalled": "3.11.0",
+      "after": null,
+      "registryLatest": "4.3.3",
+      "status": "removed"
+    },
+    {
+      "package": "@vitest/coverage-v8",
+      "beforeRange": "4.1.12",
+      "beforeInstalled": "4.1.12",
+      "after": "5.0.5",
+      "registryLatest": "5.0.5",
+      "status": "upgraded"
+    },
+    {
+      "package": "autoprefixer",
+      "beforeRange": "^10.4.21",
+      "beforeInstalled": "10.4.21",
+      "after": null,
+      "registryLatest": "10.6.2",
+      "status": "removed"
+    },
+    {
+      "package": "eslint",
+      "beforeRange": "^9.32.0",
+      "beforeInstalled": "9.32.0",
+      "after": "10.13.0",
+      "registryLatest": "10.13.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "eslint-plugin-react-hooks",
+      "beforeRange": "^5.2.0",
+      "beforeInstalled": "5.2.0",
+      "after": "7.1.1",
+      "registryLatest": "7.1.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "eslint-plugin-react-refresh",
+      "beforeRange": "^0.4.20",
+      "beforeInstalled": "0.4.20",
+      "after": "0.5.7",
+      "registryLatest": "0.5.7",
+      "status": "upgraded"
+    },
+    {
+      "package": "fontkit",
+      "beforeRange": "2.0.4",
+      "beforeInstalled": "2.0.4",
+      "after": "2.0.4",
+      "registryLatest": "2.0.4",
+      "status": "already current"
+    },
+    {
+      "package": "globals",
+      "beforeRange": "^15.15.0",
+      "beforeInstalled": "15.15.0",
+      "after": "17.13.0",
+      "registryLatest": "17.13.0",
+      "status": "upgraded"
+    },
+    {
+      "package": "jsdom",
+      "beforeRange": "^20.0.3",
+      "beforeInstalled": "20.0.3",
+      "after": "30.1.3",
+      "registryLatest": "30.1.3",
+      "status": "upgraded"
+    },
+    {
+      "package": "lovable-tagger",
+      "beforeRange": "^1.1.13",
+      "beforeInstalled": "1.1.13",
+      "after": null,
+      "registryLatest": "1.3.5",
+      "status": "removed"
+    },
+    {
+      "package": "pdf-lib",
+      "beforeRange": "1.17.1",
+      "beforeInstalled": "1.17.1",
+      "after": "1.17.1",
+      "registryLatest": "1.17.1",
+      "status": "already current"
+    },
+    {
+      "package": "postcss",
+      "beforeRange": "^8.5.6",
+      "beforeInstalled": "8.5.31",
+      "after": null,
+      "registryLatest": "8.5.32",
+      "status": "removed"
+    },
+    {
+      "package": "tailwindcss",
+      "beforeRange": "^3.4.17",
+      "beforeInstalled": "3.4.17",
+      "after": "4.3.3",
+      "registryLatest": "4.3.3",
+      "status": "upgraded"
+    },
+    {
+      "package": "typescript",
+      "beforeRange": "^5.8.3",
+      "beforeInstalled": "5.8.3",
+      "after": "6.0.3",
+      "registryLatest": "7.0.2",
+      "status": "upgraded"
+    },
+    {
+      "package": "typescript-eslint",
+      "beforeRange": "^8.38.0",
+      "beforeInstalled": "8.38.0",
+      "after": "8.72.1",
+      "registryLatest": "8.72.1",
+      "status": "upgraded"
+    },
+    {
+      "package": "vite",
+      "beforeRange": "6.4.5",
+      "beforeInstalled": "6.4.5",
+      "after": "8.3.5",
+      "registryLatest": "8.3.5",
+      "status": "upgraded"
+    },
+    {
+      "package": "vitest",
+      "beforeRange": "4.1.12",
+      "beforeInstalled": "4.1.12",
+      "after": "5.0.5",
+      "registryLatest": "5.0.5",
+      "status": "upgraded"
+    }
+  ]
+}

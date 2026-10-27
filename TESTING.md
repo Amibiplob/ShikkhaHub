@@ -1,27 +1,29 @@
 # ShikkhaHub testing
 
-Verification date: **27 October 2026, Asia/Dhaka**. Exact final results are recorded in [`docs/verification.json`](docs/verification.json). The final command transcript is summarized in the audit report; no coverage percentage is claimed.
+Verification date: **27 October 2026, Asia/Dhaka**. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
 
 ## Recorded final results
 
 | Check | Result |
 | --- | --- |
-| Verification sequence | Types/lint/unit/SQL/build passed together; complete Chrome suite passed separately after interruption/port recovery |
-| TypeScript | Application, tooling, browser-test and server-handler configs passed |
-| ESLint | 0 errors, 9 documented Fast Refresh warnings retained; 12 hook warnings fixed |
-| Vitest | 53 tests passed in 16 files (includes server PDF/support, timezone, FAQ, verification navigation and six staging safeguards) |
-| PostgreSQL WASM integration | 46 tests passed; full Phase 3 migration/RLS/RPC chain and legacy adoption/recovery |
-| Production build | Passed; large-chunk warning retained |
-| Headless Chrome | 34 passed, 0 failed/skipped/flaky |
-| Real Supabase staging suite | 16 blocked/skipped; no real-service passes |
-| Independent PostgreSQL | 1 passed, 0 failed; four independent-connection races on PostgreSQL 18.4 |
-| Deno server compatibility | Deno 2.9.6 frozen-lock check and local PDF/support smoke passed; synthetic adapters |
-| Deno dependency graph | npm bulk-advisory check: 31 locked version entries, zero known findings |
-| Vitest coverage integration | Historical Phase 2: 35 tests; not rerun in Phase 3, no global coverage claim |
-| Visible Chrome recheck | Not rerun in Phase 3; Phase 1 had three passes |
-| Full dependency audit | Exit 0; zero known findings on final lock |
-| Production-only audit | Exit 0; zero known findings on final lock |
-| Diff/secret-pattern checks | Passed; actual `.env` unchanged |
+| Reproducible install | Final `npm ci` passed; Node 24.22.1 / npm 11.19.1 |
+| TypeScript | Application, tooling, browser-test and all three server adapters pass |
+| ESLint | 0 errors, 0 warnings; current React Hooks recommended rules enabled |
+| Vitest | 81 tests passed in 21 files |
+| PostgreSQL WASM integration | 46 passed; migrations/RLS/RPCs with explicit provider-service shims |
+| Production build | Passed; main 351.96 kB, largest deferred chart chunk 380.24 kB; no oversized-chunk warning |
+| Headless Chrome | 39 passed, zero failed/skipped/flaky; five affected-route rechecks after the final identity guard |
+| Headed Chrome | 38 passed in complete suite plus one separate passing headed chart regression |
+| Real Supabase staging suite | 16 deliberately skipped with external opt-in disabled; no hosted passes |
+| Independent PostgreSQL | 1 passed; four independent-connection races on disposable PostgreSQL 18.4 |
+| Deno compatibility | Actual Deno 2.9.6 frozen checks of all three entry points and PDF/support runtime smoke pass |
+| Deno dependency graph | 29 locked version entries; zero known bulk-advisory findings |
+| Coverage | 81 tests; imported-file statements 84.99%, branches 76.51%, functions 82.47%, lines 88.34% |
+| Full / production dependency audits | Both report zero known findings |
+| Dependency tree | `npm ls` passes; only intentional TypeScript 6 / Node 24 type-version exceptions in `npm outdated` |
+| Dev / built runtime | CSS HMR without document reload and four built-preview routes pass; backend intercepted |
+| Diff / environment preservation | No whitespace errors; actual secrets, migrations and generated database types unchanged |
+
 
 Phase 1 screenshot/hot-reload and network-interruption artifacts remain historical evidence. Phase 2 reproduced the student grading-display defect before repairing it; its failing trace/screenshots are retained under ignored `artifacts/phase2-grade-before/`. The extended grading journey now checks student marks/feedback after reload and supports legacy records. Initial restricted-sandbox registry/server attempts failed for environment reasons and were retried with network/loopback permissions. No checks were disabled to hide failures.
 
@@ -39,7 +41,7 @@ npm run verify
 ```sh
 npm run test                 # colocated unit/component tests
 npm run test:watch
-npm run test:coverage        # optional; not part of the recorded counts
+npm run test:coverage        # imported-file coverage; current scope recorded above
 npm run test:db              # isolated migration/RLS/constraint/RPC tests
 npm run test:e2e             # real Chrome; starts/waits/stops local Vite itself
 npm run test:e2e:headed      # same suite with visible browser (DISPLAY required)
@@ -51,7 +53,7 @@ npm audit --omit=dev         # production install classification, currently exit
 npm run test:e2e:staging     # external approved target only; otherwise 16 blocked/skipped
 ```
 
-The default browser channel is installed Google Chrome. Phase 3 executed headless Chrome; headed Chrome results belong to Phase 1 only. CI uses downloadable Chromium:
+The default browser channel is installed Google Chrome 156.0.8078.47. Current modernization headless/headed results are above; earlier phase-specific results remain historical. CI uses downloadable Chromium:
 
 ```sh
 npx playwright install --with-deps chromium
@@ -163,7 +165,7 @@ This phase used PostgreSQL **18.4**, acquired temporarily through `@embedded-pos
 With Deno **2.9.6** installed independently:
 
 ```sh
-deno check --frozen --config supabase/functions/deno.json supabase/functions/certificate-pdf/index.ts supabase/functions/support-contact/index.ts
+deno check --frozen --config supabase/functions/deno.json supabase/functions/certificate-pdf/index.ts supabase/functions/support-contact/index.ts supabase/functions/course-assistant/index.ts
 deno run --frozen --config supabase/functions/deno.json --allow-read=supabase/functions/_shared/fonts --allow-write=artifacts/phase3-pdf tests/edge-runtime.mjs
 ```
 
@@ -180,3 +182,17 @@ The original font adapter first failed the Bangla unit generator with a missing 
 Selected Phase 3 screenshots, using synthetic data, are in `docs/screenshots/phase3-*`. The feature guide documents workflow bounds, unsupported account suspension/payments/email delivery, required Edge configuration and the sixteen blocked hosted scenarios. No production-readiness claim follows from local success.
 
 The 34-scenario full browser run passed. Screenshot inspection then found that independent contexts in the new mobile-labeled flows used the default desktop viewport. All feature contexts now explicitly inherit 375/1440px; a separate seven-scenario recheck verifies the real widths. That review exposed SH-032 (squeezed mobile admin search), repaired with stacked controls and a browser assertion requiring a usable input width. The final seven-scenario run is recorded separately, without counting duplicate scenarios as 41 unique tests.
+
+## Modernization regressions
+
+Five new browser scenarios in `e2e/modernization.spec.ts` load actual local artwork, exercise both themes and mobile controls, and enroll before testing assistant JWT/SSE rendering at 375px/1440px. The extra chart scenario hovers real rendered bars for independent 100%/50% course rates. Completion-badge tests use authoritative certificate counts and reject failed award writes. The server handler tests use only synthetic provider responses and independently verify caller authorization, bounded messages/course context, HTTPS configuration and generic upstream errors. Component tests reject signed-out assistant calls and recover broken course thumbnails. Theme tests cover storage, system changes, cross-tab notifications and the absence of rendered scripts. Existing SQL and browser journeys remain active; the admin pagination test caught and then verified repair of a debounce migration regression.
+
+Failed upgrade attempts and their corrections are documented in the modernization report and retained in ignored local artifacts. Screenshots were opened and inspected; this does not imply hosted service, physical-device or exhaustive visual/accessibility acceptance. The original main bundle warning was resolved through actual route/analytics splitting, without raising its threshold.
+
+Additional strict tooling checks (TypeScript 6 requires `--ignoreConfig` when explicitly passing files):
+
+```sh
+npx tsc --ignoreConfig --noEmit --strict --skipLibCheck --moduleResolution bundler --module ESNext --target ES2022 --types node tailwind.config.ts vitest.config.ts
+```
+
+The complete headless run was followed by a final account-identity guard and five affected-route headless rechecks. Its new home-discovery regression was demonstrated failing before repair and passing afterward; all 81 unit tests pass. The complete headed run and later chart recheck are separate evidence. A prior intermittent reload abort, three unchanged passing stability reruns and the later complete pass are retained in the verification report. The no-binary concurrency command now explicitly skips; it no longer reports a misleading test-file pass.

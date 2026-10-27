@@ -68,3 +68,10 @@ The prepared real-service suite now contains **16 scenarios**. None passed again
 - [ ] Verify admin server counts/search/filter/pagination, role escalation denial, self/final-admin protection (including concurrent stale snapshots), confirmed moderation/revocation and append-only audit access. Global account suspension is not offered; provider-wide suspension needs a separately reviewed mechanism.
 - [ ] Review exact-ID ignored manifests for support/booking/certificate/audit records that intentionally survive course cleanup. Dedicated staging accounts/data must remain isolated; no broad cleanup against production is authorized.
 - [ ] Complete screen-reader/touch/non-Chrome QA, high-volume performance/retention review and physical/hosted video acceptance. Basic local Chrome responsiveness is not complete accessibility or production scale proof.
+
+## Modernized build and independent assistant
+
+- Use the Node/npm versions and frozen npm/Deno locks in the dependency report. Re-run actual hosted acceptance after upgrading the Supabase client; fixture and SQL tests do not prove provider serialization/JWT/storage transport.
+- Optional `course-assistant` now has explicit per-function import-map/JWT settings. Configure `AI_CHAT_COMPLETIONS_URL`, `AI_MODEL`, `AI_API_KEY` and exact `APP_ALLOWED_ORIGINS` in the approved server secret environment only. Review the selected provider's streaming contract, data handling, spend/quota and per-user rate controls before enabling it. No gateway/provider was configured during modernization.
+- Confirm SPA fallback routing and replace local social-image metadata with the actual approved absolute URL/canonical origin before publication. Verify Tailwind 4's browser support floor against the accepted device matrix.
+- Test persisted light/dark/system preferences, mobile menu controls, uploaded/broken thumbnails and lazy-route navigation against the deployed build. Local screenshots are fixture evidence.
