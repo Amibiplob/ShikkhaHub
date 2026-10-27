@@ -1,6 +1,34 @@
 # ShikkhaHub testing
 
-Verification date: **27 October 2026, Asia/Dhaka**. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
+Latest repair verification: **28 October 2026, Asia/Dhaka**; see the repair section below. The **27 October 2026** results in the following historical sections describe their own snapshots. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
+
+## Routing, CI, mobile menu and course completion repair
+
+Baseline: clean `df417cb`, Node 24.22.1/npm 11.19.1; 114 Vitest tests passed. Missing Vercel fallback and CI PDF provisioning were confirmed by inspection. The baseline local PDF tool was already installed, so no local ENOENT is claimed. A preliminary browser run was interrupted after four passes because source edits caused Vite reload/parse errors; it is not a completed baseline. The first new browser run reproduced the mobile duplicate-notification-channel crash. The next focused run passed 28/29; its only remaining failure was a new test looking for Bengali text instead of the language button's actual accessible name. The selector was corrected, with the assertion retained. The first new component run passed 7/9; two failures came from an unstable mock translation function retriggering effects; stabilizing the mock gave 9/9 including FAQ. These counts are separate runs, not extra unique scenarios.
+
+`e2e/navigation-repair.spec.ts` covers all four widths (320/375/425/768) for guest/student/teacher/admin: actual theme toggles, open/close, Escape, outside dismissal, focus containment/return, background lock, role links, link navigation, back/forward and session changes. Additional scenarios cover desktop resizing, Bangla labels, public/protected nested refresh, delayed role restoration, unknown routes, zero-row successful progress responses and unauthorized completion. The existing 1440/375 certificate journeys now exercise rapid lesson clicks, saved-progress reload, missing assessments, independent teacher grading, Finish Course, stable certificate identity, completion reload, actual PDF extraction and revocation. Real browser execution uses installed Chrome; HTTP/Auth/Realtime remain isolated fixtures. SQL tests independently enforce real migration/RLS/eligibility behavior in local PGlite.
+
+CI installs Ubuntu `poppler-utils` and runs `command -v pdftotext`/`pdftotext -v` before Playwright. Locally this run uses Poppler 24.02.0. Only the certificate browser spec requires PDF extraction. Build/security helpers use Node/npm. Independent concurrency needs `psql`, `initdb` and `pg_ctl`; the unconfigured command explicitly skips. A new temporary PostgreSQL 18.4 cluster passed all four races after acquiring the pinned binary into `/tmp` and restoring its bundled library symlinks/`LD_LIBRARY_PATH`. The initial installed path had no `initdb`; an initial unhydrated package attempt lacked ICU links. None of these attempts contacted a hosted database or changed project dependencies.
+
+The full command is `npm run verify`; concurrency and `npm audit` run separately because verify does not include them. Keep the Vite/browser run serial and avoid source/docs edits while it runs. Final verification: `npm run verify` ran the unchanged full chain with its configured one browser worker under an isolated local supervisor and exited **0**. No package script or workflow worker setting changed. The first default one-worker run completed **62/62** with no flaky/skipped/global browser errors, then the outer execution returned **143** after the success summary; its signal origin was not proven. A filtered verification-chain/cleanup recheck exited **0**. A temporary two-worker retry hit the existing login journey's unchanged 30-second timeout (18 passed, one failed, two interrupted, 41 not run), so it was stopped (exit 130); its log/trace remain under `parallel-verify.log`/`parallel-browser-results/`. The complete configured one-worker run below then passed. The local supervisor records npm's actual exit separately from the tool-session lifecycle. No assertions, scenarios or production settings were removed to obtain these results.
+
+| Final check | Result |
+| --- | --- |
+| Git-index secret scan | Passed, including final staged blobs before commits |
+| Repository security | **6 passed** |
+| Environment/build/routing regressions | **3 passed** |
+| TypeScript / ESLint | Passed; zero lint errors/warnings |
+| Vitest unit/component/server | **122 passed in 24 files** |
+| SQL database/migration tests | **49 passed** in local PGlite with Auth/Storage/Realtime shims |
+| Independent PostgreSQL 18.4 races | **4 passed**, reported as one Node integration test |
+| Production build | Passed |
+| Complete real-Chrome browser suite | **62 passed, 0 failed, 0 skipped, 0 flaky**, with one worker and intercepted backend services |
+| npm audit | **0 known vulnerabilities** |
+| Git whitespace checks | Passed |
+
+Final logs/status/metadata are `artifacts/bug-repair/verify-final.log`, `verify-final-exit.txt` and `final-results.json`. The earlier complete one-worker results remain in `full-browser-results/` and `full-verify-signal.log`; final browser screenshots/report are copied into `final-browser-results/`. Screenshots at 320/375/425/768px and completed-course screenshots at 375/1440px were opened and inspected; the checked layouts fit their viewports, with bounded internal menu scrolling. This is scoped viewport review, not physical-device or comprehensive accessibility acceptance. Ignored evidence is under `artifacts/bug-repair/`; the focused failure trace and screenshots are preserved under `focused-browser-results/`. Default final screenshots/traces are in `test-results/`.
+
+Local rewrite-pattern tests cover client deep links and reserved API/file/asset paths. They do not execute Vercel's edge router. Actual GitHub Actions, Vercel deep-link/refresh/cache delivery, Auth confirmation/recovery emails and this repair against hosted Supabase require a later authorized hosted run. Previous disposable staging acceptance remains historical and was not repeated here. No push, frontend/backend deployment, hosted migration, account modification or environment-file edit occurs in this repair.
 
 ## Explicit environment exposure recheck
 

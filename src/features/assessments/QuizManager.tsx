@@ -17,9 +17,10 @@ interface QuizManagerProps {
   courseId: string;
   isTeacher: boolean;
   enrolled: boolean;
+  onAttemptSaved?: () => void;
 }
 
-const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
+const QuizManager = ({ courseId, isTeacher, enrolled, onAttemptSaved }: QuizManagerProps) => {
   const { user } = useAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,6 +152,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
       const percentage = Math.round(score / totalPoints * 100);
       setResult({ score, totalPoints, percentage, passed });
       setAttempts((prev) => ({ ...prev, [activeQuiz.id]: data }));
+      onAttemptSaved?.();
       if (data.passed) toast.success("Congratulations! You passed! 🎉");
       else toast.info(`Score: ${Math.round(data.score / data.total_points * 100)}%. You need ${activeQuiz.pass_percentage}% to pass.`);
     }

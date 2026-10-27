@@ -42,9 +42,9 @@ Sparkles,
 Trophy,
 User,
 Video,
-X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import ThemeToggle from "@/components/shared/ThemeToggle";
 import NotificationBell from "@/features/notifications/NotificationBell";
 import GlobalSearch from "@/components/shared/GlobalSearch";
@@ -61,12 +61,18 @@ const categories = [
   { icon: Palette, label: "Design", key: "cat.designShort" },
 ];
 
-const Header = () => {
+const HeaderContent = () => {
   const { user, profile, signOut, hasRole } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1280px)");
+    const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false); };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   const initials =
@@ -310,7 +316,6 @@ const Header = () => {
             <GlobalSearch key={user?.id || "guest"} />
           </div>
           <LanguageToggle />
-          <NotificationBell key={user?.id || "guest"} />
           <ThemeToggle />
           {user ? (
             <DropdownMenu>
@@ -368,188 +373,167 @@ const Header = () => {
           )}
         </div>
 
-        {/* Mobile toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="xl:hidden"
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="container mx-auto mt-1 rounded-lg border border-border bg-background p-4 shadow-lg xl:hidden">
-          <nav className="flex flex-col gap-2">
-            <GlobalSearch key={user?.id || "guest"} />
-            <div className="flex items-center gap-2 py-2">
-              <LanguageToggle />
-              <ThemeToggle />
-              <NotificationBell key={user?.id || "guest"} />
-            </div>
-            <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("nav.explore")}
-            </p>
-            <Link to="/courses" onClick={() => setMobileOpen(false)}>
-              <Button variant="ghost" className="w-full justify-start">
-                <BookOpen className="mr-2 h-4 w-4" /> {t("nav.courses")}
+        <div className="ml-auto flex items-center gap-1 xl:ml-0">
+          <NotificationBell key={user?.id || "guest"} />
+          <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
+            <Dialog.Trigger asChild>
+              <Button variant="ghost" size="icon" className="xl:hidden" aria-label={t("nav.openMenu")}>
+                <Menu className="h-5 w-5" />
               </Button>
-            </Link>
-            <Link
-              to="/courses?level=beginner"
-              onClick={() => setMobileOpen(false)}
-            >
-              <Button variant="ghost" className="w-full justify-start">
-                <Sparkles className="mr-2 h-4 w-4" /> {t("nav.beginner")}
-              </Button>
-            </Link>
-            <Link
-              to="/courses?level=advanced"
-              onClick={() => setMobileOpen(false)}
-            >
-              <Button variant="ghost" className="w-full justify-start">
-                <Rocket className="mr-2 h-4 w-4" /> {t("nav.advanced")}
-              </Button>
-            </Link>
-            <Link
-              to="/courses?sort=popular"
-              onClick={() => setMobileOpen(false)}
-            >
-              <Button variant="ghost" className="w-full justify-start">
-                <Flame className="mr-2 h-4 w-4" /> {t("nav.popular")}
-              </Button>
-            </Link>
-            <div className="flex flex-wrap gap-2 px-3 py-1">
-              {categories.map((c) => (
-                <Link
-                  key={c.label}
-                  to={`/courses?category=${encodeURIComponent(c.label)}`}
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
-                >
-                  {t(c.key)}
-                </Link>
-              ))}
-            </div>
-            <Link to="/community" onClick={() => setMobileOpen(false)}>
-              <Button variant="ghost" className="w-full justify-start">
-                <MessageSquare className="mr-2 h-4 w-4" /> {t("nav.community")}
-              </Button>
-            </Link>
-            <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
-              <Button variant="ghost" className="w-full justify-start">
-                <Medal className="mr-2 h-4 w-4" /> {t("nav.leaderboard")}
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={() => goHomeSection("learning-paths")}
-            >
-              <Map className="mr-2 h-4 w-4" /> {t("nav.paths")}
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={() => goHomeSection("live-learning")}
-            >
-              <Radio className="mr-2 h-4 w-4" /> {t("nav.live")}
-            </Button>
-            {user && (
-              <Link to="/certificates" onClick={() => setMobileOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Trophy className="mr-2 h-4 w-4" /> {t("nav.achievements")}
-                </Button>
-              </Link>
-            )}
-            {!(user && (hasRole("teacher") || hasRole("admin"))) && (
-              <Link to="/auth?tab=signup" onClick={() => setMobileOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start">
-                  <GraduationCap className="mr-2 h-4 w-4" /> {t("nav.teachOn")}
-                </Button>
-              </Link>
-            )}
-
-            {user ? (
-              <>
-                <Link to="/tutors" onClick={() => setMobileOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start">
-                    {t("nav.tutors")}
+            </Dialog.Trigger>
+            <Dialog.Portal>
+              <Dialog.Overlay data-testid="mobile-menu-overlay" className="fixed inset-0 z-50 bg-black/50 xl:hidden" />
+              <Dialog.Content aria-describedby={undefined} className="fixed inset-x-3 top-3 z-50 max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-lg border border-border bg-background p-4 shadow-lg xl:hidden">
+                <div className="mb-3 flex items-center justify-between">
+                  <Dialog.Title className="font-semibold">{t("nav.navigation")}</Dialog.Title>
+                  <Dialog.Close asChild><Button variant="ghost" size="sm">{t("nav.closeMenu")}</Button></Dialog.Close>
+                </div>
+                <nav className="flex flex-col gap-2">
+                  <GlobalSearch key={user?.id || "guest"} />
+                  <div className="flex items-center gap-2 py-2">
+                    <LanguageToggle />
+                    <ThemeToggle />
+                  </div>
+                  <Button asChild variant="ghost" className="w-full justify-start">
+                    <Link to="/tutors" onClick={() => setMobileOpen(false)}>{t("nav.tutors")}</Link>
                   </Button>
-                </Link>
-                <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("nav.myLearning")}
-                </p>
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />{" "}
-                    {t("nav.dashboard")}
+                  <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("nav.explore")}
+                  </p>
+                  <Button asChild variant="ghost" className="w-full justify-start"><Link to="/courses" onClick={() => setMobileOpen(false)}>
+                    <BookOpen className="mr-2 h-4 w-4" /> {t("nav.courses")}
+                  </Link></Button>
+                  <Button asChild variant="ghost" className="w-full justify-start"><Link
+                    to="/courses?level=beginner"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" /> {t("nav.beginner")}
+                  </Link></Button>
+                  <Button asChild variant="ghost" className="w-full justify-start"><Link
+                    to="/courses?level=advanced"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Rocket className="mr-2 h-4 w-4" /> {t("nav.advanced")}
+                  </Link></Button>
+                  <Button asChild variant="ghost" className="w-full justify-start"><Link
+                    to="/courses?sort=popular"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Flame className="mr-2 h-4 w-4" /> {t("nav.popular")}
+                  </Link></Button>
+                  <div className="flex flex-wrap gap-2 px-3 py-1">
+                    {categories.map((c) => (
+                      <Link
+                        key={c.label}
+                        to={`/courses?category=${encodeURIComponent(c.label)}`}
+                        onClick={() => setMobileOpen(false)}
+                        className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground"
+                      >
+                        {t(c.key)}
+                      </Link>
+                    ))}
+                  </div>
+                  <Button asChild variant="ghost" className="w-full justify-start"><Link to="/community" onClick={() => setMobileOpen(false)}>
+                    <MessageSquare className="mr-2 h-4 w-4" /> {t("nav.community")}
+                  </Link></Button>
+                  <Button asChild variant="ghost" className="w-full justify-start"><Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
+                    <Medal className="mr-2 h-4 w-4" /> {t("nav.leaderboard")}
+                  </Link></Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => goHomeSection("learning-paths")}
+                  >
+                    <Map className="mr-2 h-4 w-4" /> {t("nav.paths")}
                   </Button>
-                </Link>
-                <Link
-                  to="/dashboard?tab=bookmarks"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <Button variant="ghost" className="w-full justify-start">
-                    <Bookmark className="mr-2 h-4 w-4" /> {t("nav.bookmarks")}
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => goHomeSection("live-learning")}
+                  >
+                    <Radio className="mr-2 h-4 w-4" /> {t("nav.live")}
                   </Button>
-                </Link>
-                <Link
-                  to="/dashboard?tab=live"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <Button variant="ghost" className="w-full justify-start">
-                    <Video className="mr-2 h-4 w-4" /> {t("nav.liveClasses")}
-                  </Button>
-                </Link>
-                <Link to="/profile" onClick={() => setMobileOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start">
-                    <User className="mr-2 h-4 w-4" /> {t("nav.profile")}
-                  </Button>
-                </Link>
-
-                {hasRole("teacher") && (
-                  <Link to="/analytics" onClick={() => setMobileOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start">
-                      <BarChart3 className="mr-2 h-4 w-4" />{" "}
-                      {t("nav.analytics")}
+                  {user && (
+                    <Button asChild variant="ghost" className="w-full justify-start"><Link to="/achievements" onClick={() => setMobileOpen(false)}>
+                      <Trophy className="mr-2 h-4 w-4" /> {t("nav.achievements")}
+                    </Link></Button>
+                  )}
+                  {user && (
+                    <Button asChild variant="ghost" className="w-full justify-start">
+                      <Link to="/certificates" onClick={() => setMobileOpen(false)}>
+                        <Award className="mr-2 h-4 w-4" /> {t("nav.certificates")}
+                      </Link>
                     </Button>
-                  </Link>
-                )}
-                {hasRole("admin") && (
-                  <Link to="/admin" onClick={() => setMobileOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start">
-                      <Shield className="mr-2 h-4 w-4" /> {t("nav.adminShort")}
-                    </Button>
-                  </Link>
-                )}
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={signOut}
-                >
-                  <LogOut className="mr-2 h-4 w-4" /> {t("nav.signOut")}
-                </Button>
-              </>
-            ) : (
-              <Link to="/auth" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full bg-gradient-primary text-primary-foreground">
-                  {t("nav.signIn")}
-                </Button>
-              </Link>
-            )}
-          </nav>
+                  )}
+                  {!(user && (hasRole("teacher") || hasRole("admin"))) && (
+                    <Button asChild variant="ghost" className="w-full justify-start"><Link to="/auth?tab=signup&role=teacher" onClick={() => setMobileOpen(false)}>
+                      <GraduationCap className="mr-2 h-4 w-4" /> {t("nav.teachOn")}
+                    </Link></Button>
+                  )}
+
+                  {user ? (
+                    <>
+                      <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t("nav.myLearning")}
+                      </p>
+                      <Button asChild variant="ghost" className="w-full justify-start"><Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />{" "}
+                        {t("nav.dashboard")}
+                      </Link></Button>
+                      <Button asChild variant="ghost" className="w-full justify-start"><Link
+                        to="/dashboard?tab=bookmarks"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <Bookmark className="mr-2 h-4 w-4" /> {t("nav.bookmarks")}
+                      </Link></Button>
+                      <Button asChild variant="ghost" className="w-full justify-start"><Link
+                        to="/dashboard?tab=live"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <Video className="mr-2 h-4 w-4" /> {t("nav.liveClasses")}
+                      </Link></Button>
+                      <Button asChild variant="ghost" className="w-full justify-start"><Link to="/profile" onClick={() => setMobileOpen(false)}>
+                        <User className="mr-2 h-4 w-4" /> {t("nav.profile")}
+                      </Link></Button>
+
+                      {hasRole("teacher") && (
+                        <Button asChild variant="ghost" className="w-full justify-start"><Link to="/analytics" onClick={() => setMobileOpen(false)}>
+                          <BarChart3 className="mr-2 h-4 w-4" />{" "}
+                          {t("nav.analytics")}
+                        </Link></Button>
+                      )}
+                      {hasRole("admin") && (
+                        <Button asChild variant="ghost" className="w-full justify-start"><Link to="/admin" onClick={() => setMobileOpen(false)}>
+                          <Shield className="mr-2 h-4 w-4" /> {t("nav.adminShort")}
+                        </Link></Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={signOut}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" /> {t("nav.signOut")}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button asChild className="w-full bg-gradient-primary text-primary-foreground"><Link to="/auth" onClick={() => setMobileOpen(false)}>
+                      {t("nav.signIn")}
+                    </Link></Button>
+                  )}
+                </nav>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
         </div>
-      )}
+      </div>
     </header>
   );
 };
 
-export default Header;
+// A new history entry or identity/role transition owns a fresh, closed menu.
+// This also covers back/forward and auth events while the modal is open.
+export default function Header() {
+  const location = useLocation();
+  const { user, roles } = useAuth();
+  return <HeaderContent key={`${location.key}:${user?.id ?? "guest"}:${roles.join(",")}`} />;
+}

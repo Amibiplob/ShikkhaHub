@@ -96,7 +96,7 @@ test("student enrolls, reads Markdown, persists progress, quiz and bookmarks, di
   await expect(
     page.getByRole("heading", { name: "Learn safely" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Mark Complete" }).click();
+  await page.getByRole("button", { name: "Mark Lesson Complete" }).click();
   await expect(page.getByText("100% complete")).toBeVisible();
   await page.reload();
   await expect(
@@ -163,12 +163,12 @@ test("progress and bookmark errors do not show false success", async ({
   backend.deniedProgress = true;
   await login(page, backend, "student");
   await page.goto(`/courses/${C}`);
-  await page.getByRole("button", { name: "Mark Complete" }).click();
+  await page.getByRole("button", { name: "Mark Lesson Complete" }).click();
   await expect(
     page.getByText("Progress was not saved. Try again."),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Mark Complete" }),
+    page.getByRole("button", { name: "Mark Lesson Complete" }),
   ).toBeVisible();
   expect(backend.rows.lesson_progress).toHaveLength(0);
 });

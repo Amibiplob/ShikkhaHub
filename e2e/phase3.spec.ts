@@ -123,18 +123,24 @@ for (const width of [1440, 375]) {
       status: 400,
     });
     await page
-      .getByRole("button", { name: "Check certificate eligibility" })
+      .getByRole("button", { name: "Finish Course" })
       .click();
     await expect(
-      page.getByText(/Complete all lessons, pass every quiz/),
+      page.getByRole("alert").filter({ hasText: "Course completion was not verified" }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Download PDF" }),
     ).toHaveCount(0);
-    await page.getByRole("button", { name: "Mark Complete" }).click();
+    await expect(page.getByRole("link", { name: /Pass quiz:/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Submit assignment:/ })).toBeVisible();
+    await page.getByRole("button", { name: "Mark Lesson Complete" }).evaluate((button: HTMLButtonElement) => { button.click(); button.click(); });
     await expect(
       page.getByRole("button", { name: "Completed", exact: true }),
     ).toBeVisible();
+    expect(backend.rows.lesson_progress).toHaveLength(1);
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Completed", exact: true })).toBeVisible();
+    await expect(page.getByText("1 / 1 lessons completed", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Start Quiz", exact: true }).click();
     await page.getByRole("radio", { name: "4", exact: true }).check();
     await page.getByRole("button", { name: "Submit Quiz" }).click();
@@ -146,6 +152,8 @@ for (const width of [1440, 375]) {
       .fill("https://example.test/certificate-project");
     await page.getByRole("button", { name: /Submit$/ }).click();
     await expect(page.getByText("Your Submission")).toBeVisible();
+    await page.goto(`/courses/${C}`);
+    await expect(page.getByRole("link", { name: /Awaiting teacher grading:/ })).toBeVisible();
     const context = await browser.newContext({
       viewport: { width, height: 1000 },
     });
@@ -165,6 +173,19 @@ for (const width of [1440, 375]) {
         .getByRole("button", { name: "Save Review", exact: true })
         .click();
       await expect(teacher.getByText("85/100", { exact: true })).toBeVisible();
+      await page.goto(`/courses/${C}`);
+      await expect(page.getByRole("link", { name: /Awaiting teacher grading:/ })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: /Pass quiz:/ })).toHaveCount(0);
+      await page.getByRole("button", { name: "Finish Course", exact: true }).click();
+      await expect(page.getByText("Course completed · Certificate ready", { exact: true })).toBeVisible();
+      const certificateId = backend.rows.certificates[0].id;
+      await page.getByRole("button", { name: "Finish Course", exact: true }).click();
+      expect(backend.rows.certificates).toHaveLength(1);
+      expect(backend.rows.certificates[0].id).toBe(certificateId);
+      await page.reload();
+      await expect(page.getByText("Course completed · Certificate ready", { exact: true })).toBeVisible();
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+      await page.screenshot({ path: info.outputPath(`course-completed-${width}.png`), fullPage: true });
       await page.goto("/certificates");
       await page
         .getByRole("button", { name: "Check eligibility", exact: true })

@@ -1,5 +1,23 @@
 # ShikkhaHub stabilization and staging audit
 
+## Current repair scope — 28 October 2026
+
+Final local verification passed: 122 Vitest, 49 SQL, 62 real-Chrome fixture-backed browser scenarios, six repository-security and three build/config regressions, plus four independent PostgreSQL races. TypeScript, lint, production build, current npm audit (zero known findings), final staged secret checks and whitespace checks passed. The complete successful verification used the configured single browser worker; the earlier one-worker run had all 62 passes but outer exit 143 after its summary. Exact attempts and evidence boundaries are preserved in TESTING.md.
+
+Changed files for this repair:
+
+- Hosting/CI: `vercel.json`, `.github/workflows/validate.yml`, `tests/vercel-build.test.mjs`, `src/pages/Faq.test.tsx`.
+- Navigation/localization: `src/components/layout/Header.tsx`, `src/features/notifications/NotificationBell.tsx`, `src/lib/translations.ts`, `e2e/navigation-repair.spec.ts`.
+- Learning: `src/pages/CourseDetail.tsx`, `src/features/certificates/CertificateCard.tsx`, `src/features/certificates/completion.ts`, `src/features/certificates/CertificateCard.test.tsx`, `src/features/assessments/QuizManager.tsx`, `src/components/ui/progress.tsx`.
+- Existing browser regressions: `e2e/journeys.spec.ts`, `e2e/phase3.spec.ts`, `e2e/staging/acceptance.spec.ts` (label alignment only; hosted suite not executed).
+- Documentation: `README.md`, `TESTING.md`, `docs/BUG_FIX_LOG.md`, `docs/PHASE3_FEATURE_GUIDE.md`, `docs/SHIKKHAHUB_AUDIT_REPORT.md`.
+
+
+The latest repair starts at clean `df417cb` on React 19/Vite 8. Confirmed local defects are missing SPA hosting fallback, missing CI PDF-tool provisioning, a mobile menu that mounts duplicate notification subscribers, and completion controls without clear requirement/status presentation. Repairs reuse existing routes, modal primitives, progress tables and authoritative certificate RPCs. No migrations, RLS policies, grade rules or historical certificate identities change. Full roots and affected behavior are in [BUG_FIX_LOG.md](BUG_FIX_LOG.md); workflow details are in [PHASE3_FEATURE_GUIDE.md](PHASE3_FEATURE_GUIDE.md), deployment guidance in the README, and exact current test counts in [TESTING.md](../TESTING.md).
+
+The new navigation/browser regressions use independent isolated role sessions and genuine Chrome, with intercepted backend services. PGlite and a disposable PostgreSQL 18.4 cluster provide separate local database evidence. They do not prove current hosted Supabase, GitHub Actions, email redirect delivery or Vercel edge behavior. Those checks await an authorized push/deployment/hosted run. No such external changes occur here. Older audit sections below retain their dated evidence; earlier blocked staging statements do not override the later disposable staging record in README/TESTING.
+
+
 > **Modernization update, 27 October 2026:** React 19, Vite 8, Tailwind 4 and current compatible dependencies now replace the earlier tooling snapshot. All existing role/course/tutoring/certificate/support routes and Supabase migrations remain. Current implementation, original local artwork, compatibility fixes and executed test evidence are in [DEPENDENCY_UPGRADE_REPORT.md](DEPENDENCY_UPGRADE_REPORT.md), [CODEBASE_CLEANUP_REPORT.md](CODEBASE_CLEANUP_REPORT.md), [VISUAL_ASSET_AUDIT.md](VISUAL_ASSET_AUDIT.md) and [MODERNIZATION_VERIFICATION.md](MODERNIZATION_VERIFICATION.md). Statements below about React 18, earlier lint warnings, bundle warnings and test counts describe the historical Phase 3 snapshot. Hosted acceptance gates remain open.
 
 

@@ -342,7 +342,7 @@ test.describe("REAL Supabase staging acceptance (external opt-in)", () => {
       page.getByRole("heading", { name: "Staging acceptance lesson" }),
     ).toBeVisible();
     await page
-      .getByRole("button", { name: "Mark Complete", exact: true })
+      .getByRole("button", { name: "Mark Lesson Complete", exact: true })
       .click();
     await expect(
       page.getByRole("button", { name: "Completed", exact: true }),

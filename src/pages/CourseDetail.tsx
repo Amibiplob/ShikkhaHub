@@ -12,7 +12,8 @@ Recording
 import ReactMarkdown from "react-markdown";
 import { privateFileUrl } from "@/lib/storage";
 import PrivateFileLink from "@/components/shared/PrivateFileLink";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,14 +69,17 @@ import { format } from "date-fns";
 const CourseDetailContent = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [course, setCourse] = useState<Course>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [enrolled, setEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
+  const [completionRevision, setCompletionRevision] = useState(0);
   const [enrolling, setEnrolling] = useState(false);
   const [savingProgress, setSavingProgress] = useState(false);
+  const progressLocked = useRef(false);
   const [video, setVideo] = useState<{ path: string; url: string } | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson>(null);
   const videoUrl = video && video.path === activeLesson?.video_url ? video.url : null;
@@ -222,44 +226,29 @@ const CourseDetailContent = () => {
   };
 
   const toggleComplete = async (lessonId: string) => {
-    if (!user || savingProgress) return;
+    if (!user || !enrolled || progressLocked.current) return;
+    progressLocked.current = true;
     setSavingProgress(true);
-    const isCompleted = progress[lessonId];
-    if (isCompleted) {
-      const { error } = await supabase
-        .from("lesson_progress")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("lesson_id", lessonId);
-      if (error) {
-        toast.error("Progress was not saved. Try again.");
-        setSavingProgress(false);
-        return;
-      }
-      setProgress((p) => {
-        const n = { ...p };
-        delete n[lessonId];
-        return n;
-      });
-    } else {
-      const { error } = await supabase.from("lesson_progress").upsert(
-        {
-          user_id: user.id,
-          lesson_id: lessonId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,lesson_id" },
-      );
-      if (error) {
-        toast.error("Progress was not saved. Try again.");
-        setSavingProgress(false);
-        return;
-      }
-      setProgress((p) => ({ ...p, [lessonId]: true }));
-      checkAndAwardBadges(user.id);
+    try {
+      const result = progress[lessonId]
+        ? await supabase.from("lesson_progress").delete().eq("user_id", user.id).eq("lesson_id", lessonId).select("lesson_id")
+        : await supabase.from("lesson_progress").upsert({
+            user_id: user.id, lesson_id: lessonId, completed: true,
+            completed_at: new Date().toISOString(),
+          }, { onConflict: "user_id,lesson_id" }).select("lesson_id");
+      if (result.error || result.data?.length !== 1) throw new Error("Progress write rejected");
+      const { data, error } = await supabase.from("lesson_progress")
+        .select("lesson_id, completed").eq("user_id", user.id)
+        .in("lesson_id", modules.flatMap(m => m.lessons?.map(l => l.id) || []));
+      if (error) throw error;
+      setProgress(Object.fromEntries((data || []).filter(p => p.completed).map(p => [p.lesson_id, true])));
+      void checkAndAwardBadges(user.id);
+    } catch {
+      toast.error(t("completion.progressError"));
+    } finally {
+      progressLocked.current = false;
+      setSavingProgress(false);
     }
-    setSavingProgress(false);
   };
 
   const handleCreateAssignment = async (e: React.FormEvent) => {
@@ -469,12 +458,6 @@ const CourseDetailContent = () => {
                   <span className="text-sm text-muted-foreground">
                     {progressPercent}% complete
                   </span>
-                  <CertificateCard
-                    courseId={id!}
-                    courseTitle={course.title}
-                    progressPercent={progressPercent}
-                    teacherName={course.profiles?.full_name}
-                  />
                 </div>
               )}
               <span className="text-sm text-muted-foreground">
@@ -485,6 +468,7 @@ const CourseDetailContent = () => {
         </div>
 
         <div className="container mx-auto px-4 py-8">
+          {enrolled && <div className="mb-6"><CertificateCard courseId={id!} completedLessons={completedCount} totalLessons={totalLessons} assessmentRevision={completionRevision} /></div>}
           <div className="grid min-w-0 gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
             {/* Sidebar - Module list */}
             <aside className="lg:sticky lg:top-20 lg:self-start">
@@ -542,6 +526,8 @@ const CourseDetailContent = () => {
                           progress[activeLesson.id] ? "default" : "outline"
                         }
                         disabled={savingProgress}
+                        aria-pressed={!!progress[activeLesson.id]}
+                        title={progress[activeLesson.id] ? t("completion.undo") : undefined}
                         onClick={() => toggleComplete(activeLesson.id)}
                         className={
                           progress[activeLesson.id]
@@ -551,8 +537,8 @@ const CourseDetailContent = () => {
                       >
                         <CheckCircle2 className="mr-1.5 h-4 w-4" />
                         {progress[activeLesson.id]
-                          ? "Completed"
-                          : "Mark Complete"}
+                          ? t("completion.lessonCompleted")
+                          : t("completion.mark")}
                       </Button>
                     )}
                   </div>
@@ -965,11 +951,12 @@ const CourseDetailContent = () => {
           </div>
 
           {/* Quizzes */}
-          <QuizManager
+          <div id="course-quizzes" className="scroll-mt-24"><QuizManager
             courseId={id!}
             isTeacher={course.teacher_id === user?.id}
             enrolled={enrolled}
-          />
+            onAttemptSaved={() => setCompletionRevision(r => r + 1)}
+          /></div>
 
           {/* Prerequisites (teacher management + student view) */}
           <CoursePrerequisites
