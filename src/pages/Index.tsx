@@ -1,19 +1,19 @@
-import FeaturedCoursesSection from "@/components/FeaturedCoursesSection";
-import ProjectTeamSection from "@/components/ProjectTeamSection";
+import FeaturedCoursesSection from "@/features/home/components/FeaturedCoursesSection";
+import ProjectTeamSection from "@/features/home/components/ProjectTeamSection";
 import { Link } from "react-router-dom";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import HeroSection from "@/components/HeroSection";
-import FeaturesSection from "@/components/FeaturesSection";
-import CategoriesSection from "@/components/CategoriesSection";
-import HowItWorksSection from "@/components/HowItWorksSection";
-import LearningPathsSection from "@/components/LearningPathsSection";
-import TeachSection from "@/components/TeachSection";
-import FaqSection from "@/components/FaqSection";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import HeroSection from "@/features/home/components/HeroSection";
+import FeaturesSection from "@/features/home/components/FeaturesSection";
+import CategoriesSection from "@/features/home/components/CategoriesSection";
+import HowItWorksSection from "@/features/home/components/HowItWorksSection";
+import LearningPathsSection from "@/features/home/components/LearningPathsSection";
+import TeachSection from "@/features/home/components/TeachSection";
+import FaqSection from "@/features/home/components/FaqSection";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
-import HomeDiscoverySections from "@/components/HomeDiscoverySections";
+import HomeDiscoverySections from "@/features/home/components/HomeDiscoverySections";
 
 const Index = () => {
   const { t } = useLanguage();

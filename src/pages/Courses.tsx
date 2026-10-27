@@ -1,9 +1,9 @@
-import type { Course } from "@/lib/models";
+import type { Course } from "@/types/models";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import CourseCard from "@/components/CourseCard";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import CourseCard from "@/features/courses/components/CourseCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

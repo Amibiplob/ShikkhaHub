@@ -1,14 +1,14 @@
 import { lazy, Suspense } from "react";
-import type { Course, LiveSession } from "@/lib/models";
+import type { Course, LiveSession } from "@/types/models";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
-import CourseCard from "@/components/CourseCard";
-import ProfileEditor from "@/components/ProfileEditor";
-import LiveClassScheduler from "@/components/LiveClassScheduler";
-import LiveClassModal from "@/components/LiveClassModal";
+import Header from "@/components/layout/Header";
+import CourseCard from "@/features/courses/components/CourseCard";
+import ProfileEditor from "@/features/auth/ProfileEditor";
+import LiveClassScheduler from "@/features/live-classes/LiveClassScheduler";
+import LiveClassModal from "@/features/live-classes/LiveClassModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,8 +41,8 @@ Video
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-const TutoringWorkspace = lazy(() => import("@/components/TutoringWorkspace"));
-const StudentAnalytics = lazy(() => import("@/components/StudentAnalytics"));
+const TutoringWorkspace = lazy(() => import("@/features/tutoring/TutoringWorkspace"));
+const StudentAnalytics = lazy(() => import("@/features/learning/StudentAnalytics"));
 
 const Dashboard = () => {
   const { user, loading: authLoading, hasRole, profile } = useAuth();

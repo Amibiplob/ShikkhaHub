@@ -1,9 +1,9 @@
-import PrivateVideo from "@/components/PrivateVideo";
-import type { LiveSession, Recording } from "@/lib/models";
+import PrivateVideo from "@/components/shared/PrivateVideo";
+import type { LiveSession, Recording } from "@/types/models";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";

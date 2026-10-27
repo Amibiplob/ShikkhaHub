@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import PageShell from "@/components/PageShell";
+import PageShell from "@/components/layout/PageShell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -9,7 +9,7 @@ AccordionContent,
 AccordionItem,
 AccordionTrigger,
 } from "@/components/ui/accordion";
-import { filterFaqs } from "@/lib/faqs";
+import { filterFaqs } from "@/features/support/faqs";
 export default function Faq() {
   const [search, setSearch] = useState("");
   const items = filterFaqs(search);

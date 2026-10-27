@@ -3,9 +3,9 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Auth from "./Auth";
 
-vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: null }) }));
+vi.mock("@/features/auth/useAuth", () => ({ useAuth: () => ({ user: null }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: {}, from: () => ({}) } }));
-vi.mock("@/components/Header", () => ({ default: () => null }));
+vi.mock("@/components/layout/Header", () => ({ default: () => null }));
 
 const at = (url: string) => render(<MemoryRouter initialEntries={[url]}><Auth /></MemoryRouter>);
 

@@ -1,12 +1,12 @@
 import type { Tables } from "@/integrations/supabase/types";
-import type { Course } from "@/lib/models";
+import type { Course } from "@/types/models";
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

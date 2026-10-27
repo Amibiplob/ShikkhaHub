@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import PageShell from "@/components/PageShell";
-import TeacherRequests from "@/components/TeacherRequests";
+import PageShell from "@/components/layout/PageShell";
+import TeacherRequests from "@/features/administration/TeacherRequests";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +25,7 @@ TableHeader,
 TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 type RecordRow = Record<string, Json | undefined>;
 type PageData = { rows: RecordRow[]; total: number };
 type Overview = Record<string, number | { date: string; changes: number }[]>;

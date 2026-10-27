@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Faq from "./Faq";
 import { vi } from "vitest";
-vi.mock("@/components/Header", () => ({ default: () => null }));
-vi.mock("@/components/Footer", () => ({ default: () => null }));
+vi.mock("@/components/layout/Header", () => ({ default: () => null }));
+vi.mock("@/components/layout/Footer", () => ({ default: () => null }));
 describe("FAQ", () => {
   it("searches actual answers and opens accessible accordion content", () => {
     render(

@@ -2,6 +2,29 @@
 
 Verification date: **27 October 2026, Asia/Dhaka**. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
 
+## Repository cleanup recheck
+
+The subsequent [repository cleanup report](docs/REPOSITORY_CLEANUP_REPORT.md) inventories 65 file moves, three removed unused toast modules, the single removed dependency and environment protection. The default suite remains local/fixture-backed; **hosted staging tests were not rerun** for cleanup.
+
+| Check | Cleanup result |
+| --- | --- |
+| TypeScript / ESLint | Passed; zero lint errors/warnings |
+| Unit/component/server handlers | **91 passed in 23 files**, including nine public-environment boundary tests |
+| Repository configuration/secret protection | **6 Node tests passed**, using disposable Git repositories |
+| Isolated PostgreSQL WASM | **49 passed**, zero skipped |
+| Disposable PostgreSQL 18.4 | **1 test passed**, four independent-connection races, zero skipped |
+| Production build | Passed; entry **336.72 kB** (baseline 351.96 kB) |
+| Fixture-backed Chrome | **39 passed**, zero failed/skipped in the final frozen full run |
+| Full / production npm audit | Both zero findings |
+| Clean install / dependency resolution | Isolated `npm ci` and both clean/working `npm ls --all` passed |
+| Environment / preserved backend files | All four local environment files and 76 protected migration/function/config/asset/type files match baseline hashes |
+
+`npm run check:secrets` reads the Git index, so stage intended changes before the final check. It rejects force-added private configuration/auth-state/artifact paths and recognized credential formats without printing values; harmless examples/samples and exact negative-test placeholders are allowed. `npm run test:security` proves the guard against disposable repositories without opening any application environment file or contacting Supabase. CI runs the guard before install, and `verify` starts with both checks.
+
+Vite rejects unknown public variable names and privileged/non-anonymous keys before serving/building. Two actual synthetic unsafe builds exited before emission, redacted their values and left `dist/` unchanged. The unit tests also cover public anonymous/publishable keys, loopback-only fixture keys, server-variable separation and unsafe origins. The guard is intentionally targeted; staged review remains required. No secret/history erasure claim is made.
+
+Ignored logs and machine results are in `artifacts/repository-cleanup/{baseline,final}/`; current fixture screenshots are under `test-results/`. Opened and inspected the final 1440px dark home screenshot, 375px light home screenshot, 375px administrator support screenshot and 375px revoked-certificate screenshot. Navigation, artwork, text wrapping, search controls and toast rendering fit the inspected viewports without visible clipping. Automated overflow checks also pass; this is scoped screenshot review, not exhaustive visual/accessibility or physical-device acceptance. The first clean offline install failed with `ENOTCACHED`; a normal pinned clean install then passed in `/tmp`. These runs preserve the working install and actual environment files. The first post-refactor full run had **38 passes and one live-class timeout** after both Vite clients reconnected and the teacher page reloaded. The trace reload timestamp coincided with documentation edits during the run; the installed Tailwind Vite watcher can issue full reloads for scanned-content changes. The unchanged isolated live suite then passed **2/2** without raising timeouts or weakening assertions. The failure trace/screenshots are retained in `artifacts/repository-cleanup/first-final-browser/`. The final full rerun passed **39/39** with repository edits paused (6.7 minutes). A native-loader warning from the new Vite config import was also resolved by specifying its `.ts` extension; typecheck and build were rechecked. Baseline, first post-refactor run, isolated recheck and final full rerun are reported separately.
+
 ## Supabase staging setup recheck
 
 27 October 2026: the explicitly approved disposable ShikkhaHub backend has **43 migrations applied** and zero pending. See [the setup report](docs/SUPABASE_STAGING_SETUP.md) and [sanitized evidence](docs/supabase-staging-verification.json). No original Lovable project or production resource was touched.
@@ -58,11 +81,13 @@ npm ci
 npm run verify
 ```
 
-`verify` runs app/tooling/browser-test/server-handler TypeScript, ESLint, Vitest, PostgreSQL WASM integration tests, a production build, then real headless browser tests. It does not run migrations against `.env`, create remote accounts, deploy or push.
+`verify` runs the Git-index security check and its regressions, app/tooling/browser-test/server-handler TypeScript, ESLint, Vitest, PostgreSQL WASM integration tests, a production build, then real headless browser tests. It does not run migrations against `.env`, create remote accounts, deploy or push.
 
 ```sh
 npm run test                 # colocated unit/component tests
 npm run test:watch
+npm run check:secrets        # inspect indexed blobs; never prints configuration values
+npm run test:security        # disposable Git-index/ignore/credential regressions
 npm run test:coverage        # imported-file coverage; current scope recorded above
 npm run test:db              # isolated migration/RLS/constraint/RPC tests
 npm run test:e2e             # real Chrome; starts/waits/stops local Vite itself

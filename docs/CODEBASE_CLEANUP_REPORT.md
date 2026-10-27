@@ -1,5 +1,7 @@
 # Codebase cleanup report
 
+This is the earlier modernization snapshot. Subsequent environment tracking repairs, feature moves and current verification are recorded in [REPOSITORY_CLEANUP_REPORT.md](REPOSITORY_CLEANUP_REPORT.md); paths and retention statements below describe this earlier run.
+
 27 October 2026, Asia/Dhaka. Compared with `ff94074`; this is implementation work in the existing Vite SPA, with no production data/schema change.
 
 ## Removal evidence

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import PageShell from "@/components/PageShell";
+import { useAuth } from "@/features/auth/useAuth";
+import PageShell from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ DialogHeader,
 DialogTitle,
 } from "@/components/ui/dialog";
 import type { Tables } from "@/integrations/supabase/types";
-import { browserTimezone, formatSession } from "@/lib/tutoring";
+import { browserTimezone, formatSession } from "@/features/tutoring/tutoring";
 import { toast } from "sonner";
 type Tutor = { user_id: string; full_name: string | null; bio: string | null };
 export default function Tutors() {

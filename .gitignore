@@ -14,6 +14,20 @@ dist-ssr
 .env
 .env.*
 !.env.example
+!.env.sample
+# Private test accounts, server secrets and browser authentication state.
+*.env
+*.secrets
+*.secrets.*
+*.pem
+*.key
+*.p12
+staging-accounts*
+staging-secrets*
+auth-state*.json
+storage-state*.json
+.auth/
+playwright/.auth/
 playwright-report/
 test-results/
 coverage/

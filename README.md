@@ -6,7 +6,7 @@ ShikkhaHub is independently maintained. It uses **React 19.3, TypeScript 6, Vite
 
 **Staging update, 27 October 2026:** the explicitly approved disposable backend has all **43 migrations applied**, three deployed Edge Functions and **16/16 real hosted acceptance scenarios passed**. See [staging setup and verification](docs/SUPABASE_STAGING_SETUP.md) for identity checks, configuration, corrections and remaining manual gates. Earlier modernization/Phase 3 no-hosted-access statements describe those earlier runs.
 
-See [dependency upgrades](docs/DEPENDENCY_UPGRADE_REPORT.md), [cleanup](docs/CODEBASE_CLEANUP_REPORT.md), [visual assets](docs/VISUAL_ASSET_AUDIT.md), and [current verification](docs/MODERNIZATION_VERIFICATION.md) for the modernization evidence and remaining hosted acceptance requirements.
+See [repository cleanup](docs/REPOSITORY_CLEANUP_REPORT.md) for the current structure, environment protection and regression results. [Dependency upgrades](docs/DEPENDENCY_UPGRADE_REPORT.md), [earlier cleanup](docs/CODEBASE_CLEANUP_REPORT.md), [visual assets](docs/VISUAL_ASSET_AUDIT.md), and [modernization verification](docs/MODERNIZATION_VERIFICATION.md) retain the earlier evidence and remaining acceptance requirements.
 
 ## Features and roles
 
@@ -21,7 +21,36 @@ See [dependency upgrades](docs/DEPENDENCY_UPGRADE_REPORT.md), [cleanup](docs/COD
 
 ## Architecture
 
-`src/pages/` composes routed screens; `src/components/` contains presentation and workflow components. `AuthContext` waits for account roles before granting protected-route access. Browser requests use the public Supabase key and user JWT. PostgreSQL RLS, constraints, triggers and narrow RPCs enforce ownership, assessment integrity and private content access. Storage uses private buckets and short-lived signed URLs. WebRTC carries live media; Supabase private Realtime topics receive signals sent through an authenticated RPC.
+`src/App.tsx` composes the error boundary, providers and router. Route screens stay in `src/pages/`; route definitions and lazy imports are in `src/app/router/AppRoutes.tsx`. Feature-owned components, hooks, services and their tests live together in `src/features/`. Home discovery queries stay in presentation components, keeping `Index.tsx` a readable section composition.
+
+```text
+config/                 Vite public-environment validation and regressions
+scripts/                Git-index secret/configuration check
+src/
+  app/providers/        application providers and theme adapter
+  app/router/           discoverable route definitions
+  pages/                routed screens
+  features/             auth, courses, home, learning, assessments, tutoring,
+                        certificates, administration, support, community,
+                        live-classes and notifications
+  components/ui/        reusable UI primitives and the single Sonner toaster
+  components/layout/    Header, Footer and PageShell
+  components/shared/    cross-feature presentation helpers
+  contexts/             shared language state
+  hooks/                shared theme/language and achievement helpers
+  integrations/supabase/ central browser client and generated database types
+  lib/                  shared storage, translations and class utilities
+  types/                small shared database-query view models
+  test/                 shared source-test setup and fakes
+public/                 local artwork and public metadata
+supabase/functions/     server adapters, shared handlers, fonts and Deno lock
+supabase/migrations/    canonical, immutable database history
+e2e/                    isolated Chrome journeys; separate hosted opt-in suite
+tests/                  SQL, concurrency, server-runtime and repository checks
+docs/                   setup, security, verification and historical evidence
+```
+
+`AuthContext` waits for account roles before granting protected-route access. Browser requests use the public Supabase key and user JWT. PostgreSQL RLS, constraints, triggers and narrow RPCs enforce ownership, assessment integrity and private content access. Storage uses private buckets and short-lived signed URLs. WebRTC carries live media; Supabase private Realtime topics receive signals sent through an authenticated RPC.
 
 `supabase/migrations/` is the canonical database history. `drizzle/` retains the historical teacher-request migration and empty generated schema as reference only. Supabase migrations adopt that table. The unused Drizzle CLI/config and database client dependencies have been removed; use the canonical Supabase migration history.
 
@@ -49,14 +78,19 @@ Environment variable names:
 | --- | --- |
 | `VITE_SUPABASE_URL` | Public Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Public anon/publishable key; RLS remains mandatory |
-| `VITE_SUPABASE_PROJECT_ID` | Legacy project identifier, if required by local tooling |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Server-side Supabase configuration for the Edge Functions |
 | `AI_CHAT_COMPLETIONS_URL`, `AI_MODEL`, `AI_API_KEY` | Optional server-only HTTPS SSE chat-completions provider; see `supabase/functions/.env.example` |
 | `APP_ALLOWED_ORIGINS`, `APP_PUBLIC_ORIGIN` | Exact server browser origins / certificate verification origin; see Phase 3 guide |
 | `SUPPORT_CHALLENGE_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` | Server-only support signing/intake; never expose to Vite |
 | `E2E_BROWSER_CHANNEL` | Test browser channel, defaults to `chrome` |
 
-Never put a service-role key in the frontend. Existing `.env` contents were preserved; `.env.local` takes precedence. The browser suite overrides the backend URL and key with an isolated localhost endpoint and intercepts its HTTP/WebSocket traffic; it does not create real accounts or contact the configured project.
+Only the two listed `VITE_*` settings are required by the SPA. `VITE_SUPABASE_PROJECT_ID` remains accepted for historical local tooling but is unused by the application. Never put a service-role, secret API, AI provider or user-session key in the frontend. Vite validates its public configuration before serving/building: it rejects unknown `VITE_*` variables, privileged/non-anonymous JWTs and secret keys in the public-key field. Isolated fixture keys are accepted only with a loopback backend. Supabase publishable/anonymous keys are intentionally public and still require RLS; see [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys) and [Vite's public environment boundary](https://vite.dev/guide/env-and-mode.html).
+
+Local `.env` and dedicated test-account files remain intact and ignored; `.env` is no longer tracked. `.env.local` takes precedence over `.env`. Keep staging and production configuration in separate protected stores, or ignored mode-specific files such as `.env.staging.local` and `.env.production.local`; select the intended mode explicitly when building. Runtime Edge Function secrets belong in Supabase's server environment, with names/placeholders in `supabase/functions/.env.example`, never in `VITE_*`. A configured URL does not authorize hosted mutations.
+
+Run `npm run check:secrets` before committing. It inspects Git's index, including force-added ignored files, and fails on private environment/authentication paths or recognized credential formats without displaying values. It also runs first in CI and `verify`. Harmless `.env.example` and `.env.sample` files are allowed. This is a targeted guard, not a guarantee against every possible secret format; review staged changes. The historical `.env` retains an old public anonymous key and project configuration: ignoring/untracking does not erase history. The [repository cleanup report](docs/REPOSITORY_CLEANUP_REPORT.md) records the scan scope and findings. Do not rewrite history automatically; rotate any genuinely private credential if a later review identifies exposure.
+
+The browser suite overrides the backend URL and key with an isolated localhost endpoint and intercepts its HTTP/WebSocket traffic; it does not create real accounts or contact the configured project.
 
 ## Supabase setup
 
@@ -74,6 +108,8 @@ Use [SUPABASE_STAGING_SETUP.md](docs/SUPABASE_STAGING_SETUP.md) for the current 
 ```sh
 npm run dev                  # development server
 npm run typecheck            # app + tooling + browser + server-handler TypeScript
+npm run check:secrets        # inspect tracked/indexed configuration without values
+npm run test:security        # disposable Git-index/ignore/credential regressions
 npm run lint                 # ESLint; zero errors/warnings in the modernization run
 npm run test                 # colocated Vitest unit/component tests
 npm run test:db              # disposable PostgreSQL WASM migration/RLS integration tests
@@ -84,7 +120,7 @@ npm run test:coverage        # local Vitest coverage, no claimed percentage
 npm run test:concurrency     # disposable independent PostgreSQL races; see TESTING
 npm run build               # production assets in dist/
 npm run preview             # inspect built assets
-npm run verify              # typecheck, lint, unit, database, build, browser
+npm run verify              # repository security checks, typecheck, lint, unit, DB, build, browser
 npm audit                   # full dependency advisory report; dated results in docs/
 ```
 

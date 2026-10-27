@@ -1,6 +1,6 @@
-import LessonBookmark from "@/components/LessonBookmark";
-import CourseSettings from "@/components/CourseSettings";
-import PrivateVideo from "@/components/PrivateVideo";
+import LessonBookmark from "@/features/courses/components/LessonBookmark";
+import CourseSettings from "@/features/courses/components/CourseSettings";
+import PrivateVideo from "@/components/shared/PrivateVideo";
 import type {
 Course,
 Module,
@@ -8,27 +8,27 @@ Lesson,
 LiveSession,
 Assignment,
 Recording
-} from "@/lib/models";
+} from "@/types/models";
 import ReactMarkdown from "react-markdown";
 import { privateFileUrl } from "@/lib/storage";
-import PrivateFileLink from "@/components/PrivateFileLink";
+import PrivateFileLink from "@/components/shared/PrivateFileLink";
 import { useEffect, useState } from "react";
 import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import CourseReviews from "@/components/CourseReviews";
-import CertificateCard from "@/components/CertificateCard";
-import CourseContentEditor from "@/components/CourseContentEditor";
-import CourseDiscussions from "@/components/CourseDiscussions";
-import StudentProgressTracker from "@/components/StudentProgressTracker";
-import QuizManager from "@/components/QuizManager";
-import BookmarkButton from "@/components/BookmarkButton";
-import CoursePrerequisites from "@/components/CoursePrerequisites";
-import CourseAssistant from "@/components/CourseAssistant";
-import LiveClassModal from "@/components/LiveClassModal";
+import { useAuth } from "@/features/auth/useAuth";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import CourseReviews from "@/features/courses/components/CourseReviews";
+import CertificateCard from "@/features/certificates/CertificateCard";
+import CourseContentEditor from "@/features/courses/components/CourseContentEditor";
+import CourseDiscussions from "@/features/courses/components/CourseDiscussions";
+import StudentProgressTracker from "@/features/learning/StudentProgressTracker";
+import QuizManager from "@/features/assessments/QuizManager";
+import BookmarkButton from "@/features/courses/components/BookmarkButton";
+import CoursePrerequisites from "@/features/courses/components/CoursePrerequisites";
+import CourseAssistant from "@/features/courses/components/CourseAssistant";
+import LiveClassModal from "@/features/live-classes/LiveClassModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";

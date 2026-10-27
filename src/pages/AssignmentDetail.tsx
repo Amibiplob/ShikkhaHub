@@ -1,11 +1,11 @@
-import type { Assignment, Submission } from "@/lib/models";
+import type { Assignment, Submission } from "@/types/models";
 import { allowedDocument } from "@/lib/storage";
-import PrivateFileLink from "@/components/PrivateFileLink";
+import PrivateFileLink from "@/components/shared/PrivateFileLink";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import Header from "@/components/Header";
+import { useAuth } from "@/features/auth/useAuth";
+import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

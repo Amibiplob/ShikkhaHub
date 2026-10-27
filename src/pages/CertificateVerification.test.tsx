@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import CertificateVerification from "./CertificateVerification";
 
-vi.mock("@/components/Header", () => ({ default: () => null }));
-vi.mock("@/components/Footer", () => ({ default: () => null }));
+vi.mock("@/components/layout/Header", () => ({ default: () => null }));
+vi.mock("@/components/layout/Footer", () => ({ default: () => null }));
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
 

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ProfileEditor from "@/components/ProfileEditor";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import ProfileEditor from "@/features/auth/ProfileEditor";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Mail, BookOpen, Trophy, Award, Calendar } from "lucide-react";

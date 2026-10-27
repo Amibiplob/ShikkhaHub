@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, Medal, Trophy } from "lucide-react";
 

@@ -1,6 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import ThemeProvider from "@/components/ThemeProvider";
+import ThemeProvider from "@/app/providers/ThemeProvider";
 import { useTheme } from "./useTheme";
 
 function Probe() {

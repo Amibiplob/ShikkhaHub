@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import PageShell from "@/components/PageShell";
-import { downloadCertificate } from "@/lib/certificates";
+import PageShell from "@/components/layout/PageShell";
+import { downloadCertificate } from "@/features/certificates/certificates";
 import { toast } from "sonner";
 export default function Certificates() {
   const { user } = useAuth();

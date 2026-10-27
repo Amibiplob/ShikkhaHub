@@ -1,12 +1,12 @@
-import { courseQuizPassRates, scopeTeacherActivity } from "@/lib/teacherActivity";
+import { courseQuizPassRates, scopeTeacherActivity } from "@/features/learning/teacherActivity";
 import type { Tables } from "@/integrations/supabase/types";
-import type { Course, Module, Lesson, Submission, Attempt } from "@/lib/models";
+import type { Course, Module, Lesson, Submission, Attempt } from "@/types/models";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

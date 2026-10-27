@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GraduationCap, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 
 const ResetPassword = () => {
   const navigate = useNavigate();

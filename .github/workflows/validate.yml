@@ -12,6 +12,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - run: npm run check:secrets
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run verify

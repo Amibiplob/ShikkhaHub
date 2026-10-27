@@ -1,9 +1,9 @@
-import type { LiveSession } from "@/lib/models";
+import type { LiveSession } from "@/types/models";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ AudioLines, MessageSquare, Circle, Square, Film
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useTeacherBroadcast, useStudentViewer } from "@/hooks/useWebRTCBroadcast";
+import { useTeacherBroadcast, useStudentViewer } from "@/features/live-classes/useWebRTCBroadcast";
 
 const LiveClass = () => {
   const { roomName } = useParams<{ roomName: string }>();

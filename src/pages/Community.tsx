@@ -1,10 +1,10 @@
-import type { Post } from "@/lib/models";
+import type { Post } from "@/types/models";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { useAuth } from "@/features/auth/useAuth";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArrowBigUp, ChevronLeft, ChevronRight, Loader2, MessageSquare, Pin, Plus, Search, SortAsc, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { sortPopular, paginate } from "@/lib/communitySort";
+import { sortPopular, paginate } from "@/features/community/communitySort";
 
 const CATEGORIES = [
   { value: "all", label: "All Topics" },
