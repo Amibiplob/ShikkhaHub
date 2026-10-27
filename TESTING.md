@@ -2,6 +2,26 @@
 
 Verification date: **27 October 2026, Asia/Dhaka**. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
 
+## Vercel build compatibility recheck
+
+Against baseline `1616009`, supplying the harmless process-only `VITE_VERCEL_GIT_REPO_ID=123456789` reproduced the exact configuration-loading failure with exit 1. The same `npm run build` now exits 0. The validator allows exactly the 16 [documented public Vercel framework metadata names](https://vercel.com/docs/environment-variables/framework-environment-variables), with no prefix wildcard; OIDC/automation secrets and other unknown `VITE_*` names remain denied. [Vite documents that prefixed settings can reach the browser](https://vite.dev/guide/env-and-mode.html).
+
+`VITE_SUPABASE_ANON_KEY` accepts public publishable/anonymous keys and is normalized at Vite configuration time to the existing key reference used by the SDK, assistant and support HTTP requests. `VITE_SUPABASE_PUBLISHABLE_KEY` retains precedence when both are present; **both** supplied fields are validated. No environment file was rewritten, no live Supabase resource was accessed/changed, and no deployment was attempted.
+
+| Command/check | Result |
+| --- | --- |
+| `npm run typecheck` / `npm run lint` | Passed; zero lint errors/warnings |
+| `npm run test -- --maxWorkers=2` | **110 passed in 23 files** |
+| Focused environment regressions | **28 passed**, including each of the 16 documented metadata names, alias resolution/precedence and sensitive-name/key denials |
+| `npm run test:security` | **6 passed** |
+| `npm run test:build-env` | **1 integration test passed**: builds the actual app in a disposable root with all 16 synthetic metadata variables and only the anon-name public key, checks SDK/assistant/support emitted keys, then rejects six sensitive names and a secret key in seven negative builds |
+| `npm run build` | Passed with current local configuration, and again with the original dummy repository ID |
+| `npm run check:secrets` / `git diff --check` | Passed; local environment hashes unchanged |
+
+The real-build regression runs in `verify`, and therefore the existing CI workflow. Logs/before-after evidence are ignored under `artifacts/vercel-build-fix/`. Database/browser/provider acceptance was not rerun for this configuration-only change. An initial strict-TypeScript test-fixture indexing error was corrected and the full typecheck/unit suite rerun successfully.
+
+No tracked configuration or project `.npmrc` contained `cache-dir`, and the normal local command emitted no warning. Injecting either `npm_config_cache_dir` or `npm_config_cache-dir` into `npm config get cache` reproduced the exact npm warning, identifying an external npm environment option as a possible source. The actual Vercel injector/settings were not inspected; no unrelated npm configuration was changed.
+
 ## Repository cleanup recheck
 
 The subsequent [repository cleanup report](docs/REPOSITORY_CLEANUP_REPORT.md) inventories 65 file moves, three removed unused toast modules, the single removed dependency and environment protection. The default suite remains local/fixture-backed; **hosted staging tests were not rerun** for cleanup.

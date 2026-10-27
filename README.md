@@ -77,14 +77,16 @@ Environment variable names:
 | Name | Purpose |
 | --- | --- |
 | `VITE_SUPABASE_URL` | Public Supabase project URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Public anon/publishable key; RLS remains mandatory |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` or `VITE_SUPABASE_ANON_KEY` | Public anon/publishable key; RLS remains mandatory. The publishable-name setting takes precedence if both are supplied; both are validated. |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Server-side Supabase configuration for the Edge Functions |
 | `AI_CHAT_COMPLETIONS_URL`, `AI_MODEL`, `AI_API_KEY` | Optional server-only HTTPS SSE chat-completions provider; see `supabase/functions/.env.example` |
 | `APP_ALLOWED_ORIGINS`, `APP_PUBLIC_ORIGIN` | Exact server browser origins / certificate verification origin; see Phase 3 guide |
 | `SUPPORT_CHALLENGE_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` | Server-only support signing/intake; never expose to Vite |
 | `E2E_BROWSER_CHANNEL` | Test browser channel, defaults to `chrome` |
 
-Only the two listed `VITE_*` settings are required by the SPA. `VITE_SUPABASE_PROJECT_ID` remains accepted for historical local tooling but is unused by the application. Never put a service-role, secret API, AI provider or user-session key in the frontend. Vite validates its public configuration before serving/building: it rejects unknown `VITE_*` variables, privileged/non-anonymous JWTs and secret keys in the public-key field. Isolated fixture keys are accepted only with a loopback backend. Supabase publishable/anonymous keys are intentionally public and still require RLS; see [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys) and [Vite's public environment boundary](https://vite.dev/guide/env-and-mode.html).
+The SPA requires the URL and one of the two public-key settings above. The `ANON_KEY` name may contain a modern publishable key; Vite normalizes it to the existing public-key reference for the SDK, assistant and support requests. `VITE_SUPABASE_PROJECT_ID` remains accepted for historical local tooling but is unused by the application. Never put a service-role, secret API, AI provider or user-session key in the frontend. Vite validates its public configuration before serving/building: it rejects unknown `VITE_*` variables, privileged/non-anonymous JWTs and secret keys in either public-key field, including an unused alias. Isolated fixture keys are accepted only with a loopback backend. Supabase publishable/anonymous keys are intentionally public and still require RLS; see [Supabase API keys](https://supabase.com/docs/guides/getting-started/api-keys) and [Vite's public environment boundary](https://vite.dev/guide/env-and-mode.html).
+
+Vercel's exact 16 [public framework metadata names](https://vercel.com/docs/environment-variables/framework-environment-variables) are also accepted: environment/target, deployment/branch/production URLs, content hash salt, Git provider/repository/commit/author and pull-request metadata. The explicit list is in `config/public-environment.ts`; there is no `VITE_VERCEL_*` wildcard. Browser-prefixed OIDC tokens, automation bypass secrets, database credentials and other unknown names remain rejected. `npm run test:build-env` builds the actual app with synthetic Vercel metadata and the anon-name alias in a disposable directory, verifies the emitted client/HTTP keys, and proves sensitive configurations still fail. This check also runs in `verify`/CI.
 
 Local `.env` and dedicated test-account files remain intact and ignored; `.env` is no longer tracked. `.env.local` takes precedence over `.env`. Keep staging and production configuration in separate protected stores, or ignored mode-specific files such as `.env.staging.local` and `.env.production.local`; select the intended mode explicitly when building. Runtime Edge Function secrets belong in Supabase's server environment, with names/placeholders in `supabase/functions/.env.example`, never in `VITE_*`. A configured URL does not authorize hosted mutations.
 
@@ -110,6 +112,7 @@ npm run dev                  # development server
 npm run typecheck            # app + tooling + browser + server-handler TypeScript
 npm run check:secrets        # inspect tracked/indexed configuration without values
 npm run test:security        # disposable Git-index/ignore/credential regressions
+npm run test:build-env       # isolated real build with Vercel metadata/key alias and secret denials
 npm run lint                 # ESLint; zero errors/warnings in the modernization run
 npm run test                 # colocated Vitest unit/component tests
 npm run test:db              # disposable PostgreSQL WASM migration/RLS integration tests
