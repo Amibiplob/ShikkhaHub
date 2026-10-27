@@ -68,7 +68,7 @@ export const en: Dict = {
   "hero.titleWith": "with",
   "hero.titleExperts": "experts",
   "hero.subtitle":
-    "Interactive courses, live classes, hands-on projects, and a vibrant community — everything you need to become a better developer.",
+    "Interactive courses, live classes, hands-on projects, and a vibrant community - everything you need to become a better developer.",
   "hero.ctaPrimary": "Start Learning Free",
   "hero.ctaSecondary": "Browse Courses",
   "hero.statCourses": "Courses",
@@ -127,7 +127,7 @@ export const en: Dict = {
     "A complete platform for learning, teaching, and building together.",
   "features.f1.title": "Structured Courses",
   "features.f1.desc":
-    "Learn with organized modules and lessons — videos, articles, and downloadable resources.",
+    "Learn with organized modules and lessons - videos, articles, and downloadable resources.",
   "features.f2.title": "Live Classes",
   "features.f2.desc":
     "Join real-time video sessions with screen sharing, whiteboard, and interactive Q&A.",
@@ -189,7 +189,7 @@ export const en: Dict = {
   "teach.eyebrow": "For teachers",
   "teach.title": "Share what you know on",
   "teach.subtitle":
-    "Publish courses, host live sessions, grade assignments and grow your own learning community — all from one dashboard.",
+    "Publish courses, host live sessions, grade assignments and grow your own learning community - all from one dashboard.",
   "teach.cta": "Start teaching",
   "teach.p1.title": "Build your course",
   "teach.p1.text":
@@ -212,7 +212,7 @@ export const en: Dict = {
     "Complete all lessons, pass every course quiz and obtain grades for every assignment to earn a PDF certificate in My Certificates. The server checks eligibility.",
   "faq.q3": "How do live classes work?",
   "faq.a3":
-    "Teachers schedule a live class from the course page. When it starts, you join directly in the browser — no extra app or external meeting link needed. Recordings are available only when the teacher records and uploads them.",
+    "Teachers schedule a live class from the course page. When it starts, you join directly in the browser - no extra app or external meeting link needed. Recordings are available only when the teacher records and uploads them.",
   "faq.q4": "Can I ask questions while learning?",
   "faq.a4":
     "Every course has discussions, and the community forum is open for career advice and technical help. The optional AI assistant requires separate provider configuration.",
@@ -302,11 +302,11 @@ export const bn: Dict = {
 
   "hero.artworkAlt": "সংযুক্ত পাঠ ও খোলা বইসহ কোড শেখার কর্মক্ষেত্রের চিত্র",
   "hero.badge": "ডেভেলপারদের জন্য তৈরি শেখার প্ল্যাটফর্ম",
-  "hero.title1": "কোডিং শিখুন",
+  "hero.title1": "বিশেষজ্ঞদের",
   "hero.titleWith": "সাথে",
-  "hero.titleExperts": "বিশেষজ্ঞদের",
+  "hero.titleExperts": "কোডিং শিখুন",
   "hero.subtitle":
-    "ইন্টারঅ্যাকটিভ কোর্স, লাইভ ক্লাস, হাতে-কলমে প্রজেক্ট আর একটি সজীব কমিউনিটি — ভালো ডেভেলপার হতে যা যা দরকার সবই এক জায়গায়।",
+    "ইন্টারঅ্যাকটিভ কোর্স, লাইভ ক্লাস, হাতে-কলমে প্রজেক্ট আর একটি সজীব কমিউনিটি - ভালো ডেভেলপার হতে যা যা দরকার সবই এক জায়গায়।",
   "hero.ctaPrimary": "ফ্রিতে শেখা শুরু করুন",
   "hero.ctaSecondary": "কোর্স দেখুন",
   "hero.statCourses": "কোর্স",
@@ -352,7 +352,7 @@ export const bn: Dict = {
   "categories.eyebrow": "ব্রাউজ",
   "categories.title": "ক্যাটাগরি অনুযায়ী দেখুন",
   "categories.subtitle":
-    "একটি ট্র্যাক বেছে নিন — বেসিক থেকে শুরু করুন বা সরাসরি অ্যাডভান্সড বিষয়ে যান।",
+    "একটি ট্র্যাক বেছে নিন - বেসিক থেকে শুরু করুন বা সরাসরি অ্যাডভান্সড বিষয়ে যান।",
 
   "features.eyebrow": "ফিচার",
   "features.title1": "উন্নতির জন্য যা যা দরকার",
@@ -361,7 +361,7 @@ export const bn: Dict = {
     "শেখা, শেখানো আর একসাথে তৈরি করার একটি সম্পূর্ণ প্ল্যাটফর্ম।",
   "features.f1.title": "সাজানো কোর্স",
   "features.f1.desc":
-    "গোছানো মডিউল ও লেসনে শিখুন — ভিডিও, আর্টিকেল এবং ডাউনলোডযোগ্য রিসোর্স।",
+    "গোছানো মডিউল ও লেসনে শিখুন - ভিডিও, আর্টিকেল এবং ডাউনলোডযোগ্য রিসোর্স।",
   "features.f2.title": "লাইভ ক্লাস",
   "features.f2.desc":
     "স্ক্রিন শেয়ার, হোয়াইটবোর্ড আর প্রশ্নোত্তরসহ রিয়েল-টাইম ভিডিও সেশনে যোগ দিন।",
@@ -417,7 +417,7 @@ export const bn: Dict = {
   "teach.eyebrow": "শিক্ষকদের জন্য",
   "teach.title": "আপনার জ্ঞান ছড়িয়ে দিন",
   "teach.subtitle":
-    "কোর্স প্রকাশ করুন, লাইভ সেশন নিন, অ্যাসাইনমেন্ট মূল্যায়ন করুন এবং নিজের শেখার কমিউনিটি গড়ুন — সবই এক ড্যাশবোর্ড থেকে।",
+    "কোর্স প্রকাশ করুন, লাইভ সেশন নিন, অ্যাসাইনমেন্ট মূল্যায়ন করুন এবং নিজের শেখার কমিউনিটি গড়ুন - সবই এক ড্যাশবোর্ড থেকে।",
   "teach.cta": "শেখানো শুরু করুন",
   "teach.p1.title": "আপনার কোর্স তৈরি করুন",
   "teach.p1.text":
@@ -439,7 +439,7 @@ export const bn: Dict = {
     "সব লেসন শেষ, সব কুইজে পাস এবং সব অ্যাসাইনমেন্টে গ্রেড পাওয়ার পর সার্ভার যোগ্যতা যাচাই করে My Certificates পাতায় PDF সার্টিফিকেট দেয়।",
   "faq.q3": "লাইভ ক্লাস কীভাবে কাজ করে?",
   "faq.a3":
-    "শিক্ষক কোর্স পাতা থেকে লাইভ ক্লাস নির্ধারণ করেন। ক্লাস শুরু হলে ব্রাউজারেই সরাসরি যোগ দিতে পারবেন — আলাদা অ্যাপ বা বাইরের লিংক লাগে না। শিক্ষক রেকর্ড করে আপলোড করলে রেকর্ডিং পাওয়া যায়।",
+    "শিক্ষক কোর্স পাতা থেকে লাইভ ক্লাস নির্ধারণ করেন। ক্লাস শুরু হলে ব্রাউজারেই সরাসরি যোগ দিতে পারবেন - আলাদা অ্যাপ বা বাইরের লিংক লাগে না। শিক্ষক রেকর্ড করে আপলোড করলে রেকর্ডিং পাওয়া যায়।",
   "faq.q4": "শেখার সময় প্রশ্ন করা যাবে?",
   "faq.a4":
     "প্রতিটি কোর্সে আলোচনা আছে, আর কমিউনিটি ফোরামে ক্যারিয়ার ও কৌশলগত সাহায্য পাওয়া যায়। ভর্তি শিক্ষার্থীরা এআই কোর্স সহকারীও ব্যবহার করতে পারেন।",

@@ -124,7 +124,7 @@ const TeacherAnalytics = () => {
   const totalEnrollments = filtered.enrollments.length;
   const avgRating = filtered.reviews.length > 0
     ? (filtered.reviews.reduce((acc: number, r) => acc + r.rating, 0) / filtered.reviews.length).toFixed(1)
-    : "—";
+    : "-";
   const totalSubmissions = filtered.submissions.length;
   const gradedSubmissions = filtered.submissions.filter((s) => s.status === "graded" || s.status === "reviewed").length;
 
@@ -437,7 +437,7 @@ const TeacherAnalytics = () => {
                           const courseReviews = reviews.filter((r) => r.course_id === c.id);
                           const cRating = courseReviews.length > 0
                             ? (courseReviews.reduce((a: number, r) => a + r.rating, 0) / courseReviews.length).toFixed(1)
-                            : "—";
+                            : "-";
                           return (
                             <tr key={c.id} className="border-b border-border/50">
                               <td className="py-3 font-medium">{c.title}</td>

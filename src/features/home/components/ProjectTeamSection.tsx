@@ -9,7 +9,7 @@ export default function ProjectTeamSection() {
       <p className="mb-2 text-sm uppercase tracking-widest text-primary">{t('team.eyebrow')}</p>
       <h2 id="project-team-heading" className="text-3xl font-bold tracking-tight">{t('team.title')}</h2>
       <p className="mt-4 max-w-3xl text-muted-foreground">{t('team.description')}</p>
-      <p className="mt-3 font-medium">ShikkhaHub — An Online Based Educational Platform</p>
+      <p className="mt-3 font-medium">ShikkhaHub - An Online Based Educational Platform</p>
       <ul className="my-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {members.map(name => <li key={name} className="rounded-xl border border-border bg-card p-5 font-semibold">{name}</li>)}
       </ul>

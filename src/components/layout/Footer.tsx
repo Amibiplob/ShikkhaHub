@@ -147,12 +147,12 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-        <div className="mt-10 border-t border-border pt-6 text-center text-sm text-muted-foreground">
+      </div>
+        <div className="py-6 border-t border-border text-center text-sm text-muted-foreground">
           <p>
             © {new Date().getFullYear()} ShikkhaHub. {t("footer.rights")}
           </p>
         </div>
-      </div>
     </footer>
   );
 };

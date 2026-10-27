@@ -97,7 +97,7 @@ There are no destructive down scripts. Dropping guards, restoring public buckets
 
 Earlier Phase 2 blockers included missing target/credentials and unapplied migrations. The current staging run resolves identity, migrations, constraints and the documented real-service subset. Full backup restoration, broader hosted concurrency, email/OAuth, all-bucket acceptance and TURN/physical-device proof remain open.
 
-## Phase 3 extension — five pending additive files
+## Phase 3 extension - five pending additive files
 
 The seven October 26 files above remain unchanged. Apply the following **after** that chain, one transaction per file, to authorized disposable staging only. No hosted migration was executed in Phase 3. Do not deploy the new frontend before its RPCs/functions are accepted.
 

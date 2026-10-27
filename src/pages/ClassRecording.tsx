@@ -63,7 +63,7 @@ const ClassRecording = () => {
         </Button>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">{liveClass?.title || "Class"} — Recordings</h1>
+          <h1 className="text-2xl font-bold">{liveClass?.title || "Class"} - Recordings</h1>
           <p className="text-muted-foreground text-sm mt-1">{liveClass?.courses?.title}</p>
         </div>
 

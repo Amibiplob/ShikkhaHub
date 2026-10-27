@@ -2,7 +2,7 @@
 
 ## Project overview
 
-**ShikkhaHub — An Online Based Educational Platform** is a final-year CSE project by Md Biplob Hossain, Leon Khan, Al Amin, and Asif Khan at City University, Bangladesh. Supervisor: Ahsan Habib, Lecturer and Coordinator, Department of CSE.
+**ShikkhaHub - An Online Based Educational Platform** is a final-year CSE project by Md Biplob Hossain, Leon Khan, Al Amin, and Asif Khan at City University, Bangladesh. Supervisor: Ahsan Habib, Lecturer and Coordinator, Department of CSE.
 
 Demonstrate a course authoring → student learning → assessment → tutoring → moderation sequence. Do not imply university endorsement, accredited certification, live payments, or hosted acceptance from simulated service fixtures.
 

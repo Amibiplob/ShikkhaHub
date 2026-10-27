@@ -161,7 +161,7 @@ const LiveClass = () => {
         file_url: fileName,
         file_size: blob.size,
         duration_seconds: teacher.recordingDuration,
-        title: `${liveClass.title} — ${format(new Date(), "MMM d, h:mm a")}`,
+        title: `${liveClass.title} - ${format(new Date(), "MMM d, h:mm a")}`,
       });
 
       if (recordError) throw recordError;

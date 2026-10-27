@@ -242,7 +242,7 @@ const Dashboard = () => {
               </div>
               <div className="rounded-xl border border-border bg-card p-5">
                 <Users className="mb-2 h-5 w-5 text-success" />
-                <p className="text-2xl font-bold">—</p>
+                <p className="text-2xl font-bold">-</p>
                 <p className="text-sm text-muted-foreground">Total Students</p>
               </div>
             </>

@@ -283,7 +283,7 @@ const AssignmentDetail = () => {
                 {(mySubmission.status === "graded" || mySubmission.status === "reviewed") && (
                   <div className="rounded-lg border border-success/20 bg-success/5 p-4 space-y-2">
                     <p className="font-semibold text-success">
-                      Marks: {mySubmission.marks !== null ? `${mySubmission.marks}/${assignment.max_marks}` : "—"}
+                      Marks: {mySubmission.marks !== null ? `${mySubmission.marks}/${assignment.max_marks}` : "-"}
                     </p>
                     {mySubmission.feedback && (
                       <div>
@@ -325,7 +325,7 @@ const AssignmentDetail = () => {
                         </div>
                         {subType === "file" ? (
                           <div>
-                            <Label>Upload File (PDF, TXT, DOC, DOCX, ZIP — max 10MB)</Label>
+                            <Label>Upload File (PDF, TXT, DOC, DOCX, ZIP - max 10MB)</Label>
                             <input
                               ref={fileInputRef}
                               type="file"
@@ -410,7 +410,7 @@ const AssignmentDetail = () => {
                   <TableBody>
                     {submissions.map((sub) => (
                       <TableRow key={sub.id}>
-                        <TableCell className="font-medium">{sub.profiles?.full_name || "—"}</TableCell>
+                        <TableCell className="font-medium">{sub.profiles?.full_name || "-"}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1 capitalize">{typeIcon(sub.submission_type)} {sub.submission_type}</div>
                         </TableCell>
@@ -429,7 +429,7 @@ const AssignmentDetail = () => {
                         </TableCell>
                         <TableCell>{statusBadge(sub.status)}</TableCell>
                         <TableCell>
-                          {sub.marks !== null ? `${sub.marks}/${assignment.max_marks}` : "—"}
+                          {sub.marks !== null ? `${sub.marks}/${assignment.max_marks}` : "-"}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {format(new Date(sub.submitted_at), "MMM d, h:mm a")}

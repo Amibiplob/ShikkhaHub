@@ -22,7 +22,7 @@ const HeroSection = () => {
     };
   }, []);
 
-  const fmt = (n: number | undefined) => (n === undefined ? "—" : n.toLocaleString());
+  const fmt = (n: number | undefined) => (n === undefined ? "-" : n.toLocaleString());
 
   const stats = [
     { icon: Code2, label: t("hero.statCourses"), value: fmt(counts?.courses) },

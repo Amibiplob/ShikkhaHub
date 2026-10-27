@@ -425,7 +425,7 @@ export default function Admin() {
                                 "No"
                               )
                             ) : (
-                              text(row, f) || "—"
+                              text(row, f) || "-"
                             )}
                           </TableCell>
                         ))}
@@ -623,7 +623,7 @@ export default function Admin() {
                       <dd className="whitespace-pre-wrap break-all text-sm">
                         {typeof v === "object"
                           ? JSON.stringify(v)
-                          : String(v ?? "—")}
+                          : String(v ?? "-")}
                       </dd>
                     </div>
                   ))}

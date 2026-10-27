@@ -74,7 +74,7 @@ Page notation: **p.** is the printed report page; **PDF** is the physical, one-b
 
 Prior prompt extensions (lesson bookmarks, advanced Q&A limits, full storage console, immutable/timed attempts) are retained as scoped limits where relevant, not falsely attributed to the PDF. [TESTING.md](../TESTING.md) records exact results; [STAGING_ACCEPTANCE_CHECKLIST.md](STAGING_ACCEPTANCE_CHECKLIST.md) lists the remaining external decisions. No compliance percentage is claimed.
 
-## Phase 3 reconciliation — approved implementation extensions
+## Phase 3 reconciliation - approved implementation extensions
 
 The PDF and page references above are unchanged. The following supersedes affected Phase 2 status/remaining-gap descriptions; it does not rewrite the report or turn its future list into original completed requirements.
 
