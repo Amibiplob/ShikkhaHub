@@ -2,7 +2,29 @@
 
 Verification date: **27 October 2026, Asia/Dhaka**. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
 
-## Recorded final results
+## Supabase staging setup recheck
+
+27 October 2026: the explicitly approved disposable ShikkhaHub backend has **43 migrations applied** and zero pending. See [the setup report](docs/SUPABASE_STAGING_SETUP.md) and [sanitized evidence](docs/supabase-staging-verification.json). No original Lovable project or production resource was touched.
+
+| Check | Current result |
+| --- | --- |
+| TypeScript / ESLint / build | Passed; ESLint zero errors/warnings |
+| Unit/component/server handlers | **82 passed in 22 files** |
+| Isolated PostgreSQL WASM | **49 passed**, including pre-existing Auth adoption, postflight drift and private notification authorization |
+| Independent PostgreSQL 18.4 | **1 passed**, covering four independent-connection races |
+| Fixture-backed Chrome | **39 passed**, after the notification change |
+| Real hosted Chrome / SDK suite | **16 passed, zero skipped/failed**, both function and Realtime opt-ins enabled |
+| Read-only public Chrome | Four actual routes rendered, actual API HTTP 200, zero page exceptions/interception |
+| Hosted Edge HTTP checks | Ten passed: CORS, unsigned calls, guest challenge and tampered proof |
+| Real Realtime probes | Public `PrivateOnly`; anonymous private denial; recipient join / outsider denial; actual private grade-notification CDC and live broadcasts |
+| Hosted catalog | 35/35 RLS tables; 46 FKs; four deferred checks validated; 115 public / 15 Storage / 2 Realtime policies |
+| Supabase DB linter | No errors; two retained warnings for a shadowed/unused loop variable in `save_tutor_slot` |
+
+The first unit run had one timeout while broad checks competed for resources; the unchanged full suite passed with `--maxWorkers=2`. The first fixture run had 38 passes/one lazy-route loading timeout; the isolated admin recheck, following full run and final full run passed without raising timeouts. The first hosted run had 13 passes, one PDF request failure and two unexecuted scenarios. A real PDF/session diagnostic proved HTTP 200 with an active session, 403 after global logout and 200 after fresh login. The runner now reauthenticates its SDK role after testing the application's global logout. No server session checks were weakened. Private initial hosted evidence remains in `artifacts/staging-initial-hosted/`.
+
+Dedicated test credentials are retained only in ignored `artifacts/staging/staging-accounts.env` (0600), with exact-ID manifests in `artifacts/staging/`. Load them into the runner's process through protected local tooling; the suite deliberately does not infer authorization from app `.env`. Hosted reports disable traces/screenshots/video and were created with restrictive permissions. Do not commit credentials, tokens, raw reports or real signed URLs.
+
+## Recorded modernization results (before staging setup)
 
 | Check | Result |
 | --- | --- |
@@ -102,9 +124,9 @@ This is scenario coverage, not exhaustive coverage of every permutation, physica
 
 The HTML report, traces, dependency caches, browser storage and generated artifacts are ignored. The suite owns and shuts down its Vite server and browser contexts. No cleanup command targets real databases or accounts.
 
-## Real Supabase staging acceptance (prepared, not executed against a backend)
+## Real Supabase staging acceptance
 
-`playwright.staging.config.ts` and `e2e/staging/` are separate from default intercepted tests and from `verify`. No HTTP/WebSocket routes are mocked in this suite. Without opt-in, `npm run test:e2e:staging` starts no application server and reports **16 skipped**. This exit-0 discovery result is not an acceptance pass.
+`playwright.staging.config.ts` and `e2e/staging/` are separate from default intercepted tests and from `verify`. No HTTP/WebSocket routes are mocked. The authorized run on 27 October passed **all 16** against the real disposable backend. Without opt-in, `npm run test:e2e:staging` still starts no application server and reports **16 skipped**; that discovery result is not an acceptance pass.
 
 An authorized operator must approve a disposable project containing only test data, run the [migration plan](docs/STAGING_MIGRATION_PLAN.md), and provision/confirm three dedicated identities through trusted staging Auth/SQL mechanisms. Public signup creates students; grant teacher/admin roles only through trusted server tooling. Tests neither provision accounts nor grant roles. A label or hostname cannot independently prove a project is not production; the operator's target review remains required.
 
@@ -134,7 +156,7 @@ The suite owns a loopback Vite server on **18081**, does not reuse another serve
 
 Traces, screenshots and video are disabled for this suite. Form credentials avoid Playwright fill-argument logging. Keep ignored reports restricted anyway: assertion failures can reveal identity/record metadata. An ignored `artifacts/staging/staging-acceptance-*.json` manifest (created before writes with restricted file permissions) records exact IDs/object path for partial-run recovery. Cleanup deletes only run-owned objects and exact-ID courses; trigger-generated notifications and Auth identities remain operator cleanup. Never delete by a broad prefix across accounts. Reports are `artifacts/staging-results.json`; default fixture reports remain separate.
 
-Currently blocked: all 16 real scenarios because no approved target or external role credentials were supplied. A configured run without Realtime opt-in will still skip its Realtime scenario and cannot be described as complete acceptance. Source/type/safeguard checks and no-credential discovery do not prove selectors or service contracts work against hosted Supabase. Manual second-student/teacher isolation, full Storage bucket/MIME/size/expiry checks, Auth email/OAuth/revocation, broader two-student hosted concurrency, physical media/TURN, screen share and recording remain outside this prepared subset.
+The approved disposable run passed all 16 with actual role credentials and both optional service gates enabled. A future run without Realtime/function opt-in still skips those scenarios and cannot claim complete subset acceptance. Manual second-student/teacher isolation, all-bucket MIME/size/expiry checks, actual email/OAuth, broader hosted concurrency, physical media/TURN, screen share and recording remain outside this automated subset. The separate PDF diagnostic additionally verified live session revocation at the server handler.
 
 ## Release acceptance still required
 

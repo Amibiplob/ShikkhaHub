@@ -18,6 +18,8 @@ playwright-report/
 test-results/
 coverage/
 artifacts/
+/supabase/.temp/
+/supabase/.branches/
 
 # Editor directories and files
 .vscode/*

@@ -1,5 +1,7 @@
 # Tutoring, certificates, administration and support
 
+**Current hosted staging update:** [SUPABASE_STAGING_SETUP.md](SUPABASE_STAGING_SETUP.md) records 43 applied migrations, three deployed functions and 16 actual hosted acceptance passes on the explicitly approved disposable backend. Original Phase 3 local-only statements below remain historical; broader/manual acceptance gates remain open.
+
 > **Modernization update, 27 October 2026:** React 19, Vite 8, Tailwind 4 and current compatible dependencies now replace the earlier tooling snapshot. All existing role/course/tutoring/certificate/support routes and Supabase migrations remain. Current implementation, original local artwork, compatibility fixes and executed test evidence are in [DEPENDENCY_UPGRADE_REPORT.md](DEPENDENCY_UPGRADE_REPORT.md), [CODEBASE_CLEANUP_REPORT.md](CODEBASE_CLEANUP_REPORT.md), [VISUAL_ASSET_AUDIT.md](VISUAL_ASSET_AUDIT.md) and [MODERNIZATION_VERIFICATION.md](MODERNIZATION_VERIFICATION.md). Statements below about React 18, earlier lint warnings, bundle warnings and test counts describe the historical Phase 3 snapshot. Hosted acceptance gates remain open.
 
 

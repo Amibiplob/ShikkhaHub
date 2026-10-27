@@ -124,6 +124,17 @@ test('private signaling rejects outsiders and impersonation, stamps authenticate
  assert.equal((await sql(ids.other,'SELECT id FROM realtime.messages')).rows.length,0);
  await assert.rejects(()=>sql(ids.student,"INSERT INTO realtime.messages(topic,extension,event,payload) VALUES('live-private-room','broadcast','teacher-ended','{}')"),/permission denied/);
 });
+test('private notification channel authorization is recipient-only and grants no client broadcast writes',async()=>{
+ const topic=`notifications-${ids.student}`;
+ await db.query("INSERT INTO realtime.messages(topic,extension,event,payload) VALUES($1,'broadcast','test','{}')",[topic]);
+ await db.query("SELECT set_config('realtime.topic',$1,false)",[topic]);
+ assert.equal((await sql(ids.student,'SELECT id FROM realtime.messages WHERE topic=$1',[topic])).rows.length,1);
+ assert.equal((await sql(ids.other,'SELECT id FROM realtime.messages WHERE topic=$1',[topic])).rows.length,0);
+ await assert.rejects(()=>sql(null,'SELECT id FROM realtime.messages WHERE topic=$1',[topic]),/permission denied/);
+ await db.query("SELECT set_config('realtime.topic',$1,false)",[`notifications-${ids.other}`]);
+ assert.equal((await sql(ids.student,'SELECT id FROM realtime.messages WHERE topic=$1',[topic])).rows.length,0);
+ await assert.rejects(()=>sql(ids.student,"INSERT INTO realtime.messages(topic,extension,event,payload) VALUES($1,'broadcast','test','{}')",[topic]),/permission denied|row-level security/);
+});
 test('paid enrollment is blocked until gateway-backed entitlements exist',async()=>{
  const course='10000000-0000-4000-8000-000000000099';
  await db.query("INSERT INTO courses(id,teacher_id,title,is_published,price_bdt) VALUES($1,$2,'Paid course',true,1000)",[course,ids.teacher]);

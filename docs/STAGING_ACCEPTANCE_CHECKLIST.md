@@ -1,18 +1,18 @@
 # Staging and academic acceptance
 
-27 October 2026. **No real Supabase staging scenario has passed in this phase.** The separate suite now discovers 16 scenarios (eleven original plus five Phase 3) and skips them without explicit target authorization and external credentials. Skips are blockers, never passes. Local simulated-browser and PostgreSQL WASM evidence is listed in TESTING.md.
+27 October 2026. **All 16 real hosted scenarios passed** on the explicitly approved disposable ShikkhaHub backend after 43 migrations and three function deployments. See [current setup and evidence](SUPABASE_STAGING_SETUP.md). Realtime public/anonymous/recipient boundaries were additionally probed against the real service. Without explicit external settings the suite still skips; skips are never passes. Local intercepted-browser and PostgreSQL evidence remains separate in TESTING.md.
 
 ## Before enabling real tests
 
-- [ ] Record explicit approval of a disposable, empty staging project and its exact host/reference. Confirm it is separate from production; an environment-variable label alone cannot identify production safely.
-- [ ] Complete every preflight, backup/restore and migration step in [STAGING_MIGRATION_PLAN.md](STAGING_MIGRATION_PLAN.md). Record ledger versions, migration hashes, validated constraints and policy review.
-- [ ] Create three **dedicated test accounts** through the authorized staging Auth invitation/signup/admin mechanism. Confirm emails through the staging mechanism. Assign teacher/admin roles through trusted server/SQL tooling only; the test runner never grants roles or provisions accounts.
-- [ ] Supply the exact approved host, public key and three role credentials externally. Verify the student has neither teacher nor admin and the teacher has no admin role.
-- [ ] Allow the runner to create and delete only its UUID-scoped, `staging-acceptance-*` courses, lessons, assessments, bookmarks and test objects. Keep unrelated data out of this project.
-- [ ] Configure allowed Auth origins/recovery redirects. Review private-only Realtime settings and all policies before setting `STAGING_REALTIME=enabled`.
-- [ ] Restrict artifact access. Real tests disable traces/screenshots/video, but reporter errors or future debugging can still reveal identity information. Never commit reports, credential files, sessions or signed URLs.
+- [x] Explicit disposable-project approval and exact authenticated/API/link match recorded. No application tables or Storage objects existed initially; one existing Auth account was preserved.
+- [x] Record all 43 ledger versions/hashes, review policies/owners, validate all four deferred constraints and run the read-only postflight. The broader backup/restore rehearsal remains an operational gate below.
+- [x] Create three **dedicated test accounts** after explicit approval through Auth Admin, confirmed without sending email. Assign teacher/admin only to those new IDs through trusted SQL; the browser test runner never grants roles or provisions accounts.
+- [x] Supply the exact approved host, public key and role credentials through protected local tooling. Real JWT checks verified the student has no staff roles and the teacher has no admin role.
+- [x] Allow only UUID-scoped test course/object creation and exact-ID cleanup. Retain isolated test accounts and manifests for intentionally surviving history.
+- [x] Configure local Auth/recovery URLs; verify public-channel `PrivateOnly`, anonymous private denial and per-recipient authorization before Realtime opt-in. Hosted origin/email/OAuth acceptance remains below.
+- [x] Disable hosted traces/screenshots/video and protect credentials/reports/manifests with restrictive permissions. Never commit them.
 
-## Automated real-service scenarios (all currently blocked)
+## Automated real-service scenarios (documented subset passed)
 
 | Scenario | Prepared proof | Acceptance required |
 | --- | --- | --- |
@@ -21,7 +21,7 @@
 | Teacher management | Disposable course setup through teacher JWT, UI course edit, independent server readback, scoped cleanup | Full manual create/module/upload/publish/delete walkthrough too |
 | Progress | UI complete/reload and direct persisted row check | Hosted write and PostgREST conflict semantics |
 | Quiz integrity | Answer-key read and fabricated score rejected; actual UI answer/result compared with stored score | Confirm RPC serialization and role column grants |
-| Assignment/grading | UI submission, rejected self-grade, independent teacher grading, student reload | Named PostgREST profile relationship and notifications |
+| Assignment/grading | UI submission, rejected self-grade, independent teacher grading, private grade-notification CDC and student reload | Broader cross-student/teacher and notification-recovery matrix |
 | Cross-user access | Rejected student course mutation; teacher cannot read student's private lesson bookmark | Add second learner/second teacher manual matrix for broader isolation |
 | Storage | Real text upload, student signing/download, public read denial, cross-owner upload denial | MIME/size, submission/recording buckets, legacy paths, expiry still manual |
 | Realtime (separate opt-in) | Private subscription, actual message reception, stamped teacher identity and student teacher-event denial | Outsider join/direct broadcast rejection, cached receiver revocation, physical devices/TURN still manual |
@@ -38,7 +38,7 @@ The suite uses real services without HTTP/WebSocket interception. It does not te
 - [ ] Test private-only Realtime, forbidden outsider joins, direct client broadcast denial and receiver revocation lifecycle. Current join authorization can remain cached.
 - [ ] Run teacher/student live media across physical devices and different networks, with an approved TURN relay. Check denied permissions, reconnect, screen share, recording upload/playback, leave and end.
 - [ ] Verify scheduled expiry jobs, backup restoration, error/abuse monitoring and authorized provider quotas. Optional AI requires rate limiting and provider/Deno acceptance before use.
-- [ ] Re-run full and production dependency audits before acceptance; this phase reports zero known findings. See SECURITY_RESOLUTION.md for all prior findings and scope. Keep test/dev servers on loopback and compile only trusted source.
+- [ ] Re-run full and production dependency audits before release acceptance. Earlier modernization reports recorded zero known findings; this database setup did not refresh that advisory snapshot. See SECURITY_RESOLUTION.md for historical scope. Keep test/dev servers on loopback and compile only trusted source.
 - [ ] Measure load, concurrent usage, bundle/loading performance and recovery objectives. No availability/scalability/load/compliance certification is claimed.
 - [ ] Complete screen-reader, keyboard, contrast, touch, non-Chrome and physical-device review; full dashboard translation remains incomplete.
 
@@ -49,14 +49,14 @@ The suite uses real services without HTTP/WebSocket interception. It does not te
 - [ ] Cross-check names/supervisor/title with the report cover. Omit its student IDs from public UI/docs. The original PDF is retained outside the repository.
 - [ ] Follow FINAL_YEAR_DEMO_GUIDE.md and identify whether the demonstration uses intercepted service fixtures or the approved live staging project. Never describe fixture persistence as hosted persistence.
 - [ ] Explain report inconsistencies: §3.3's resource-oriented ER figure, §3.5's conceptual schema, §3.7's Next.js listing and §5.2's future work. The current source schema and measured tests are the implementation evidence.
-- [ ] Leave payments, AI scoring, native apps and automated certification described as future work; standard SQL quiz scoring is implemented. Course approval and promo codes remain absent.
+- [ ] Leave paid entitlements, AI scoring, native apps and accredited certification described as future work. SQL quiz grading, authoritative platform certificates and administrator course approval are implemented; promo codes remain absent.
 - [ ] Use the selected Phase 1 screenshots only as labeled disposable-fixture examples; compare fresh browser artifacts with the interface before presentation. No real account credentials in slides or recordings.
 
 Public deployment remains blocked until the required hosted/security/operational acceptance above is completed and approved. This phase makes a local commit only.
 
 ## Phase 3 additional gates
 
-The prepared real-service suite now contains **16 scenarios**. None passed against hosted Supabase during this phase; all skip without approved external settings. `STAGING_FUNCTIONS=enabled` separately enables actual PDF/support function scenarios after reviewed deployment. Realtime still has its own opt-in.
+The real-service suite contains **16 scenarios**, all passed in the current authorized staging run, including actual PDF/support functions and private Realtime. They still skip without explicit approved settings. The items below describe broader/manual acceptance, not claims established by those 16 scenarios alone.
 
 - [ ] Run Phase 3 preflight, resolve certificate-number collisions and legacy booking overlaps, review legacy snapshots, then apply all five new migrations after the seven existing repairs. Verify revoked direct grants, exact policies/owners and schema cache.
 - [ ] Accept teacher review metadata workflow: draft → pending → approved/rejected; title/description/price edits return to draft. Confirm grandfathered publication and the non-versioned lesson-edit boundary.

@@ -1,6 +1,8 @@
 # Staging migration plan
 
-Reviewed 27 October 2026. No hosted migration was executed. The seven October files are unchanged from `6ad01db`; this phase adds adoption, failure/recovery and preflight regressions. Local evidence uses real PostgreSQL WASM with Auth/Storage/Realtime schema shims. `pg_cron`/`pg_net`, hosted role ownership, concurrent connections and provider services require Supabase acceptance.
+**Executed 27 October 2026:** all **43** canonical migrations are recorded on the explicitly approved disposable ShikkhaHub staging project (`pdg…zrs`); final dry run has no pending migrations. The authenticated project, API URL and CLI link matched before writes. Hosted catalog verification, all four deferred constraint validations and 16 real acceptance scenarios passed. See [the setup report](SUPABASE_STAGING_SETUP.md) and [sanitized evidence](supabase-staging-verification.json). The original Lovable-connected project was untouched.
+
+The per-phase review below retains the historical rollout/adoption requirements. The original seven October 26 files and original five Phase 3 files remain unchanged. Local PostgreSQL WASM and independent-connection shims remain separate evidence from hosted services. Existing-data and production rollouts still require their own backup/restore and operational approval.
 
 ## Target and recovery prerequisites
 
@@ -93,7 +95,7 @@ On SQL error, stop immediately. A transactional file rolls back atomically; prio
 
 There are no destructive down scripts. Dropping guards, restoring public buckets/answer grants or re-enabling arbitrary notification writes would restore known vulnerabilities. Prefer a reviewed forward repair. If the disposable target is inconsistent or prior manual DDL escaped transactions, restore its backup into a new disposable project and replay there; separately restore private object bytes and settings. Restore testing, object-reference checks and migration ledger reconciliation must pass before resuming writes. Never “repair” the migration ledger to conceal schema drift.
 
-Current blockers: no identified/approved staging target or role credentials, no hosted backup/restore rehearsal, unapplied seven migrations, unknown existing data/policies/object paths/provider ownership, unvalidated hosted constraints, real Auth/Storage/Realtime and concurrent-connection acceptance, and no TURN/physical-device proof.
+Earlier Phase 2 blockers included missing target/credentials and unapplied migrations. The current staging run resolves identity, migrations, constraints and the documented real-service subset. Full backup restoration, broader hosted concurrency, email/OAuth, all-bucket acceptance and TURN/physical-device proof remain open.
 
 ## Phase 3 extension — five pending additive files
 
@@ -135,8 +137,21 @@ SELECT schemaname,tablename,policyname,cmd,qual,with_check FROM pg_policies
 NOTIFY pgrst, 'reload schema';
 ```
 
-Then run distinct real JWTs through every new RPC and private table. Verify invalid state transitions/direct writes, cross-owner reads, concurrent confirmations, last-admin READ COMMITTED/REPEATABLE READ behavior, certificate auto-issuance/idempotency/revocation/removal, accurate paginated totals and guest/authenticated support privacy. Stage/deploy the two Edge Functions **only after separate authorization**, using the settings/font/import-map instructions in PHASE3_FEATURE_GUIDE.md. Acceptance must confirm exact origin checks, modern public-key/JWT behavior, service-key scope, font static-file packaging and returned PDF bytes.
+Then run distinct real JWTs through every new RPC and private table. Verify invalid state transitions/direct writes, cross-owner reads, concurrent confirmations, last-admin READ COMMITTED/REPEATABLE READ behavior, certificate auto-issuance/idempotency/revocation/removal, accurate paginated totals and guest/authenticated support privacy. Deploy functions only within the authorized staging setup using PHASE3_FEATURE_GUIDE.md; this run explicitly authorized and deployed all three adapters. Acceptance must confirm exact origin checks, modern public-key/JWT behavior, service-key scope, font static-file packaging and returned PDF bytes.
 
 The local independent-connection rehearsal used temporary PostgreSQL 18.4 with private Unix sockets and explicit Auth/Storage/Realtime shims; it does not establish hosted extension ownership or Supabase services. PGlite also tests atomic recovery from duplicate old certificate numbers, preserving both legacy rows and the old FK after a failed file 10 transaction.
 
 Recovery: stop on the first error, inspect the ledger/schema, preserve evidence, resolve the reviewed cause and retry only the pending transaction. Previous successful files remain applied. Prefer forward repairs or restoring a disposable backup into a new target. Do not restore direct client role/certificate writes, public ticket access or the former broad tutoring mutations as a rollback shortcut. Roll back the matching frontend if RPCs are unavailable. Existing downloaded PDFs cannot be recalled; retain verification/revocation metadata. Completed/cancelled bookings, certificates, tickets, notes and audit history need explicit retention/cleanup decisions, not automatic deletion.
+
+## Additional staging corrections and execution
+
+| Source position | Additive file | Evidence and behavior |
+| --- | --- | --- |
+| 42 | `202610270006_existing_auth_profiles.sql` | Hosted preflight found one Auth account predating the application tables. A regression first proved the old chain leaves its profile missing. Insert only missing profiles using signup metadata, preserve existing profiles and default student role behavior, and never infer staff roles from metadata. |
+| 43 | `202610270007_private_notification_channels.sql` | Private-only Realtime rejects the UI's old public notification channel. Use a private per-user topic and an authenticated SELECT policy matching both the recipient and joined topic; no browser broadcast-write policy is added. SQL/component regressions and actual recipient/outsider subscriptions verify the repair. |
+
+The initial dry run included all 41 original files with no seeds/role files. The profile repair was locally validated and included in the first 42-file hosted push; the notification correction was separately dry-run/applied as the only pending file. Final ledger comparison includes all 43 versions, including historical empty files, with zero pending changes. No historical file was renamed or rewritten and no ledger repair/reset was used.
+
+Use `npx supabase@2.122.0 db query --linked --file tests/staging-postflight.sql` after independently checking the link. The script runs in a read-only transaction and returns one JSON report covering expected tables/RLS, RPCs, unique indexes, grants, complete policies, owners/search paths, FKs, buckets, publication and extensions. Review zero blocker counts, false forbidden privileges and zero unvalidated constraints after the separate validation procedure; counts alone are insufficient.
+
+The initial staging database had no application tables, policies, buckets or objects, but one Auth account. Protected configuration/catalog snapshots were retained; a full backup/restore rehearsal was not performed. This disposable setup does not satisfy production recovery acceptance. See [SUPABASE_STAGING_SETUP.md](SUPABASE_STAGING_SETUP.md) for executed service checks, function deployment, dedicated test identities and remaining operational requirements.

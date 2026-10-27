@@ -1,0 +1,747 @@
+{
+  "verificationDate": "2026-10-27",
+  "timezone": "Asia/Dhaka",
+  "target": {
+    "name": "ShikkhaHub",
+    "maskedReference": "pdg…zrs",
+    "region": "ap-northeast-1",
+    "authenticatedApiAndLinkMatched": true,
+    "explicitDisposableApproval": true,
+    "originalProjectResourcesAccessedOrChanged": false
+  },
+  "supabaseCliVersion": "2.122.0",
+  "migrationCount": 43,
+  "applied": 43,
+  "pending": 0,
+  "migrations": [
+    {
+      "file": "20260307133541_9652c161-8100-49f0-9c75-3b83b151407f.sql",
+      "version": "20260307133541",
+      "sha256": "147a0884778679e03a8cc7c42bad32f27a8c776d6a4e716c85969cc8cdfae5c4",
+      "bytes": 7888,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260307134247_e5193209-bed6-4d3a-9e5f-b7fdbbabb3a9.sql",
+      "version": "20260307134247",
+      "sha256": "00b53fe0359e63f8595c2f4eb57d82f050699a769dc73232aa04c97239beb47a",
+      "bytes": 3334,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308083020_92cf9393-3870-4f68-85f0-59485cd159d5.sql",
+      "version": "20260308083020",
+      "sha256": "9b40b1e86e9077966e1071f08022598364c61e1562585d62e6359cfcb414c9a3",
+      "bytes": 1733,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308083419_9eed2bfe-abe1-4076-ba45-163afbc44771.sql",
+      "version": "20260308083419",
+      "sha256": "2ffc5d3199a865e921c3e504578dc24d469e8b9e619a1d0427c039c85d1006c3",
+      "bytes": 1280,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308083717_fc93504e-9eb1-4689-9291-484e470c07fa.sql",
+      "version": "20260308083717",
+      "sha256": "6a4587a994c982410b41bbcef1bdd39ea48a40b404f270d014f6a6f88b3fcc03",
+      "bytes": 3547,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308124752_b38686aa-a21f-42db-9cbe-da55853a68f6.sql",
+      "version": "20260308124752",
+      "sha256": "ad97b18344281042a63957ea9ed52c6e8c100f036da9e91025b985db79b4b8eb",
+      "bytes": 818,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308125146_e476cd9d-d18a-4b3b-98c9-b2122aa42ff8.sql",
+      "version": "20260308125146",
+      "sha256": "c0f37c8c46059887e9d31be0dbe5bc5e05f4b2a7e7f89edf3a954b2b055ed767",
+      "bytes": 915,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308125605_4f9ca90c-8261-4f17-a169-21afcd4bcddd.sql",
+      "version": "20260308125605",
+      "sha256": "4fcb59db4818ab5c07d7f29388f4bcd66ee5a13a9a53d07d08cbdcce156c4245",
+      "bytes": 1420,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308131345_fd913025-8d61-47ca-9ec7-aebb1e929975.sql",
+      "version": "20260308131345",
+      "sha256": "53b51bd1baf6dab0d6face91f1b5d0fc36aa8f5ddc57418ddde21beb9ff6d672",
+      "bytes": 1590,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308131742_746c367a-ece4-4e63-98dc-8b194d4a077e.sql",
+      "version": "20260308131742",
+      "sha256": "d194a9c6b58486c70ec6ddce2980ecf3acafb92170bc320e4816ab1e02482134",
+      "bytes": 2019,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308132445_a09e7806-b4e2-4333-b3af-2adf812dcef7.sql",
+      "version": "20260308132445",
+      "sha256": "773e9b0b7b1f56504fe9da95e388daa642c4a0586f33745ad8c90d46d9219e87",
+      "bytes": 1016,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308132510_3c7c563a-7d5c-44c8-b805-876a37c9377e.sql",
+      "version": "20260308132510",
+      "sha256": "05f85d054cd8995087f731158c8389be1721c52e711306ac7d8d0499a21ef225",
+      "bytes": 456,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308132948_a5cf7f1b-8fe5-462d-b401-8bfb3bc67fc5.sql",
+      "version": "20260308132948",
+      "sha256": "700c2a2d1db8a1dcba933e6aeff4ecd23daa028fc532bd8d2bd20285cd9c095a",
+      "bytes": 2515,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308133343_bdd209f0-4cc9-4397-ac7d-b5ec0b1c809c.sql",
+      "version": "20260308133343",
+      "sha256": "6d7b61cfcb38752cbc1df9196695877e0e031ad777a614731f7fffb3e695271c",
+      "bytes": 5347,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308162445_06c6f415-96e3-4c24-99bc-d13b23bd911c.sql",
+      "version": "20260308162445",
+      "sha256": "9e9994e6fec02d9d1f62062fb3a9aa0f9124ff1b1148d19ea8a8783b5a60b08e",
+      "bytes": 551,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308163818_58b55456-8e46-49c9-a705-3ab3797a9ce4.sql",
+      "version": "20260308163818",
+      "sha256": "6897c796f9171a51f12206648b07a1a44a4358d43f8bcaf58e8c321ef7c75504",
+      "bytes": 232,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308190728_560ffb69-daf8-4aef-9576-48dbcfa36619.sql",
+      "version": "20260308190728",
+      "sha256": "3b598906ef15c2a904ea316fcf720da3af0b8b3e4ac7f2a4b610a3a4b01bd3c9",
+      "bytes": 747,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308204043_033fa78a-7ac6-494b-a624-bb61c5f0021e.sql",
+      "version": "20260308204043",
+      "sha256": "639c8050443fda59b848eaa0335d08b95b3e4d4bec750e9a6b800c166c639953",
+      "bytes": 1800,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308210154_d932768a-9991-4d21-81c2-1f5e7313a164.sql",
+      "version": "20260308210154",
+      "sha256": "87056c99e3a9b747e66c10c0e49fa1ff1943977b9c7b5c8620142cb86a482536",
+      "bytes": 3925,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308214527_39f525dc-7da6-4d13-baa1-fbf4f164c4db.sql",
+      "version": "20260308214527",
+      "sha256": "2be98d1c15026c50f924e48bbc3e1e094a45f2e9bde910d535804ca1a78eebce",
+      "bytes": 375,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260308214544_4d9f38b6-18a9-4b0a-a291-d1d6f111eeca.sql",
+      "version": "20260308214544",
+      "sha256": "7c46412e6771ee447a6321054ace6f92e1099f6bb8757038e3a12e3296029572",
+      "bytes": 126,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260901120150_b35f6295-6198-4c4b-bc42-4cea64995117.sql",
+      "version": "20260901120150",
+      "sha256": "f0f98ca839ea9f3d1879d773d7528d70917967b4908a275de79718ea899f58a2",
+      "bytes": 1699,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260905152652_16bec8b2-f57c-4912-a104-1fa059232d7d.sql",
+      "version": "20260905152652",
+      "sha256": "16a454830f46e1cb6ab20493acbac1fca263faf07edc253f76e1425de2093e5e",
+      "bytes": 738,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260905152721_9f18259f-3dff-40f0-ac3a-3a38491c8234.sql",
+      "version": "20260905152721",
+      "sha256": "fdbbb66c1883a06acae3b1daf979be5762dc7fc49fe59141b7819c9ca8c25fc6",
+      "bytes": 726,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260908133703_d1ff1baf-8c51-4fd4-a02d-240194f1cd00.sql",
+      "version": "20260908133703",
+      "sha256": "f3e812a593cf89d5d40e9cb2e9598d637dba0888ada6c4e7bc32583ef6b8063f",
+      "bytes": 469,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260909134251_37ba379b-8539-4f12-a0ad-f330252d74a1.sql",
+      "version": "20260909134251",
+      "sha256": "72c865dd28dfda107f62eed6521282a23a870cc1ec348e9d0ab75740ae5b75b0",
+      "bytes": 663,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260909134317_e7c87549-5c89-4781-a165-c44df622a3d1.sql",
+      "version": "20260909134317",
+      "sha256": "4b63be2f114bd3f5e62061dd22bd712111501deddb97e853bd322ef28cdd3cec",
+      "bytes": 85,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260909134354_c2a66f74-1ef1-42de-9fc8-0e03448a8441.sql",
+      "version": "20260909134354",
+      "sha256": "d1d289021877a7f9512f26468a94f403cc2dcdfffdff0cb85df6e6258812ad92",
+      "bytes": 81,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "20260909134431_3cb12370-f670-49d0-a2c7-9d4225b5c16c.sql",
+      "version": "20260909134431",
+      "sha256": "08f06b2c09461c3f93f22d8c10f4617f08382ec2a4d5c0965db7124af85d4281",
+      "bytes": 344,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610260001_authorization_and_assessments.sql",
+      "version": "202610260001",
+      "sha256": "911082ea4a784a8538f9f93e008897685053d2be561979396e7fa19a1abfd96d",
+      "bytes": 15089,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610260002_storage_and_tutoring.sql",
+      "version": "202610260002",
+      "sha256": "f04cda09050c0f536966cf4fed43a82f1bb1472c52e6a360e3d6e9e5bdd07326",
+      "bytes": 9436,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610260003_private_live_signaling.sql",
+      "version": "202610260003",
+      "sha256": "f2973f7d68370c0510464a7134b6f56a600ec7a26b7f6bcb625ca76e616d57d8",
+      "bytes": 2252,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610260004_activity_integrity.sql",
+      "version": "202610260004",
+      "sha256": "a717b499e0c4bbfe3cc0b810344d75358a14e530b893f011237a07ddee853131",
+      "bytes": 2317,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610260005_catalog_and_leaderboard.sql",
+      "version": "202610260005",
+      "sha256": "536685c8a1dc111df3dd57fcfbd8d0f00839d461d26eb011fd911db4be8ee55a",
+      "bytes": 1422,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610260006_lesson_bookmarks.sql",
+      "version": "202610260006",
+      "sha256": "4d6a3958198bf5679e64f89649d33d57b25540fd57237ebd49a1c16fe689dc42",
+      "bytes": 1038,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610260007_course_child_ownership.sql",
+      "version": "202610260007",
+      "sha256": "70a573efea30333a31e44c13aa5235f4f755a4f29d8bd3d5205e2e7fe90d4b8b",
+      "bytes": 717,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610270001_administration.sql",
+      "version": "202610270001",
+      "sha256": "72e19867aca382407f43fa882acead7bf27109ec99ccc2bbb502c6d37b7ad30f",
+      "bytes": 8430,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610270002_tutoring_lifecycle.sql",
+      "version": "202610270002",
+      "sha256": "b6cbc7edb5ff5a8d958e6de287008ceff7cd7c644f4916cd06d664a119bbffa3",
+      "bytes": 12157,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610270003_authoritative_certificates.sql",
+      "version": "202610270003",
+      "sha256": "cb5da37b22a5dadfe066187051f6a41be79f453ba88d62958e9588bab8ea2727",
+      "bytes": 7925,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610270004_support.sql",
+      "version": "202610270004",
+      "sha256": "ed4f90bf990696ae750dcf91153cbcf5bc328a1c84a9bf92479532816938d59a",
+      "bytes": 5919,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610270005_admin_reporting.sql",
+      "version": "202610270005",
+      "sha256": "5a43da7d1e600c34cde64921f648b5f6ab48ed2fa92b47c64bb77a3f509bb34c",
+      "bytes": 7732,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610270006_existing_auth_profiles.sql",
+      "version": "202610270006",
+      "sha256": "b4c0bd8beb339699c31608bf0e11d4182587201ebec87c0668f486603d4da850",
+      "bytes": 509,
+      "recordedOnStaging": true
+    },
+    {
+      "file": "202610270007_private_notification_channels.sql",
+      "version": "202610270007",
+      "sha256": "6afd7b491c9649466768ac0735599331e8e399d9f13a3975f6a4bd4208aec57f",
+      "bytes": 484,
+      "recordedOnStaging": true
+    }
+  ],
+  "hostedCatalog": {
+    "tables": 35,
+    "tablesWithRLS": 35,
+    "indexes": 64,
+    "foreignKeys": 46,
+    "functionsIncludingProviderHelper": 48,
+    "publicPolicies": 115,
+    "storagePolicies": 15,
+    "realtimePolicies": 2,
+    "unvalidatedConstraints": 0,
+    "checks": [
+      {
+        "blockers": 0,
+        "check_name": "application tables without RLS"
+      },
+      {
+        "blockers": 0,
+        "check_name": "incorrect Storage visibility"
+      },
+      {
+        "blockers": 0,
+        "check_name": "missing application tables"
+      },
+      {
+        "blockers": 0,
+        "check_name": "missing lifecycle RPCs"
+      },
+      {
+        "blockers": 0,
+        "check_name": "missing notification publication"
+      },
+      {
+        "blockers": 0,
+        "check_name": "missing required unique indexes"
+      },
+      {
+        "blockers": 0,
+        "check_name": "missing Storage buckets"
+      },
+      {
+        "blockers": 0,
+        "check_name": "security definers without fixed search path"
+      }
+    ],
+    "forbiddenPrivileges": {
+      "anonymous_intake_must_be_false": false,
+      "answer_read_must_be_false": false,
+      "attempt_insert_must_be_false": false,
+      "booking_update_must_be_false": false,
+      "certificate_insert_must_be_false": false,
+      "client_intake_must_be_false": false,
+      "notification_insert_must_be_false": false,
+      "role_delete_must_be_false": false
+    },
+    "schemaPermissions": [
+      {
+        "role": "anon",
+        "untrusted_create_must_be_false": false
+      },
+      {
+        "role": "authenticated",
+        "untrusted_create_must_be_false": false
+      }
+    ],
+    "tablesInventory": [
+      {
+        "name": "admin_audit_log",
+        "rls": true
+      },
+      {
+        "name": "application_locks",
+        "rls": true
+      },
+      {
+        "name": "assignments",
+        "rls": true
+      },
+      {
+        "name": "badges",
+        "rls": true
+      },
+      {
+        "name": "certificates",
+        "rls": true
+      },
+      {
+        "name": "class_recordings",
+        "rls": true
+      },
+      {
+        "name": "community_comments",
+        "rls": true
+      },
+      {
+        "name": "community_posts",
+        "rls": true
+      },
+      {
+        "name": "community_upvotes",
+        "rls": true
+      },
+      {
+        "name": "course_bookmarks",
+        "rls": true
+      },
+      {
+        "name": "course_discussions",
+        "rls": true
+      },
+      {
+        "name": "course_prerequisites",
+        "rls": true
+      },
+      {
+        "name": "course_reviews",
+        "rls": true
+      },
+      {
+        "name": "courses",
+        "rls": true
+      },
+      {
+        "name": "enrollments",
+        "rls": true
+      },
+      {
+        "name": "lesson_bookmarks",
+        "rls": true
+      },
+      {
+        "name": "lesson_progress",
+        "rls": true
+      },
+      {
+        "name": "lessons",
+        "rls": true
+      },
+      {
+        "name": "live_classes",
+        "rls": true
+      },
+      {
+        "name": "modules",
+        "rls": true
+      },
+      {
+        "name": "notifications",
+        "rls": true
+      },
+      {
+        "name": "profiles",
+        "rls": true
+      },
+      {
+        "name": "quiz_attempts",
+        "rls": true
+      },
+      {
+        "name": "quiz_questions",
+        "rls": true
+      },
+      {
+        "name": "quizzes",
+        "rls": true
+      },
+      {
+        "name": "submissions",
+        "rls": true
+      },
+      {
+        "name": "support_intake_limits",
+        "rls": true
+      },
+      {
+        "name": "support_notes",
+        "rls": true
+      },
+      {
+        "name": "support_tickets",
+        "rls": true
+      },
+      {
+        "name": "teacher_requests",
+        "rls": true
+      },
+      {
+        "name": "tutor_profiles",
+        "rls": true
+      },
+      {
+        "name": "tutor_slots",
+        "rls": true
+      },
+      {
+        "name": "tutoring_requests",
+        "rls": true
+      },
+      {
+        "name": "user_badges",
+        "rls": true
+      },
+      {
+        "name": "user_roles",
+        "rls": true
+      }
+    ],
+    "buckets": [
+      {
+        "allowed_mime_types": [
+          "image/png",
+          "image/jpeg",
+          "image/webp"
+        ],
+        "file_size_limit": 5242880,
+        "id": "avatars",
+        "public": true
+      },
+      {
+        "allowed_mime_types": null,
+        "file_size_limit": null,
+        "id": "class-recordings",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/png",
+          "image/jpeg",
+          "image/webp"
+        ],
+        "file_size_limit": 5242880,
+        "id": "course-thumbnails",
+        "public": true
+      },
+      {
+        "allowed_mime_types": [
+          "application/pdf",
+          "text/plain",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "video/mp4",
+          "video/webm"
+        ],
+        "file_size_limit": 52428800,
+        "id": "lesson-files",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "application/pdf",
+          "text/plain",
+          "application/zip",
+          "application/x-zip-compressed",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ],
+        "file_size_limit": 10485760,
+        "id": "submissions",
+        "public": false
+      }
+    ],
+    "extensions": [
+      {
+        "extname": "pg_cron",
+        "extversion": "1.6.4"
+      },
+      {
+        "extname": "pg_net",
+        "extversion": "0.20.4"
+      }
+    ],
+    "cronJobs": 0
+  },
+  "auth": {
+    "emailPassword": true,
+    "emailConfirmationRequired": true,
+    "googleConfigured": false,
+    "siteUrl": "http://localhost:8080",
+    "redirectOrigins": [
+      "http://localhost:8080",
+      "http://127.0.0.1:8080",
+      "http://127.0.0.1:18081"
+    ],
+    "existingAuthAccountsPreserved": 1,
+    "dedicatedApprovedTestAccountsCreated": 3,
+    "testRolesProvisionedByTrustedSQL": true,
+    "emailsSent": false,
+    "emailDeliveryVerified": false
+  },
+  "realtime": {
+    "publicRejectedWithPrivateOnly": true,
+    "anonymousPrivateDenied": true,
+    "signedInOwnNotificationTopicJoined": true,
+    "signedInOtherRecipientTopicDenied": true,
+    "liveBroadcastAndIdentityStampingVerified": true,
+    "privateNotificationCDCReceived": true
+  },
+  "edgeFunctions": {
+    "deployed": [
+      "certificate-pdf",
+      "support-contact",
+      "course-assistant"
+    ],
+    "httpChecksPassed": 10,
+    "pdfBytesInDedicatedDiagnostic": 399734,
+    "sessionDiagnosticStatuses": [
+      200,
+      403,
+      200
+    ],
+    "fontsAndLicensePackaged": true,
+    "aiProviderConfigured": false,
+    "appPublicOrigin": "http://localhost:8080",
+    "customSecretNames": [
+      "APP_ALLOWED_ORIGINS",
+      "APP_PUBLIC_ORIGIN",
+      "SUPPORT_CHALLENGE_SECRET"
+    ],
+    "authenticatedAssistantUnconfiguredStatus": 503
+  },
+  "localVerification": {
+    "typecheck": "passed",
+    "eslintErrors": 0,
+    "eslintWarnings": 0,
+    "unitTests": 82,
+    "unitFiles": 22,
+    "databaseTests": 49,
+    "concurrencyIntegrationTests": 1,
+    "independentConnectionRaces": 4,
+    "postgresVersion": "18.4",
+    "productionBuild": "passed",
+    "fixtureChromePassed": 39,
+    "fixtureChromeFailed": 0,
+    "sourceScreenshotsInspected": [
+      "375px admin support",
+      "1440px landing"
+    ],
+    "localSqlProviderExtensionsSkipped": true
+  },
+  "hostedBrowser": {
+    "status": "passed",
+    "initialRun": {
+      "passed": 13,
+      "failed": 1,
+      "didNotRun": 2,
+      "cause": "Driver SDK session revoked by prior UI global logout; reauthenticated driver without weakening server checks"
+    },
+    "intercepted": false,
+    "traceScreenshotsAndVideo": false,
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationMilliseconds": 63836.524000000005,
+    "privateNotificationCDCVerifiedDuringGrading": true
+  },
+  "supabaseDatabaseLint": {
+    "errors": 0,
+    "warnings": 2,
+    "function": "public.save_tutor_slot",
+    "details": [
+      "outer i shadowed by loop variable",
+      "unused outer i"
+    ]
+  },
+  "remaining": [
+    "Confirmation/recovery email delivery and approved Google OAuth",
+    "Approved hosted frontend and PDF verification origin",
+    "All-bucket MIME/size/signed-URL expiry acceptance",
+    "Broader hosted concurrency and receiver revocation",
+    "Scheduled expiry job and observed execution",
+    "Backup and restore rehearsal",
+    "AI provider configuration, quotas and abuse controls",
+    "Physical media/TURN and broader accessibility/non-Chrome/load review"
+  ],
+  "frontendDeployed": false,
+  "productionTouched": false,
+  "pushed": false,
+  "productionApproved": false,
+  "readOnlyPublicBrowser": {
+    "browser": "Chrome",
+    "viewport": "1440x1000",
+    "interception": false,
+    "authenticated": false,
+    "accountOrDataWrites": false,
+    "routes": [
+      {
+        "path": "/",
+        "shellRendered": true
+      },
+      {
+        "path": "/auth",
+        "shellRendered": true
+      },
+      {
+        "path": "/faq",
+        "shellRendered": true
+      },
+      {
+        "path": "/courses",
+        "shellRendered": true
+      }
+    ],
+    "pageExceptions": 0,
+    "backendResponseStatuses": [
+      200
+    ],
+    "backendRequestFailures": 0
+  },
+  "cleanup": {
+    "cron_jobs": 0,
+    "dedicated_accounts": 3,
+    "manifest_course_rows_remaining": 0,
+    "manifest_storage_objects_remaining": 0,
+    "missing_profiles": 0,
+    "other_account_staff_roles": 0,
+    "other_auth_accounts": 1,
+    "unvalidated_constraints": 0
+  },
+  "stagingReadyForFurtherAcceptance": true,
+  "verificationArtifacts": {
+    "hostedReport": "artifacts/staging-results.json",
+    "hostedLog": "artifacts/staging/hosted-run.log",
+    "initialHostedFailure": "artifacts/staging-initial-hosted/",
+    "testCredentials": "artifacts/staging/staging-accounts.env",
+    "hostedReportMode": "0600",
+    "testCredentialMode": "0600",
+    "hostedResultDirectoryMode": "0700"
+  }
+}

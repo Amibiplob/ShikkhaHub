@@ -4,6 +4,8 @@ ShikkhaHub is a final-year CSE project at City University, Bangladesh. Students 
 
 ShikkhaHub is independently maintained. It uses **React 19.3, TypeScript 6, Vite 8 with Rolldown/Oxc, React Router 7, Tailwind CSS 4, Radix UI, TanStack Query, and Supabase**. The browser SPA keeps authentication, authorization and data storage in Supabase.
 
+**Staging update, 27 October 2026:** the explicitly approved disposable backend has all **43 migrations applied**, three deployed Edge Functions and **16/16 real hosted acceptance scenarios passed**. See [staging setup and verification](docs/SUPABASE_STAGING_SETUP.md) for identity checks, configuration, corrections and remaining manual gates. Earlier modernization/Phase 3 no-hosted-access statements describe those earlier runs.
+
 See [dependency upgrades](docs/DEPENDENCY_UPGRADE_REPORT.md), [cleanup](docs/CODEBASE_CLEANUP_REPORT.md), [visual assets](docs/VISUAL_ASSET_AUDIT.md), and [current verification](docs/MODERNIZATION_VERIFICATION.md) for the modernization evidence and remaining hosted acceptance requirements.
 
 ## Features and roles
@@ -58,6 +60,8 @@ Never put a service-role key in the frontend. Existing `.env` contents were pres
 
 ## Supabase setup
 
+Use [SUPABASE_STAGING_SETUP.md](docs/SUPABASE_STAGING_SETUP.md) for the current procedure. The API URL, authenticated project reference and CLI link must match before every hosted operation. `config.toml`'s `project_id` is a local namespace, not authority to target a remote project. Never reuse the original Lovable-connected backend.
+
 1. Create an explicitly disposable project or local Supabase stack. Apply `supabase/migrations/` in timestamp order using the Supabase CLI. Do not apply `drizzle/migrations/` a second time on a new project.
 2. Inspect [migration rollout notes](docs/DATABASE_ROLLOUT.md) before applying the October repairs to existing data. Duplicate submissions and historical storage paths need human review. Local WASM tests do not verify hosted Storage, Auth, extensions or Realtime services.
 3. Configure Auth email confirmation/recovery redirects for your exact local/hosted origin and `/reset-password`. Google OAuth requires a separately approved test provider setup.
@@ -88,9 +92,9 @@ See [TESTING.md](TESTING.md) for exact evidence, artifacts, scope and reproducti
 
 ## Deployment
 
-Deploy `dist/` to a static host with SPA history fallback to `index.html`. Set the public Vite variables **before building**. Apply reviewed migrations separately to the authorized backend, configure Auth redirects and private-only Realtime, then perform hosted role/storage/media acceptance. No deployment, push, production migration or provider configuration was performed by this audit.
+Deploy `dist/` to a static host with SPA history fallback to `index.html`. Set the public Vite variables **before building**. Apply reviewed migrations separately to the authorized backend, configure Auth redirects and private-only Realtime, then perform hosted role/storage/media acceptance. This staging setup deployed backend functions only; no frontend deployment, push or production migration was performed.
 
-**Not production-cleared.** Phase 3 audits report zero known dependency findings, but external configuration, hosted migration acceptance, real email/OAuth, Storage, Realtime and TURN/NAT testing remain open. WebRTC currently has STUN servers and no configured TURN relay. Recordings use browser MediaRecorder; multi-device/screen-sharing and long recording tests remain manual.
+**Not production-cleared.** The hosted staging subset passes, but real email/OAuth, broader Storage/Realtime acceptance, backup restoration, scheduled expiry and TURN/NAT testing remain open. WebRTC currently has STUN servers and no configured TURN relay. Recordings use browser MediaRecorder; multi-device/screen-sharing and long recording tests remain manual.
 
 ## Verified screenshots
 
@@ -111,9 +115,9 @@ The compact landing-page team section supports both themes and English/Bangla de
 
 ## Review and demonstration
 
-[Phase 3 feature guide](docs/PHASE3_FEATURE_GUIDE.md) documents tutoring, server-generated certificates, admin review/roles and support, including all routes, business rules, server secrets, font licenses and evidence boundaries. New public pages: `/faq`, `/contact`, `/tutors`, `/certificates/verify/:token`; account pages: `/dashboard?tab=tutoring`, `/certificates`, `/admin`. Five additive migrations follow the seven Phase 1 files. Deploy neither frontend nor functions without authorized staging acceptance; no deployment was performed.
+[Phase 3 feature guide](docs/PHASE3_FEATURE_GUIDE.md) documents tutoring, server-generated certificates, admin review/roles and support, including all routes, business rules, server secrets, font licenses and evidence boundaries. New public pages: `/faq`, `/contact`, `/tutors`, `/certificates/verify/:token`; account pages: `/dashboard?tab=tutoring`, `/certificates`, `/admin`. Five original Phase 3 migrations and two staging corrections follow the seven Phase 1 repairs. Backend functions are deployed only to the approved disposable staging target; the frontend remains undeployed.
 
-Phase 3 verification (27 October 2026): see [TESTING.md](TESTING.md) for actual results, [security resolution](docs/SECURITY_RESOLUTION.md) for all 14 prior findings and nine retained lint warnings, [migration plan](docs/STAGING_MIGRATION_PLAN.md) for per-file review/preflight/recovery, and [staging acceptance](docs/STAGING_ACCEPTANCE_CHECKLIST.md) for external blockers. No hosted account, migration, deployment or provider configuration was changed.
+Verification (27 October 2026): see [TESTING.md](TESTING.md) for current local/hosted results, [security resolution](docs/SECURITY_RESOLUTION.md) for historical findings, [migration plan](docs/STAGING_MIGRATION_PLAN.md) for review/preflight/recovery, and [staging acceptance](docs/STAGING_ACCEPTANCE_CHECKLIST.md) for remaining gates. Staging setup changed only the approved disposable backend; the original project and production remain untouched.
 
 - [Requirements matrix](docs/REPORT_REQUIREMENTS_MATRIX.md): evidence and limitations per major requirement. Phase 2 inspected the original 33-page PDF; printed/PDF page references and discrepancies are recorded.
 - [Audit report](docs/SHIKKHAHUB_AUDIT_REPORT.md): architecture, verification boundaries, security and remaining risks.

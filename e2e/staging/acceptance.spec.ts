@@ -231,7 +231,7 @@ test.describe("REAL Supabase staging acceptance (external opt-in)", () => {
     }
     for (const client of Object.values(clients)) {
       await client.removeAllChannels();
-      await client.auth.signOut();
+      await client.auth.signOut({ scope: "local" });
     }
     expect(
       failures,
@@ -262,6 +262,18 @@ test.describe("REAL Supabase staging acceptance (external opt-in)", () => {
       await page.getByRole("menuitem", { name: /Sign Out/i }).click();
       await page.goto("/dashboard");
       await expect(page).toHaveURL(/\/auth/);
+      // The application's global logout also revokes this role's independent
+      // SDK session. REST can still accept its unexpired JWT, while getUser in
+      // Edge Functions correctly rejects the revoked session. Reauthenticate
+      // the test driver rather than weakening the deployed session checks.
+      const driver = await clients[role].auth.signInWithPassword(
+        settings!.identities[role],
+      );
+      ok(driver.error);
+      expect(driver.data.user?.id).toBe(uid[role]);
+      const active = await clients[role].auth.getUser();
+      ok(active.error);
+      expect(active.data.user?.id).toBe(uid[role]);
     });
 
   test("unenrolled content and draft access are denied", async () => {
@@ -413,7 +425,25 @@ test.describe("REAL Supabase staging acceptance (external opt-in)", () => {
       baseURL: "http://127.0.0.1:18081",
     });
     const teacherPage = await context.newPage();
+    const gradeNotices: Record<string, unknown>[] = [];
+    const notifications = clients.student
+      .channel(`notifications-${uid.student}`, {
+        config: { private: true, postgres_changes_options: { wait: true, timeout: 15_000 } },
+      })
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public", table: "notifications",
+        filter: `user_id=eq.${uid.student}`,
+      }, ({ new: notice }) => gradeNotices.push(notice));
     try {
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Private notification subscription timed out")), 20_000);
+        notifications.subscribe((status) => {
+          if (status === "SUBSCRIBED") { clearTimeout(timer); resolve(); }
+          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            clearTimeout(timer); reject(new Error("Private notification subscription denied"));
+          }
+        });
+      });
       await login(teacherPage, "teacher");
       await teacherPage.goto(`/assignments/${assignment}`);
       await teacherPage
@@ -429,11 +459,15 @@ test.describe("REAL Supabase staging acceptance (external opt-in)", () => {
       await expect(
         teacherPage.getByText("90/100", { exact: true }),
       ).toBeVisible();
+      await expect.poll(() => gradeNotices.some(notice =>
+        notice.type === "grade" && notice.link === `/assignments/${assignment}`,
+      )).toBe(true);
       await page.reload();
       await expect(
         page.getByText("Marks: 90/100", { exact: true }),
       ).toBeVisible();
     } finally {
+      await clients.student.removeChannel(notifications);
       await context.close();
     }
   });

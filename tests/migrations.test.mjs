@@ -1,9 +1,52 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { createDatabase, seed, ids, asUser } from './database.mjs';
+import { PGlite } from '@electric-sql/pglite';
+import { createDatabase, databaseBootstrapSQL, seed, ids, asUser } from './database.mjs';
+
+test('pre-existing Auth accounts receive missing profiles without overwriting profiles or elevating roles', async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(databaseBootstrapSQL);
+    for (const id of [ids.student, ids.other]) await db.query(
+      'INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES($1,$2,$3)',
+      [id, 'existing@example.test', JSON.stringify({ full_name: 'Existing Auth learner', wants_teacher: true })]);
+    const files = (await readdir('supabase/migrations')).filter(file => file.endsWith('.sql')).sort();
+    for (const file of files) {
+      if (file.startsWith('20260308214544')) continue; // Provider-only extensions.
+      await db.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
+      if (file === files[0]) await db.query('INSERT INTO profiles(user_id,full_name) VALUES($1,$2)', [ids.student, 'Keep chosen profile']);
+    }
+    assert.equal((await db.query('SELECT full_name FROM profiles WHERE user_id=$1', [ids.student])).rows[0].full_name, 'Keep chosen profile');
+    assert.equal((await db.query('SELECT full_name FROM profiles WHERE user_id=$1', [ids.other])).rows[0]?.full_name, 'Existing Auth learner');
+    const roles = await db.query('SELECT DISTINCT role FROM user_roles');
+    assert.deepEqual(roles.rows.map(row => row.role), ['student']);
+    assert.equal((await db.query('SELECT count(*)::int AS count FROM teacher_requests')).rows[0].count, 0);
+  } finally { await db.close(); }
+});
 
 const october = (await readdir('supabase/migrations')).filter(f => f.startsWith('20261026')).sort();
+test('read-only postflight detects missing booking protection, disabled ticket RLS and unsafe intake grants', async () => {
+  const db = await createDatabase();
+  const script = await readFile('tests/staging-postflight.sql', 'utf8');
+  const inspect = async () => (await db.exec(script)).flatMap(result => result.rows || []).flatMap(row => Object.values(row.report).flat());
+  try {
+    const baseline = await inspect();
+    for (const row of baseline.filter(row => 'blockers' in row)) assert.equal(row.blockers, 0, row.check_name);
+    const privileges = baseline.find(row => 'client_intake_must_be_false' in row);
+    assert.ok(privileges);
+    for (const [name, value] of Object.entries(privileges)) assert.equal(value, false, name);
+    assert.equal(baseline.filter(row => row.convalidated === false).length, 4);
+    await db.exec(`DROP INDEX tutor_slot_one_approved;
+      ALTER TABLE support_tickets DISABLE ROW LEVEL SECURITY;
+      GRANT EXECUTE ON FUNCTION support_intake(uuid,uuid,text,text,text,text,text,text,text) TO authenticated;`);
+    const drift = await inspect();
+    assert.equal(drift.find(row => row.check_name === 'missing required unique indexes').blockers, 1);
+    assert.equal(drift.find(row => row.check_name === 'application tables without RLS').blockers, 1);
+    assert.equal(drift.find(row => 'client_intake_must_be_false' in row).client_intake_must_be_false, true);
+  } finally { await db.close(); }
+});
+
 async function apply(db, file) {
   // Rehearse one transaction per migration, including fail-closed recovery.
   await db.exec('BEGIN');

@@ -1,4 +1,5 @@
-project_id = "gvnqqstlwibqddmtfwzy"
+# Local CLI namespace only. Hosted targeting requires an explicitly verified link.
+project_id = "shikkhahub"
 [functions.support-contact]
 verify_jwt = false
 import_map = "./functions/deno.json"

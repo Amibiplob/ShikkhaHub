@@ -1,6 +1,6 @@
 # Database rollout and external acceptance
 
-No hosted database, storage object, account, payment setting, or Realtime configuration was changed during this work.
+**Current staging execution:** all 43 canonical migrations are applied to the explicitly approved disposable ShikkhaHub backend, with 16 real hosted scenarios passed. See [SUPABASE_STAGING_SETUP.md](SUPABASE_STAGING_SETUP.md) for exact scope and remaining gates. The notes below originated in earlier local-only phases; no original Lovable or production project was changed.
 
 ## Canonical migration path
 
