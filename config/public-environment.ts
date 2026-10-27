@@ -1,40 +1,28 @@
-const publicNames = new Set([
-  "VITE_SUPABASE_URL",
-  "VITE_SUPABASE_PUBLISHABLE_KEY",
-  "VITE_SUPABASE_ANON_KEY", // Also accepts a modern public publishable key.
-  "VITE_SUPABASE_PROJECT_ID", // Historical local tooling; unused by the SPA.
-  // Exact public framework names, not the full Vercel system-variable namespace:
-  // https://vercel.com/docs/environment-variables/framework-environment-variables
-  "VITE_VERCEL_ENV",
-  "VITE_VERCEL_TARGET_ENV",
-  "VITE_VERCEL_URL",
-  "VITE_VERCEL_BRANCH_URL",
-  "VITE_VERCEL_PROJECT_PRODUCTION_URL",
-  "VITE_VERCEL_HASH_SALT",
-  "VITE_VERCEL_GIT_PROVIDER",
-  "VITE_VERCEL_GIT_REPO_SLUG",
-  "VITE_VERCEL_GIT_REPO_OWNER",
-  "VITE_VERCEL_GIT_REPO_ID",
-  "VITE_VERCEL_GIT_COMMIT_REF",
-  "VITE_VERCEL_GIT_COMMIT_SHA",
-  "VITE_VERCEL_GIT_COMMIT_MESSAGE",
-  "VITE_VERCEL_GIT_COMMIT_AUTHOR_LOGIN",
-  "VITE_VERCEL_GIT_COMMIT_AUTHOR_NAME",
-  "VITE_VERCEL_GIT_PULL_REQUEST_ID",
-]);
+// A diagnostic guard for common accidental browser-credential names. Unknown
+// settings are excluded by Vite's exposure policy, not trusted by their prefix.
+const credentialName = /(?:^|_)(?:SECRET|PASSWORD|PASSWD|TOKEN|CREDENTIALS?|SERVICE_ROLE|PRIVATE_KEY|API_KEY|ACCESS_KEY|DATABASE_URL|DATABASE_URI|DB_URL|POSTGRES(?:QL)?_URL|REDIS_URL|MONGODB_URI|CONNECTION_STRING)(?:_|$)/i;
 const localFixtureKeys = new Set([
   "isolated-e2e-public-key",
   "isolated-ci-public-key",
 ]);
 
-/** Runs before Vite serves or builds. Errors deliberately omit configuration values. */
-export function validatePublicEnvironment(env: Record<string, string>) {
-  for (const name of Object.keys(env).filter((key) => key.startsWith("VITE_"))) {
-    if (!publicNames.has(name))
-      throw new Error(`Unsupported browser variable ${name}; keep server secrets outside VITE_*.`);
+function stringSetting(env: Record<string, unknown>, name: string) {
+  const value = env[name];
+  if (value !== undefined && typeof value !== "string")
+    throw new Error(`${name} must be a string.`);
+  return value;
+}
+
+/** Return only values approved for client exposure; never return/spread input. */
+export function validatePublicEnvironment(env: Record<string, unknown>) {
+  for (const name of Object.keys(env)) {
+    if (name.startsWith("VITE_") && credentialName.test(name))
+      throw new Error(`Sensitive browser variable ${name}; keep server secrets outside VITE_*.`);
   }
-  const rawUrl = env.VITE_SUPABASE_URL;
-  const key = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY;
+  const rawUrl = stringSetting(env, "VITE_SUPABASE_URL");
+  const publishableKey = stringSetting(env, "VITE_SUPABASE_PUBLISHABLE_KEY");
+  const anonKey = stringSetting(env, "VITE_SUPABASE_ANON_KEY");
+  const key = publishableKey || anonKey;
   if (!rawUrl || !key)
     throw new Error("Configure VITE_SUPABASE_URL and either VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY in an ignored local environment or hosting configuration.");
 
@@ -47,9 +35,11 @@ export function validatePublicEnvironment(env: Record<string, string>) {
       (url.protocol !== "https:" && !(loopback && url.protocol === "http:")))
     throw new Error("VITE_SUPABASE_URL must be an HTTPS origin (HTTP is allowed only for loopback), without credentials, a path, query or fragment.");
 
-  // Check both fields, including an unused alias: either VITE_* field can be bundled.
-  for (const name of ["VITE_SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_ANON_KEY"]) {
-    const candidate = env[name];
+  // Reject a privileged key even in the unused alias, before producing defines.
+  for (const [name, candidate] of [
+    ["VITE_SUPABASE_PUBLISHABLE_KEY", publishableKey],
+    ["VITE_SUPABASE_ANON_KEY", anonKey],
+  ] as const) {
     if (!candidate) continue;
     let anon = false;
     if (candidate.split(".").length === 3) {
@@ -63,8 +53,8 @@ export function validatePublicEnvironment(env: Record<string, string>) {
       throw new Error(`${name} must be a public publishable/anon key; never use a secret, service-role or user-session key.`);
   }
 
-  if (env.VITE_SUPABASE_PROJECT_ID && !/^[a-z0-9-]+$/.test(env.VITE_SUPABASE_PROJECT_ID))
-    throw new Error("VITE_SUPABASE_PROJECT_ID must contain only the public project identifier.");
-
-  return key;
+  return {
+    VITE_SUPABASE_URL: rawUrl,
+    VITE_SUPABASE_PUBLISHABLE_KEY: key,
+  };
 }

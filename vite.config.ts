@@ -5,12 +5,14 @@ import tailwindcss from "@tailwindcss/vite";
 import { validatePublicEnvironment } from "./config/public-environment.ts";
 
 export default defineConfig(({ mode }) => {
-  const publicKey = validatePublicEnvironment(loadEnv(mode, process.cwd(), "VITE_"));
+  const publicEnvironment = validatePublicEnvironment(loadEnv(mode, process.cwd(), "VITE_"));
   return {
-    // Normalize the supported alias once for the SDK and both Edge HTTP callers.
-    define: {
-      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(publicKey),
-    },
+    // No automatic VITE_* exposure, including HTML replacements and env objects.
+    // [] means no prefixes; '' would expose everything and is unsafe.
+    envPrefix: [],
+    define: Object.fromEntries(Object.entries(publicEnvironment).map(([name, value]) =>
+      [`import.meta.env.${name}`, JSON.stringify(value)],
+    )),
     server: {
       host: "::",
       port: 8080,

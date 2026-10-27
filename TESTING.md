@@ -2,7 +2,32 @@
 
 Verification date: **27 October 2026, Asia/Dhaka**. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
 
-## Vercel build compatibility recheck
+## Explicit environment exposure recheck
+
+The `820a9fa` allowlist was still coupled to provider additions: a synthetic `VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG` reproduced the exact build failure (exit 1). The same build now succeeds (exit 0), including an additional unknown provider field; neither marker is present in any `dist/` file. The earlier 16-name fix below is historical and superseded.
+
+`loadEnv` reads prefixed configuration on the server side for validation; Vite's independent automatic exposure uses **`envPrefix: []`**. The validator returns a fresh two-property object, and only its validated URL/canonical public key are passed to `define`. Unknown inputs are never spread into client definitions. The anon-name alias remains supported and both supplied key fields are validated. Credential-name diagnostics remain explicit (including JWT secrets); unknown-name safety is enforced by exclusion. Unused provider/project-ID fields are dropped rather than parsed or trusted. Strict source env types allow only the two application fields and Vite built-ins.
+
+Official [Vite documentation](https://vite.dev/config/shared-options#envprefix) describes prefix-based exposure and explicit `define`; the installed Vite 8.3.5 implementation confirms an empty prefix array selects no environment names. Tests verify this in both dev and build, including whole `import.meta.env` objects and computed reads. [Vercel analytics](https://vercel.com/docs/analytics/package#dynamic-configuration) and [Speed Insights](https://vercel.com/docs/speed-insights/package#dynamic-configuration) document the underlying observability variable as JSON containing client script/intake options. Its reported prefixed form follows Vercel framework conventions. This application installs/imports neither SDK, so it needs no provider payload; actual deployment values were not read or logged.
+
+| Check | Result |
+| --- | --- |
+| TypeScript / ESLint | Passed; zero lint errors/warnings |
+| Full Vitest suite | **114 passed in 23 files** |
+| Focused environment policy | **32 passed**: local/public key formats, old Git metadata, observability/additional fields, alias precedence, both key validations, unknown credential names, invalid URL, missing input, type errors, redacted diagnostics and exact output projection |
+| Repository security | **6 passed** |
+| Vercel build regressions | **2 passed**: actual application build plus production probe build; development transforms; eight credential-name and six invalid/missing/key rejection builds |
+| Production builds | Normal build and byte-identical original observability reproduction passed |
+| Targeted fixture-backed Chrome | **2 passed**: public routes at 375px and 1440px; both home screenshots opened/inspected, with working navigation/artwork and no visible clipping |
+| Exposure proof | All emitted files scanned for five unique non-public markers; zero matches. Executed compiled probe and actual dev transform expose only two application values plus built-ins. Direct/computed/object/spread reads, server-only input, unused alias and provider HTML replacement cannot retrieve excluded values |
+| npm audit | Zero known findings |
+| Index secret guard / diff check | Passed; all four local environment files unchanged |
+
+The production probe deliberately reads the whole environment and arbitrary properties so dead-code elimination cannot mask a leaked input. The probe code is evaluated in a script VM (with a minimal preload-polyfill DOM capability); the dev probe runs through the real Vite transformer, rebinding only `import.meta.env` for script execution. These are build/transform exposure tests, not browser or hosted-service proof. Probe files live only in a disposable directory; no .env is copied, process settings/cwd are restored, and input diagnostics contain names/reasons only. Normal app sources, frontend behavior and Supabase integrations are preserved. New frontend settings or telemetry SDKs require explicit reviewed exposure and tests; automatic HTML substitution is disabled. Hosting-side script injection and actual deployment behavior are outside this local verification.
+
+Logs, before/after evidence and advisory output are ignored under `artifacts/vercel-env-hardening/`. No live backend, original Lovable-connected project, database, provider setting, deployment credential or local environment file was changed. No push/deployment was performed.
+
+## Earlier Vercel build compatibility recheck (historical)
 
 Against baseline `1616009`, supplying the harmless process-only `VITE_VERCEL_GIT_REPO_ID=123456789` reproduced the exact configuration-loading failure with exit 1. The same `npm run build` now exits 0. The validator allows exactly the 16 [documented public Vercel framework metadata names](https://vercel.com/docs/environment-variables/framework-environment-variables), with no prefix wildcard; OIDC/automation secrets and other unknown `VITE_*` names remain denied. [Vite documents that prefixed settings can reach the browser](https://vite.dev/guide/env-and-mode.html).
 

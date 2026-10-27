@@ -32,19 +32,19 @@ describe("browser environment boundary", () => {
     expect(() => validatePublicEnvironment({ ...base(), VITE_SUPABASE_PUBLISHABLE_KEY: jwt("anon") })).not.toThrow();
   });
   it.each(Object.entries(vercelMetadata))("accepts documented framework metadata %s", (name, value) => {
-    expect(() => validatePublicEnvironment({ ...base(), [name]: value })).not.toThrow();
+    expect(validatePublicEnvironment({ ...base(), [name]: value })).toEqual(base());
   });
   it("accepts the complete Vercel metadata set with the anon-key alias", () => {
     expect(validatePublicEnvironment({
       ...vercelMetadata,
       VITE_SUPABASE_URL: base().VITE_SUPABASE_URL,
       VITE_SUPABASE_ANON_KEY: base().VITE_SUPABASE_PUBLISHABLE_KEY,
-    })).toBe(base().VITE_SUPABASE_PUBLISHABLE_KEY);
+    })).toEqual(base());
   });
   it("resolves either key name, retaining publishable-name precedence", () => {
-    expect(validatePublicEnvironment(base())).toBe(base().VITE_SUPABASE_PUBLISHABLE_KEY);
-    expect(validatePublicEnvironment({ VITE_SUPABASE_URL: base().VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY: jwt("anon") })).toBe(jwt("anon"));
-    expect(validatePublicEnvironment({ ...base(), VITE_SUPABASE_ANON_KEY: "sb_publishable_alias-placeholder" })).toBe(base().VITE_SUPABASE_PUBLISHABLE_KEY);
+    expect(validatePublicEnvironment(base())).toEqual(base());
+    expect(validatePublicEnvironment({ VITE_SUPABASE_URL: base().VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY: jwt("anon") }).VITE_SUPABASE_PUBLISHABLE_KEY).toBe(jwt("anon"));
+    expect(validatePublicEnvironment({ ...base(), VITE_SUPABASE_ANON_KEY: "sb_publishable_alias-placeholder" })).toEqual(base());
   });
   it("validates both key fields even when one has precedence", () => {
     for (const name of ["VITE_SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_ANON_KEY"]) {
@@ -63,9 +63,9 @@ describe("browser environment boundary", () => {
     }
     expect(() => validatePublicEnvironment({ ...base(), VITE_SUPABASE_PUBLISHABLE_KEY: "isolated-e2e-public-key" })).toThrow();
   });
-  it("rejects additional browser variables, including server credential names", () => {
-    for (const name of ["VITE_SUPABASE_SERVICE_ROLE_KEY", "VITE_SUPABASE_SECRET_KEY", "VITE_DATABASE_URL", "VITE_POSTGRES_PASSWORD", "VITE_AI_API_KEY", "VITE_STAGING_ADMIN_PASSWORD", "VITE_OTHER", "VITE_VERCEL_SECRET", "VITE_VERCEL_OIDC_TOKEN", "VITE_VERCEL_AUTOMATION_BYPASS_SECRET", "VITE_VERCEL_GIT_TOKEN", "VITE_VERCEL_FUTURE_UNKNOWN"])
-      expect(() => validatePublicEnvironment({ ...base(), [name]: "synthetic-test-only" })).toThrow("Unsupported browser variable");
+  it("rejects recognized browser credential names without logging their values", () => {
+    for (const name of ["VITE_SUPABASE_SERVICE_ROLE_KEY", "VITE_SUPABASE_SECRET_KEY", "VITE_DATABASE_URL", "VITE_POSTGRES_PASSWORD", "VITE_JWT_SECRET", "VITE_UNRECOGNIZED_CLIENT_SECRET", "VITE_AI_API_KEY", "VITE_STAGING_ADMIN_PASSWORD", "VITE_VERCEL_SECRET", "VITE_VERCEL_OIDC_TOKEN", "VITE_VERCEL_AUTOMATION_BYPASS_SECRET", "VITE_VERCEL_GIT_TOKEN"])
+      expect(() => validatePublicEnvironment({ ...base(), [name]: "synthetic-test-only" })).toThrow("Sensitive browser variable");
   });
   it("keeps server variables outside the public boundary", () => {
     expect(() => validatePublicEnvironment({ ...base(), AI_API_KEY: "synthetic-test-only" })).not.toThrow();
@@ -88,8 +88,21 @@ describe("browser environment boundary", () => {
     expect(message).toContain("public publishable/anon key");
     expect(message).not.toContain(value);
   });
-  it("supports the historical public identifier but rejects other content", () => {
-    expect(() => validatePublicEnvironment({ ...base(), VITE_SUPABASE_PROJECT_ID: "test-project" })).not.toThrow();
-    expect(() => validatePublicEnvironment({ ...base(), VITE_SUPABASE_PROJECT_ID: "sb_secret_test-placeholder" })).toThrow("public project identifier");
+  it("discards the unused project identifier and arbitrary provider data", () => {
+    const ignored = {
+      VITE_SUPABASE_PROJECT_ID: "not-exposed-project-marker",
+      VITE_VERCEL_FUTURE_UNKNOWN: "not-exposed-provider-marker",
+      VITE_OTHER: "not-exposed-other-marker",
+      VITE_UNKNOWN_PAYLOAD: ["sb", "secret", "not-exposed-payload-marker"].join("_"),
+    };
+    expect(validatePublicEnvironment({ ...base(), ...ignored })).toEqual(base());
+  });
+  it("does not parse, trust or return the unused observability configuration", () => {
+    for (const value of [JSON.stringify({ analytics: { endpoint: "/synthetic-marker" } }), "invalid-json-marker", { arbitrary: true }])
+      expect(validatePublicEnvironment({ ...base(), VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG: value })).toEqual(base());
+  });
+  it.each(["VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_ANON_KEY"])("rejects non-string application setting %s", (name) => {
+    for (const value of [null, false, 123, {}, []])
+      expect(() => validatePublicEnvironment({ ...base(), [name]: value })).toThrow(`${name} must be a string`);
   });
 });
