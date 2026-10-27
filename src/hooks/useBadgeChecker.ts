@@ -28,7 +28,7 @@ export const checkAndAwardBadges = async (userId: string) => {
 
   const counts: Record<string, number> = {
     lessons_completed: lessonsRes.count || 0,
-    courses_completed: 0, // We'll compute this separately if needed
+    courses_completed: certsRes.count || 0, // Same authoritative criterion as the database badge guard.
     certificates_earned: certsRes.count || 0,
     enrollments: enrollRes.count || 0,
     posts_created: postsRes.count || 0,
@@ -45,7 +45,7 @@ export const checkAndAwardBadges = async (userId: string) => {
 
   const inserts = toAward.map((b) => ({ user_id: userId, badge_id: b.id }));
   const { error } = await supabase.from("user_badges").insert(inserts);
-  
+  if (error) return;
 
   return toAward;
 };

@@ -1,5 +1,5 @@
 import { GraduationCap } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks/useLanguage';
 
 const members = ['Md Biplob Hossain', 'Leon Khan', 'Al Amin', 'Asif Khan'];
 export default function ProjectTeamSection() {

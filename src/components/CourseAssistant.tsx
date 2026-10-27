@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ const CourseAssistant = ({ courseId, courseTitle }: CourseAssistantProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -36,19 +39,25 @@ const CourseAssistant = ({ courseId, courseTitle }: CourseAssistantProps) => {
   const send = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
     const userMsg: Msg = { role: "user", content: text.trim() };
-    const allMessages = [...messages, userMsg];
+    const allMessages = [...messages, userMsg].slice(-20);
     setMessages(allMessages);
     setInput("");
     setIsLoading(true);
 
     let assistantSoFar = "";
+    const controller = new AbortController();
+    requestRef.current = controller;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Sign in to use the assistant"); return; }
       const resp = await fetch(CHAT_URL, {
+        signal: controller.signal,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ messages: allMessages, courseId }),
       });
@@ -100,9 +109,9 @@ const CourseAssistant = ({ courseId, courseTitle }: CourseAssistantProps) => {
           }
         }
       }
-    } catch (e) {
-      console.error("AI stream error:", e);
-      toast.error("Failed to get AI response");
+      await reader.cancel();
+    } catch {
+      if (!controller.signal.aborted) toast.error("Failed to get AI response");
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +132,7 @@ const CourseAssistant = ({ courseId, courseTitle }: CourseAssistantProps) => {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 flex w-[380px] max-h-[520px] flex-col rounded-2xl border border-border bg-card shadow-2xl">
+        <div className="fixed bottom-6 right-6 z-50 flex w-[calc(100vw-3rem)] sm:w-[380px] max-h-[min(520px,calc(100dvh-3rem))] flex-col rounded-2xl border border-border bg-card shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
@@ -133,7 +142,7 @@ const CourseAssistant = ({ courseId, courseTitle }: CourseAssistantProps) => {
                 <p className="text-xs text-muted-foreground truncate max-w-[220px]">{courseTitle}</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-8 w-8">
+            <Button aria-label="Close AI Assistant" variant="ghost" size="icon" onClick={() => setOpen(false)} className="h-8 w-8">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -186,11 +195,13 @@ const CourseAssistant = ({ courseId, courseTitle }: CourseAssistantProps) => {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                aria-label="Ask a question"
+                maxLength={4000}
                 placeholder="Ask a question..."
                 disabled={isLoading}
                 className="flex-1 text-sm"
               />
-              <Button type="submit" size="icon" disabled={isLoading || !input.trim()} className="shrink-0">
+              <Button aria-label="Send message" type="submit" size="icon" disabled={isLoading || !input.trim()} className="shrink-0">
                 <Send className="h-4 w-4" />
               </Button>
             </form>

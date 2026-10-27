@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { mockAuth, makeAuth } from "@/test/mockAuth";
-
-vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => mockAuth.value }));
 import ProtectedRoute from "./ProtectedRoute";
+
+vi.mock("@/hooks/useAuth", () => ({ useAuth: () => mockAuth.value }));
 
 const AuthPage = () => {
   const loc = useLocation();

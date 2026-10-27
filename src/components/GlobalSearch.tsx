@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import type { Course, Assignment, Post } from "@/lib/models";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +18,7 @@ const GlobalSearch = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!query.trim()) { setResults({ courses: [], posts: [], assignments: [] }); return; }
+    if (!query.trim()) return;
     const timer = setTimeout(async () => {
       setLoading(true);
       const [coursesRes, postsRes, assignRes] = await Promise.all([
@@ -60,12 +60,12 @@ const GlobalSearch = () => {
           ref={inputRef}
           placeholder="Search..."
           value={query}
-          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onChange={(e) => { setQuery(e.target.value); if (!e.target.value.trim()) setResults({ courses: [], posts: [], assignments: [] }); setOpen(true); }}
           onFocus={() => setOpen(true)}
           className="h-8 w-48 pl-8 text-sm"
         />
         {query && (
-          <Button type="button" variant="ghost" size="icon" aria-label="Clear search" onClick={() => { setQuery(""); setOpen(false); }} className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2">
+          <Button type="button" variant="ghost" size="icon" aria-label="Clear search" onClick={() => { setQuery(""); setResults({ courses: [], posts: [], assignments: [] }); setOpen(false); }} className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2">
             <X className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         )}

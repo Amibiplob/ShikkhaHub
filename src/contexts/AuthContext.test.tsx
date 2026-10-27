@@ -1,14 +1,15 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session } from '@supabase/supabase-js';
+import { toast } from 'sonner';
+import { AuthProvider } from './AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 const fake=vi.hoisted(()=>({listener:null as null | ((event:string,session:Session|null)=>void),roles:vi.fn(),profile:vi.fn(),initial:vi.fn(),signOut:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{
  auth:{onAuthStateChange:(cb:typeof fake.listener)=>{fake.listener=cb;return{data:{subscription:{unsubscribe:vi.fn()}}};},getSession:()=>fake.initial(),signOut:()=>fake.signOut()},
  from:(table:string)=>({select:()=>({eq:()=>table==='user_roles'?fake.roles():{single:()=>fake.profile()}})}),
 }}));
 vi.mock('sonner',()=>({toast:{error:vi.fn()}}));
-import { toast } from 'sonner';
-import { AuthProvider,useAuth } from './AuthContext';
 const next=(id:string)=>({user:{id},access_token:'disposable'} as Session);
 function State(){const auth=useAuth();return <><button onClick={auth.signOut}>Log out</button><p>{auth.loading?'loading':`${auth.user?.id||'guest'}:${auth.roles.join(',')}`}</p></>;}
 beforeEach(()=>{fake.signOut.mockResolvedValue({error:null});fake.initial.mockResolvedValue({data:{session:null}});fake.roles.mockResolvedValue({data:[{role:'admin'}]});fake.profile.mockResolvedValue({data:{full_name:'Test'}});});

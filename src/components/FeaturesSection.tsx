@@ -1,5 +1,5 @@
 import { Award, BookOpen, Code2, MonitorPlay, Trophy, Users } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const features = [
   { icon: BookOpen, key: "f1", color: "text-primary", bg: "bg-primary/10" },
@@ -31,7 +31,7 @@ const FeaturesSection = () => {
           {features.map((f) => (
             <div
               key={f.key}
-              className="group relative rounded-lg border border-border bg-card p-7 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+              className="group relative rounded-lg border border-border bg-card p-7 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
             >
               <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg ${f.bg} ${f.color} transition-all duration-300 group-hover:scale-105`}>
                 <f.icon className="h-6 w-6" />

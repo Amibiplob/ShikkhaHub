@@ -7,3 +7,7 @@ import_map = "./functions/deno.json"
 verify_jwt = false
 import_map = "./functions/deno.json"
 static_files = ["./functions/_shared/fonts/*.ttf", "./functions/_shared/fonts/OFL.txt"]
+
+[functions.course-assistant]
+verify_jwt = false
+import_map = "./functions/deno.json"

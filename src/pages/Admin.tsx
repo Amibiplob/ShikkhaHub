@@ -11,21 +11,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 type RecordRow = Record<string, Json | undefined>;
 type PageData = { rows: RecordRow[]; total: number };
 type Overview = Record<string, number | { date: string; changes: number }[]>;
@@ -80,20 +80,17 @@ export default function Admin() {
       { id: string; body: string; created_at: string }[]
     >([]);
   useEffect(() => {
-    const timer = setTimeout(() => setQuery(search), 200);
+    if (search === query) return;
+    const timer = setTimeout(() => { setQuery(search); setPage(0); setLoading(true); }, 200);
     return () => clearTimeout(timer);
-  }, [search]);
-  useEffect(() => {
-    setPage(0);
-  }, [kind, query, state]);
-  const refresh = useCallback(() => setRevision((r) => r + 1), []);
+  }, [search, query]);
+  const refresh = useCallback(() => { setLoading(true); setRevision((r) => r + 1); }, []);
   useEffect(() => {
     let active = true;
-    setStatsError("");
     supabase.rpc("admin_overview", {}).then(({ data, error }) => {
       if (active) {
         if (error) setStatsError("Could not load platform statistics.");
-        else setOverview(data as unknown as Overview);
+        else { setStatsError(""); setOverview(data as unknown as Overview); }
       }
     });
     return () => {
@@ -102,8 +99,6 @@ export default function Admin() {
   }, [revision]);
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError("");
     supabase
       .rpc("admin_records", {
         kind,
@@ -115,7 +110,7 @@ export default function Admin() {
       .then(({ data, error }) => {
         if (!active) return;
         if (error) setError("Could not load records. Please try again.");
-        else setData(data as unknown as PageData);
+        else { setError(""); setData(data as unknown as PageData); }
         setLoading(false);
       });
     return () => {
@@ -319,6 +314,7 @@ export default function Admin() {
       <Tabs
         value={kind}
         onValueChange={(value) => {
+          setLoading(true);
           setKind(value);
           setSearch("");
           setQuery("");
@@ -359,7 +355,7 @@ export default function Admin() {
                     id="admin-filter"
                     className="block h-10 w-full rounded-md border bg-background px-3 sm:w-auto"
                     value={state}
-                    onChange={(e) => setState(e.target.value)}
+                    onChange={(e) => { setState(e.target.value); setPage(0); setLoading(true); }}
                   >
                     <option value="">All</option>
                     {filters.map((s) => (
@@ -577,14 +573,14 @@ export default function Admin() {
                 <Button
                   variant="outline"
                   disabled={loading || page === 0}
-                  onClick={() => setPage((p) => p - 1)}
+                  onClick={() => { setLoading(true); setPage((p) => p - 1); }}
                 >
                   Previous
                 </Button>
                 <Button
                   variant="outline"
                   disabled={loading || (page + 1) * 10 >= data.total}
-                  onClick={() => setPage((p) => p + 1)}
+                  onClick={() => { setLoading(true); setPage((p) => p + 1); }}
                 >
                   Next
                 </Button>

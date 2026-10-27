@@ -3,7 +3,7 @@ import type { Course } from "@/lib/models";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,7 +49,7 @@ const CoursePrerequisites = ({ courseId, isTeacher }: CoursePrerequisitesProps) 
   }, [courseId, user, isTeacher]);
 
   useEffect(() => {
-    fetchData();
+    void (async () => { await fetchData(); })();
   }, [fetchData]);
 
   const handleAdd = async () => {

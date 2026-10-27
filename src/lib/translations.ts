@@ -62,6 +62,7 @@ export const en: Dict = {
   "cat.cs": "Computer Science",
 
   // hero
+  "hero.artworkAlt": "An illustrated coding workspace with connected lessons and an open book",
   "hero.badge": "Developer-focused learning platform",
   "hero.title1": "Learn to code",
   "hero.titleWith": "with",
@@ -299,6 +300,7 @@ export const bn: Dict = {
   "cat.designShort": "ডিজাইন",
   "cat.cs": "কম্পিউটার সায়েন্স",
 
+  "hero.artworkAlt": "সংযুক্ত পাঠ ও খোলা বইসহ কোড শেখার কর্মক্ষেত্রের চিত্র",
   "hero.badge": "ডেভেলপারদের জন্য তৈরি শেখার প্ল্যাটফর্ম",
   "hero.title1": "কোডিং শিখুন",
   "hero.titleWith": "সাথে",

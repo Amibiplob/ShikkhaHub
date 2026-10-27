@@ -1,7 +1,7 @@
 import type { Review } from "@/lib/models";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -73,7 +73,7 @@ const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
   }, [courseId, user]);
 
   useEffect(() => {
-    fetchReviews();
+    void (async () => { await fetchReviews(); })();
   }, [fetchReviews]);
 
   const handleSubmit = async (e: React.FormEvent) => {

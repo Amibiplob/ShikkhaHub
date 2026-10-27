@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import Auth from "./Auth";
 
-vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: null }) }));
+vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: null }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: {}, from: () => ({}) } }));
 vi.mock("@/components/Header", () => ({ default: () => null }));
-import Auth from "./Auth";
 
 const at = (url: string) => render(<MemoryRouter initialEntries={[url]}><Auth /></MemoryRouter>);
 

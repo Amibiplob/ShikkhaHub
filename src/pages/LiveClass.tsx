@@ -1,7 +1,7 @@
-import type { LiveSession, Recording } from "@/lib/models";
+import type { LiveSession } from "@/lib/models";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  ArrowLeft, Loader2, Mic, MicOff, Monitor, Video, VideoOff,
-  Users, PhoneOff, Send, Hand, Camera, ScreenShare,
-  AudioLines, MessageSquare, Circle, Square, Upload, Film,
+ArrowLeft, Loader2, Mic, MicOff, Monitor, Video, VideoOff,
+Users, PhoneOff, Send, Hand, Camera, ScreenShare,
+AudioLines, MessageSquare, Circle, Square, Film
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useTeacherBroadcast, useStudentViewer, type ChatMessage } from "@/hooks/useWebRTCBroadcast";
+import { useTeacherBroadcast, useStudentViewer } from "@/hooks/useWebRTCBroadcast";
 
 const LiveClass = () => {
   const { roomName } = useParams<{ roomName: string }>();
@@ -183,14 +183,6 @@ const LiveClass = () => {
 
   const isActive = isTeacher ? teacher.isLive : student.connected || student.connecting;
 
-  useEffect(() => {
-    if (!liveClass) return;
-    if (isActive || student.ended || liveClass.status === "expired" || liveClass.status === "completed") {
-      setEntryModalOpen(false);
-      return;
-    }
-    setEntryModalOpen(true);
-  }, [isActive, student.ended, liveClass]);
 
   if (authLoading || loading) {
     return (
@@ -336,7 +328,7 @@ const LiveClass = () => {
         )}
 
         {!isActive && !student.ended && !isExpired && (
-          <Dialog open={entryModalOpen} onOpenChange={setEntryModalOpen}>
+          <Dialog open={entryModalOpen && !isActive && !student.ended && liveClass.status !== "expired" && liveClass.status !== "completed"} onOpenChange={setEntryModalOpen}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{isTeacher ? "Choose how to go live" : "Ready to watch?"}</DialogTitle>

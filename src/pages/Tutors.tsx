@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import PageShell from "@/components/PageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
 } from "@/components/ui/dialog";
 import type { Tables } from "@/integrations/supabase/types";
 import { browserTimezone, formatSession } from "@/lib/tutoring";
@@ -79,7 +79,7 @@ export default function Tutors() {
     setLoading(false);
   }, []);
   useEffect(() => {
-    void load();
+    void (async () => { await load(); })();
   }, [load]);
   const request = async (event: React.FormEvent) => {
     event.preventDefault();

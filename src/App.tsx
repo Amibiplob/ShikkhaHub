@@ -1,4 +1,16 @@
 import { lazy, Suspense } from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ThemeProvider from "@/components/ThemeProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Index from "./pages/Index";
+import ScrollToHash from "@/components/ScrollToHash";
 const Tutors = lazy(() => import("./pages/Tutors"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Faq = lazy(() => import("./pages/Faq"));
@@ -7,44 +19,27 @@ const Certificates = lazy(() => import("./pages/Certificates"));
 const CertificateVerification = lazy(
   () => import("./pages/CertificateVerification"),
 );
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Courses from "./pages/Courses";
-import CourseDetail from "./pages/CourseDetail";
-import Dashboard from "./pages/Dashboard";
-import Community from "./pages/Community";
-import CommunityPost from "./pages/CommunityPost";
-import LiveClass from "./pages/LiveClass";
-import ClassRecording from "./pages/ClassRecording";
-import AssignmentDetail from "./pages/AssignmentDetail";
-import TeacherAnalytics from "./pages/TeacherAnalytics";
-import Achievements from "./pages/Achievements";
-import Leaderboard from "./pages/Leaderboard";
-import Profile from "./pages/Profile";
-import NotFound from "./pages/NotFound";
-import ScrollToHash from "@/components/ScrollToHash";
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Courses = lazy(() => import("./pages/Courses"));
+const CourseDetail = lazy(() => import("./pages/CourseDetail"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Community = lazy(() => import("./pages/Community"));
+const CommunityPost = lazy(() => import("./pages/CommunityPost"));
+const LiveClass = lazy(() => import("./pages/LiveClass"));
+const ClassRecording = lazy(() => import("./pages/ClassRecording"));
+const AssignmentDetail = lazy(() => import("./pages/AssignmentDetail"));
+const TeacherAnalytics = lazy(() => import("./pages/TeacherAnalytics"));
+const Achievements = lazy(() => import("./pages/Achievements"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <ErrorBoundary>
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <LanguageProvider>

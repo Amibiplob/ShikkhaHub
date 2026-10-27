@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { allowedDocument, privateFileUrl } from './storage';
 const signed=vi.hoisted(()=>vi.fn());
 vi.mock('@/integrations/supabase/client',()=>({supabase:{storage:{from:()=>({createSignedUrl:signed})}}}));
-import { allowedDocument, privateFileUrl } from './storage';
 describe('private resource access',()=>{
  it('refreshes legacy public storage links through signing',async()=>{signed.mockResolvedValue({data:{signedUrl:'https://example.test/signed'},error:null});expect(await privateFileUrl('submissions','https://project.supabase.co/storage/v1/object/public/submissions/user/file.pdf')).toBe('https://example.test/signed');expect(signed).toHaveBeenCalledWith('user/file.pdf',300);});
  it('propagates denied file access',async()=>{signed.mockResolvedValue({data:null,error:new Error('denied')});await expect(privateFileUrl('lesson-files','course/file.pdf')).rejects.toThrow('denied');});

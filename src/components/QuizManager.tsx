@@ -1,7 +1,7 @@
 import type { Quiz, Question, Attempt } from "@/lib/models";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, CircleDot, Loader2, Plus, Trash2, Trophy, X } from "lucide-react";
+import { CircleDot, Loader2, Plus, Trash2, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -67,7 +65,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
   }, [courseId, user]);
 
   useEffect(() => {
-    fetchQuizzes();
+    void (async () => { await fetchQuizzes(); })();
   }, [fetchQuizzes]);
 
   const handleCreateQuiz = async (e: React.FormEvent) => {
@@ -203,7 +201,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled }: QuizManagerProps) => {
               return (
                 <div key={q.id} className="rounded-lg border border-border p-4">
                   <p className="font-medium mb-3">{idx + 1}. {q.question}</p>
-                  <RadioGroup value={answers[q.id]?.toString()} onValueChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: parseInt(v) }))}>
+                  <RadioGroup value={answers[q.id]?.toString() ?? ""} onValueChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: parseInt(v) }))}>
                     {options.map((opt: string, i: number) => (
                       <div key={i} className="flex items-center space-x-2">
                         <RadioGroupItem value={i.toString()} id={`${q.id}-${i}`} />

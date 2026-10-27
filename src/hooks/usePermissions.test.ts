@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { mockAuth, makeAuth } from "@/test/mockAuth";
-
-vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => mockAuth.value }));
 import { usePermissions } from "./usePermissions";
+
+vi.mock("@/hooks/useAuth", () => ({ useAuth: () => mockAuth.value }));
 
 const perms = (auth: ReturnType<typeof makeAuth>) => {
   mockAuth.value = auth;

@@ -1,9 +1,9 @@
-import { scopeTeacherActivity } from "@/lib/teacherActivity";
+import { courseQuizPassRates, scopeTeacherActivity } from "@/lib/teacherActivity";
 import type { Tables } from "@/integrations/supabase/types";
-import type { Course, Module, Lesson, Submission, Quiz, Attempt } from "@/lib/models";
+import type { Course, Module, Lesson, Submission, Attempt } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -14,12 +14,11 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, AreaChart, Area,
+BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+PieChart, Pie, Cell, AreaChart, Area
 } from "recharts";
 import {
-  BookOpen, GraduationCap, Loader2, TrendingUp, Users, Award,
-  ClipboardList, Star, Eye, Target, CheckCircle,
+BookOpen, GraduationCap, Loader2, TrendingUp, Users, ClipboardList, Star, Target, CheckCircle
 } from "lucide-react";
 
 const COLORS = ["hsl(152,60%,42%)", "hsl(262,60%,55%)", "hsl(38,92%,50%)", "hsl(210,100%,52%)", "hsl(0,72%,51%)"];
@@ -407,18 +406,7 @@ const TeacherAnalytics = () => {
                 <Card className="p-6">
                   <h3 className="mb-4 text-lg font-semibold">Quiz Pass Rate by Course</h3>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={courses.map(c => {
-                      const courseQuizIds = quizAttempts.length > 0
-                        ? new Set() // simplified - show all
-                        : new Set();
-                      const courseAttempts = quizAttempts;
-                      const passed = courseAttempts.filter((a) => a.passed).length;
-                      const total = courseAttempts.length;
-                      return {
-                        name: c.title.length > 18 ? c.title.slice(0, 18) + "…" : c.title,
-                        rate: total > 0 ? Math.round((passed / total) * 100) : 0,
-                      };
-                    })}>
+                    <BarChart data={courseQuizPassRates(courses, quizAttempts, quizCourses)}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                       <YAxis domain={[0, 100]} />

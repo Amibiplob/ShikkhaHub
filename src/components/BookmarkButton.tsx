@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Bookmark } from "lucide-react";
 import { toast } from "sonner";
@@ -10,13 +10,13 @@ interface BookmarkButtonProps {
   size?: "sm" | "default" | "icon";
 }
 
-const BookmarkButton = ({ courseId, size = "icon" }: BookmarkButtonProps) => {
+const BookmarkButtonContent = ({ courseId, size = "icon" }: BookmarkButtonProps) => {
   const { user } = useAuth();
   const [bookmarked, setBookmarked] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) { setBookmarked(false); return; }
+    if (!user) return;
     supabase.from("course_bookmarks").select("id").eq("user_id", user.id).eq("course_id", courseId).maybeSingle()
       .then(({ data }) => setBookmarked(!!data));
   }, [user, courseId]);
@@ -46,4 +46,7 @@ const BookmarkButton = ({ courseId, size = "icon" }: BookmarkButtonProps) => {
   );
 };
 
-export default BookmarkButton;
+export default function BookmarkButton(props: BookmarkButtonProps) {
+  const { user } = useAuth();
+  return <BookmarkButtonContent key={`${user?.id || "guest"}:${props.courseId}`} {...props} />;
+}

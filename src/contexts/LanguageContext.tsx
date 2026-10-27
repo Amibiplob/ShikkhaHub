@@ -1,14 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { LanguageContext } from "./language-context";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { dictionaries, type Lang } from "@/lib/translations";
-
-type LanguageContextValue = {
-  lang: Lang;
-  setLang: (lang: Lang) => void;
-  toggleLang: () => void;
-  t: (key: string) => string;
-};
-
-const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
 
 const STORAGE_KEY = "shikkhahub-lang";
 
@@ -35,10 +27,4 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   const value = useMemo(() => ({ lang, setLang, toggleLang, t }), [lang, setLang, toggleLang, t]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
-};
-
-export const useLanguage = () => {
-  const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage must be used within a LanguageProvider");
-  return ctx;
 };

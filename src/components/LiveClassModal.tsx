@@ -1,13 +1,13 @@
 import type { LiveSession } from "@/lib/models";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Video, Camera, ScreenShare, AudioLines, PhoneOff, Calendar, Loader2,
+Video, Camera, ScreenShare, AudioLines, PhoneOff, Calendar, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";

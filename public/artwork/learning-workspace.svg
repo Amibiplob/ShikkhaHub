@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" fill="none">
+<title>Connected learning workspace</title><desc>An abstract coding notebook, open book, and connected lesson cards in teal and navy.</desc>
+<defs><linearGradient id="bg" x2="800" y2="450" gradientUnits="userSpaceOnUse"><stop stop-color="#10383e"/><stop offset="1" stop-color="#07171d"/></linearGradient><linearGradient id="glow" x2="500" y2="400" gradientUnits="userSpaceOnUse"><stop stop-color="#19baa8"/><stop offset="1" stop-color="#75d6e0"/></linearGradient><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" stroke="#75d6e0" stroke-opacity=".08"/></pattern></defs>
+<rect width="800" height="450" rx="24" fill="url(#bg)"/><rect width="800" height="450" rx="24" fill="url(#grid)"/>
+<circle cx="408" cy="226" r="174" stroke="#75d6e0" stroke-opacity=".12"/><circle cx="408" cy="226" r="138" stroke="#75d6e0" stroke-opacity=".1" stroke-dasharray="4 12"/>
+<path d="M140 125H230M580 125H670V312H591M190 325H260" stroke="#39b9ad" stroke-width="2" stroke-dasharray="6 8"/>
+<rect x="211" y="83" width="380" height="267" rx="18" fill="#0c2028" stroke="#4f9b9e" stroke-width="2"/>
+<path d="M212 126H590" stroke="#28515a"/><circle cx="235" cy="105" r="5" fill="#75d6e0"/><circle cx="253" cy="105" r="5" fill="#19baa8"/><circle cx="271" cy="105" r="5" fill="#d4a85d"/>
+<rect x="239" y="151" width="104" height="170" rx="8" fill="#13323a"/>
+<g stroke="#42747c" stroke-width="7" stroke-linecap="round"><path d="M257 176H323M257 202H303M257 228H313M257 254H293"/></g><path d="M257 280H313" stroke="#19baa8" stroke-width="7" stroke-linecap="round"/>
+<path d="M393 166L368 191L393 216M511 166L536 191L511 216M468 155L438 227" stroke="url(#glow)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<g stroke="#42747c" stroke-width="7" stroke-linecap="round"><path d="M374 258H455M374 282H525M374 306H489"/></g>
+<path d="M191 350H611L642 372C644 377 638 382 630 382H172C164 382 158 377 160 372L191 350Z" fill="#28515a"/><path d="M343 350H460L469 360H334Z" fill="#42747c"/>
+<rect x="65" y="88" width="123" height="102" rx="14" fill="#17434a" stroke="#357980"/><path d="M92 116C107 111 118 114 127 120C136 114 147 111 162 116V156C147 151 136 154 127 160C118 154 107 151 92 156V116Z" stroke="#75d6e0" stroke-width="3" stroke-linejoin="round"/><path d="M127 120V160" stroke="#75d6e0" stroke-width="3"/>
+<rect x="621" y="266" width="116" height="99" rx="14" fill="#17434a" stroke="#357980"/><circle cx="679" cy="306" r="22" fill="#19baa8" fill-opacity=".18"/><path d="M669 305L677 313L691 297" stroke="#75d6e0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M651 345H707" stroke="#42747c" stroke-width="5" stroke-linecap="round"/>
+<circle cx="677" cy="125" r="7" fill="#d4a85d"/><circle cx="140" cy="325" r="7" fill="#19baa8"/>
+</svg>

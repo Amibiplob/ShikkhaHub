@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 export default function TeacherRequests({
@@ -31,7 +31,7 @@ export default function TeacherRequests({
     setRequests(data || []);
   };
   useEffect(() => {
-    void load();
+    void (async () => { await load(); })();
   }, []);
   const review = async () => {
     if (!selected) return;

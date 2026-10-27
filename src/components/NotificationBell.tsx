@@ -1,12 +1,11 @@
 import type { Tables } from "@/integrations/supabase/types";
 import { useEffect, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Check, Loader2, BookOpen, Video, ClipboardList, Award, Users, Info } from "lucide-react";
+import { Bell, Check, Loader2, Video, ClipboardList, Award, Users, Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
@@ -33,7 +32,7 @@ const NotificationBell = () => {
   }, [user]);
 
   useEffect(() => {
-    fetchNotifications();
+    void (async () => { await fetchNotifications(); })();
 
     if (!user) return;
     // Realtime subscription

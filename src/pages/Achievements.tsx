@@ -2,7 +2,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import type { Course } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
 import Header from "@/components/Header";
@@ -11,20 +11,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  Award,
-  BookOpen,
-  Brain,
-  Download,
-  Footprints,
-  GraduationCap,
-  HeartHandshake,
-  Loader2,
-  MessageCircle,
-  Scroll,
-  Star,
-  Target,
-  Trophy,
-  Zap,
+Award,
+BookOpen,
+Brain, Footprints,
+GraduationCap,
+HeartHandshake,
+Loader2,
+MessageCircle,
+Scroll,
+Star,
+Target,
+Trophy,
+Zap
 } from "lucide-react";
 import { format } from "date-fns";
 

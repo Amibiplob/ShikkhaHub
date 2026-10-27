@@ -1,5 +1,5 @@
 // Shared fake auth state for tests. Use with:
-// vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => mockAuth.value }));
+// vi.mock("@/hooks/useAuth", () => ({ useAuth: () => mockAuth.value }));
 export type FakeRole = "admin" | "teacher" | "student";
 
 export const makeAuth = (roles: FakeRole[] = [], signedIn = true, loading = false) => ({

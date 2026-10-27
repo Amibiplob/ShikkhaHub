@@ -1,55 +1,55 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Award,
-  BarChart3,
-  Bookmark,
-  BookOpen,
-  Braces,
-  Brain,
-  Briefcase,
-  ChevronDown,
-  Clock,
-  Compass,
-  Database,
-  Flame,
-  Globe,
-  GraduationCap,
-  LayoutDashboard,
-  LifeBuoy,
-  LogOut,
-  Map,
-  Medal,
-  Menu,
-  MessageSquare,
-  Palette,
-  Radio,
-  Rocket,
-  Server,
-  Shield,
-  Smartphone,
-  Sparkles,
-  Trophy,
-  User,
-  Video,
-  X,
+Award,
+BarChart3,
+Bookmark,
+BookOpen,
+Braces,
+Brain,
+Briefcase,
+ChevronDown,
+Clock,
+Compass,
+Database,
+Flame,
+Globe,
+GraduationCap,
+LayoutDashboard,
+LifeBuoy,
+LogOut,
+Map,
+Medal,
+Menu,
+MessageSquare,
+Palette,
+Radio,
+Rocket,
+Server,
+Shield,
+Smartphone,
+Sparkles,
+Trophy,
+User,
+Video,
+X,
 } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import GlobalSearch from "@/components/GlobalSearch";
 import LanguageToggle from "@/components/LanguageToggle";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const categories = [
   { icon: Globe, label: "Web Development", key: "cat.web" },
@@ -307,10 +307,10 @@ const Header = () => {
 
         <div className="hidden items-center gap-1 xl:flex">
           <div className="hidden 2xl:block">
-            <GlobalSearch />
+            <GlobalSearch key={user?.id || "guest"} />
           </div>
           <LanguageToggle />
-          <NotificationBell />
+          <NotificationBell key={user?.id || "guest"} />
           <ThemeToggle />
           {user ? (
             <DropdownMenu>
@@ -388,7 +388,12 @@ const Header = () => {
       {mobileOpen && (
         <div className="container mx-auto mt-1 rounded-lg border border-border bg-background p-4 shadow-lg xl:hidden">
           <nav className="flex flex-col gap-2">
-            <GlobalSearch />
+            <GlobalSearch key={user?.id || "guest"} />
+            <div className="flex items-center gap-2 py-2">
+              <LanguageToggle />
+              <ThemeToggle />
+              <NotificationBell key={user?.id || "guest"} />
+            </div>
             <p className="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("nav.explore")}
             </p>

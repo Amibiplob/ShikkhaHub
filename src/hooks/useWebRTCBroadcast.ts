@@ -125,7 +125,6 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
       channel
         .on("broadcast", { event: "join-request" }, async ({ payload }) => {
           const studentId = payload.studentId;
-          const studentName = payload.studentName || "Student";
           if (!studentId || peersRef.current.has(studentId)) return;
 
           const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
@@ -264,6 +263,13 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
     }
   }, []);
 
+  // ========= Recording via MediaRecorder =========
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     const peers = peersRef.current;
     return () => {
@@ -276,13 +282,6 @@ export function useTeacherBroadcast(roomName: string, userId: string, userName: 
       channelRef.current?.unsubscribe();
     };
   }, []);
-
-  // ========= Recording via MediaRecorder =========
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startRecording = useCallback(() => {
     const stream = localStreamRef.current;

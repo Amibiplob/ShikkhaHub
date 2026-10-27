@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -10,15 +10,20 @@ import { Textarea } from "./ui/textarea";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import {
-  browserTimezone,
-  bookingLabel,
-  formatSession,
-  zonedInputToISO,
+browserTimezone,
+bookingLabel,
+formatSession,
+zonedInputToISO,
 } from "@/lib/tutoring";
 import { toast } from "sonner";
 export default function TutoringWorkspace() {
   const { user, hasRole } = useAuth();
   const teacher = hasRole("teacher");
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
   const [slots, setSlots] = useState<Tables<"tutor_slots">[]>([]),
     [requests, setRequests] = useState<Tables<"tutoring_requests">[]>([]);
   const [profiles, setProfiles] = useState<
@@ -131,7 +136,7 @@ export default function TutoringWorkspace() {
     setLoading(false);
   }, [user, teacher]);
   useEffect(() => {
-    void load();
+    void (async () => { await load(); })();
   }, [load]);
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -362,7 +367,7 @@ export default function TutoringWorkspace() {
                     <p className="text-sm">
                       {formatSession(s.starts_at, s.ends_at)}
                     </p>
-                    {Date.parse(s.starts_at) > Date.now() && (
+                    {Date.parse(s.starts_at) > now && (
                       <div className="mt-2 flex gap-2">
                         <Button
                           size="sm"
@@ -484,7 +489,7 @@ export default function TutoringWorkspace() {
                   )}
                   {["pending", "approved"].includes(r.status) &&
                     s &&
-                    Date.parse(s.starts_at) > Date.now() && (
+                    Date.parse(s.starts_at) > now && (
                       <Button
                         variant="outline"
                         onClick={() => choose(r.id, "cancel")}
@@ -495,7 +500,7 @@ export default function TutoringWorkspace() {
                   {owner &&
                     r.status === "approved" &&
                     s &&
-                    Date.parse(s.ends_at) <= Date.now() && (
+                    Date.parse(s.ends_at) <= now && (
                       <Button onClick={() => choose(r.id, "complete")}>
                         Record completion
                       </Button>

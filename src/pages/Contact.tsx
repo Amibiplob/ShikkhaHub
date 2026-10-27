@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import PageShell from "@/components/PageShell";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
-  contactErrors,
-  solveChallenge,
-  supportCategories,
-  type ContactFields,
+contactErrors,
+solveChallenge,
+supportCategories,
+type ContactFields,
 } from "../../supabase/functions/_shared/supportProtocol";
 import type { Tables } from "@/integrations/supabase/types";
-export default function Contact() {
+function ContactContent() {
   const { user, profile } = useAuth();
   const [fields, setFields] = useState<ContactFields>({
-    name: "",
-    email: "",
+    name: profile?.full_name || "",
+    email: user?.email || "",
     category: "account",
     subject: "",
     message: "",
@@ -30,18 +30,8 @@ export default function Contact() {
     [tickets, setTickets] = useState<Tables<"support_tickets">[]>([]),
     [ticketError, setTicketError] = useState("");
   useEffect(() => {
-    setFields((f) => ({
-      ...f,
-      name: profile?.full_name || "",
-      email: user?.email || "",
-    }));
-  }, [user, profile]);
-  useEffect(() => {
     let active = true;
-    if (!user) {
-      setTickets([]);
-      return;
-    }
+    if (!user) return;
     supabase
       .from("support_tickets")
       .select("*")
@@ -266,4 +256,10 @@ export default function Contact() {
       </div>
     </PageShell>
   );
+}
+
+export default function Contact() {
+ const {user,loading}=useAuth();
+ if (loading) return <PageShell title="Contact support"><p role="status">Loading contact form…</p></PageShell>;
+ return <ContactContent key={user?.id || "guest"} />;
 }

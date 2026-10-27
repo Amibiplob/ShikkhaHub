@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, BarChart3, MonitorPlay, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const perks = [
   { icon: Upload, key: "p1" },
@@ -30,7 +30,7 @@ const TeachSection = () => {
 
         <div className="space-y-4">
           {perks.map((p) => (
-            <div key={p.key} className="flex gap-4 rounded-lg border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+            <div key={p.key} className="flex gap-4 rounded-lg border border-border bg-card p-6 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                 <p.icon className="h-5 w-5" />
               </span>

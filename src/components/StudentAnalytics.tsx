@@ -1,15 +1,15 @@
 import type { Tables } from "@/integrations/supabase/types";
-import type { Course, Quiz, Attempt } from "@/lib/models";
+import type { Course, Attempt } from "@/lib/models";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  AreaChart, Area,
+BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+AreaChart, Area,
 } from "recharts";
 import { Award, BookOpen, CheckCircle, Clock, Flame, Target, TrendingUp, Loader2 } from "lucide-react";
 

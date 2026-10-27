@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, User } from "lucide-react";
+import { User } from "lucide-react";
 import BookmarkButton from "@/components/BookmarkButton";
 
 interface CourseCardProps {
@@ -22,24 +23,26 @@ const difficultyColors: Record<string, string> = {
 };
 
 const CourseCard = ({ id, title, description, thumbnail_url, category, difficulty, teacher_name, progressPercent }: CourseCardProps) => {
+  const [failedThumbnail, setFailedThumbnail] = useState<string | null>(null);
+  const artwork = /data|ai|machine/i.test(category || "") ? "data" : /design/i.test(category || "") ? "design" : "code";
+  const fallback = `/artwork/course-${artwork}.svg`;
+  const image = thumbnail_url && thumbnail_url !== failedThumbnail ? thumbnail_url : fallback;
   return (
     <div className="relative group">
       <Link to={`/courses/${id}`} className="block">
         <div className="overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:border-primary/30 hover:shadow-glow hover:-translate-y-1">
           {/* Thumbnail */}
           <div className="relative aspect-video overflow-hidden bg-muted">
-            {thumbnail_url ? (
-              <img
-                src={thumbnail_url}
-                alt={title}
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
-                <BookOpen className="h-10 w-10 text-muted-foreground/50" />
-              </div>
-            )}
+            <img
+              src={image}
+              alt={title}
+              width={800}
+              height={450}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+              decoding="async"
+              onError={() => { if (image !== fallback) setFailedThumbnail(image); }}
+            />
             {difficulty && (
               <Badge variant="outline" className={`absolute top-3 right-3 text-xs ${difficultyColors[difficulty] || ""}`}>
                 {difficulty}

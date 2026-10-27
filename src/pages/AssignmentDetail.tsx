@@ -1,10 +1,10 @@
-import type { Assignment, Submission, Review } from "@/lib/models";
+import type { Assignment, Submission } from "@/lib/models";
 import { allowedDocument } from "@/lib/storage";
 import PrivateFileLink from "@/components/PrivateFileLink";
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,24 +12,24 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowLeft, CheckCircle2, Clock, Download, ExternalLink, FileText, Github, Globe,
-  Loader2, MessageSquare, Paperclip, Send, Upload, X,
+ArrowLeft, CheckCircle2, Clock, Download, ExternalLink, FileText, GitBranch, Globe,
+Loader2, MessageSquare, Paperclip, Send, Upload, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
 const AssignmentDetail = () => {
   const { assignmentId } = useParams<{ assignmentId: string }>();
-  const { user, hasRole } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [assignment, setAssignment] = useState<Assignment>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -51,7 +51,6 @@ const AssignmentDetail = () => {
   const [feedback, setFeedback] = useState("");
   const [reviewing, setReviewing] = useState(false);
 
-  const isTeacher = hasRole("teacher");
 
   useEffect(() => {
     if (!assignmentId) return;
@@ -203,7 +202,7 @@ const AssignmentDetail = () => {
   const isPastDue = assignment.due_date && new Date(assignment.due_date) < new Date();
   const typeIcon = (t: string) => {
     switch (t) {
-      case "github": return <Github className="h-4 w-4" />;
+      case "github": return <GitBranch className="h-4 w-4" />;
       case "url": return <Globe className="h-4 w-4" />;
       case "file": return <Paperclip className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;

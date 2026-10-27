@@ -1,8 +1,6 @@
 import type { Tables } from "@/integrations/supabase/types";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +16,7 @@ const StudentProgressTracker = ({ courseId, isTeacher }: StudentProgressTrackerP
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isTeacher) { setLoading(false); return; }
+    if (!isTeacher) return;
 
     const fetchStudentProgress = async () => {
       // Get enrollments

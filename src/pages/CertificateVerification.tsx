@@ -10,7 +10,7 @@ type Verified = {
   issued_at: string;
   status: string;
 };
-export default function CertificateVerification() {
+function CertificateVerificationContent() {
   const { token } = useParams();
   const [record, setRecord] = useState<Verified | null>(null),
     [loading, setLoading] = useState(true),
@@ -18,9 +18,6 @@ export default function CertificateVerification() {
     [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError("");
-    setRecord(null);
     (async () => {
       if (!token || !/^[0-9a-f-]{36}$/i.test(token)) {
         setLoading(false);
@@ -48,7 +45,7 @@ export default function CertificateVerification() {
       ) : error ? (
         <p role="alert">
           {error}{" "}
-          <Button onClick={() => setAttempt((a) => a + 1)}>Retry</Button>
+          <Button onClick={() => { setLoading(true); setError(""); setRecord(null); setAttempt((a) => a + 1); }}>Retry</Button>
         </p>
       ) : record ? (
         <article className="max-w-2xl space-y-4 rounded-xl border bg-card p-6">
@@ -75,4 +72,9 @@ export default function CertificateVerification() {
       )}
     </PageShell>
   );
+}
+
+export default function CertificateVerification() {
+ const {token}=useParams();
+ return <CertificateVerificationContent key={token} />;
 }

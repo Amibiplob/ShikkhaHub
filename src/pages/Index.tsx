@@ -12,7 +12,7 @@ import TeachSection from "@/components/TeachSection";
 import FaqSection from "@/components/FaqSection";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 import HomeDiscoverySections from "@/components/HomeDiscoverySections";
 
 const Index = () => {

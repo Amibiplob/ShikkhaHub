@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { LanguageProvider, useLanguage } from "./LanguageContext";
+import { LanguageProvider } from "./LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 import { en, bn } from "@/lib/translations";
 
 const Probe = () => {

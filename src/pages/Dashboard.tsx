@@ -1,51 +1,48 @@
 import { lazy, Suspense } from "react";
-const TutoringWorkspace = lazy(() => import("@/components/TutoringWorkspace"));
 import type { Course, LiveSession } from "@/lib/models";
 import { useEffect, useState } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import StudentAnalytics from "@/components/StudentAnalytics";
-import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import CourseCard from "@/components/CourseCard";
 import ProfileEditor from "@/components/ProfileEditor";
 import LiveClassScheduler from "@/components/LiveClassScheduler";
 import LiveClassModal from "@/components/LiveClassModal";
-import ThumbnailUpload from "@/components/ThumbnailUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
-  BarChart3,
-  Bookmark,
-  BookOpen,
-  Calendar,
-  GraduationCap,
-  Loader2,
-  Plus,
-  Settings,
-  Users,
-  Video,
+BarChart3,
+Bookmark,
+BookOpen,
+Calendar,
+GraduationCap,
+Loader2,
+Plus, Users,
+Video
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+const TutoringWorkspace = lazy(() => import("@/components/TutoringWorkspace"));
+const StudentAnalytics = lazy(() => import("@/components/StudentAnalytics"));
 
 const Dashboard = () => {
   const { user, loading: authLoading, hasRole, profile } = useAuth();
@@ -568,7 +565,9 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <StudentAnalytics />
+            <Suspense fallback={<p role="status">Loading analytics…</p>}>
+              <StudentAnalytics />
+            </Suspense>
           </TabsContent>
           <TabsContent value="tutoring">
             <Suspense fallback={<p role="status">Loading tutoring…</p>}>

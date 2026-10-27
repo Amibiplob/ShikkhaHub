@@ -6,7 +6,6 @@ import Footer from "@/components/Footer";
 import CourseCard from "@/components/CourseCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Loader2, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -18,20 +17,15 @@ const Courses = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [category, setCategory] = useState(searchParams.get("category") || "All");
-  const [difficulty, setDifficulty] = useState(searchParams.get("level") || "All");
+  const search = searchParams.get("search") || "";
+  const category = searchParams.get("category") || "All";
+  const difficulty = searchParams.get("level") || "All";
   const [error, setError] = useState(false);
   const [revision, setRevision] = useState(0);
   const instructor = searchParams.get("instructor") || "All";
   const [instructors, setInstructors] = useState<{id:string;name:string}[]>([]);
   const sort = searchParams.get("sort") || "newest";
 
-  useEffect(() => {
-    setSearch(searchParams.get("search") || "");
-    setCategory(searchParams.get("category") || "All");
-    setDifficulty(searchParams.get("level") || "All");
-  }, [searchParams]);
 
   useEffect(() => {
     supabase.from("courses").select("teacher_id, profiles!courses_teacher_id_profiles_fkey(full_name)").eq("is_published",true).then(({data})=>{
@@ -88,7 +82,6 @@ const Courses = () => {
                   placeholder="Search courses..."
                   value={search}
                   onChange={(e) => {
-                    setSearch(e.target.value);
                     updateFilters({ search: e.target.value });
                   }}
                   className="pl-10"

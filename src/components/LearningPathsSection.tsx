@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const paths = [
   { key: "p1", query: "Web Development" },
@@ -25,7 +25,7 @@ const LearningPathsSection = () => {
 
         <div className="grid gap-6 lg:grid-cols-3">
           {paths.map((p) => (
-            <div key={p.key} className="flex flex-col rounded-lg border border-border border-t-2 border-t-primary bg-card p-7 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-secondary/50 hover:shadow-md">
+            <div key={p.key} className="flex flex-col rounded-lg border border-border border-t-2 border-t-primary bg-card p-7 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-secondary/50 hover:shadow-md">
               <p className="text-xs font-semibold uppercase tracking-wide text-primary">{t(`paths.${p.key}.level`)}</p>
               <h3 className="mb-5 mt-2 text-xl font-bold">{t(`paths.${p.key}.title`)}</h3>
               <ul className="mb-7 space-y-3">

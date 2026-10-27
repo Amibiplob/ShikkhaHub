@@ -1,9 +1,17 @@
 @import "@fontsource-variable/space-grotesk";
 @import "@fontsource-variable/dm-sans";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+@config "../tailwind.config.ts";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tailwind 4 no longer reads the legacy container options. */
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  max-width: 1400px;
+}
 
 @layer base {
   :root {
@@ -184,7 +192,7 @@
   }
 
   .glass {
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur-sm(12px);
     background: hsl(var(--card) / 0.8);
     border: 1px solid hsl(var(--border) / 0.5);
   }

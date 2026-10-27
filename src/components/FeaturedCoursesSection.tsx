@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 import type { Course } from "@/lib/models";
 import { Button } from "@/components/ui/button";
 import CourseCard from "@/components/CourseCard";

@@ -1,5 +1,5 @@
 import { ClipboardCheck, GraduationCap, PlayCircle, UserPlus } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const steps = [
   { icon: UserPlus, key: "s1" },
@@ -23,7 +23,7 @@ const HowItWorksSection = () => {
 
         <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
-            <li key={s.key} className="relative rounded-lg border border-border bg-card p-7 shadow-sm">
+            <li key={s.key} className="relative rounded-lg border border-border bg-card p-7 shadow-xs">
               <span className="absolute right-5 top-5 text-4xl font-extrabold text-primary/10">
                 {String(i + 1).padStart(2, "0")}
               </span>

@@ -4,10 +4,10 @@ import PageShell from "@/components/PageShell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+Accordion,
+AccordionContent,
+AccordionItem,
+AccordionTrigger,
 } from "@/components/ui/accordion";
 import { filterFaqs } from "@/lib/faqs";
 export default function Faq() {

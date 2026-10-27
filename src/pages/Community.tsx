@@ -1,8 +1,8 @@
-import type { Discussion, Post } from "@/lib/models";
+import type { Post } from "@/lib/models";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -44,10 +44,9 @@ const Community = () => {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState(searchParams.get("category") || "all");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "popular">(
-    searchParams.get("sort") === "oldest" || searchParams.get("sort") === "popular" ? searchParams.get("sort") as "oldest" | "popular" : "newest"
-  );
+  const category = searchParams.get("category") || "all";
+  const requestedSort = searchParams.get("sort");
+  const sortBy = requestedSort === "oldest" || requestedSort === "popular" ? requestedSort : "newest";
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
@@ -65,20 +64,16 @@ const Community = () => {
 
   // Debounce the search box so we don't fire a query per keystroke
   useEffect(() => {
-    const t = setTimeout(() => setSearch(searchInput.trim()), 350);
+    const t = setTimeout(() => { setSearch(searchInput.trim()); setPage(0); }, 350);
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  useEffect(() => {
-    setCategory(searchParams.get("category") || "all");
-    const requestedSort = searchParams.get("sort");
-    setSortBy(requestedSort === "oldest" || requestedSort === "popular" ? requestedSort : "newest");
-  }, [searchParams]);
 
   const updateListParam = (key: "category" | "sort", value: string) => {
     const params = new URLSearchParams(searchParams);
     if ((key === "category" && value === "all") || (key === "sort" && value === "newest")) params.delete(key);
     else params.set(key, value);
+    setPage(0);
     setSearchParams(params, { replace: true });
   };
 
@@ -158,7 +153,7 @@ const Community = () => {
   }, [category, search, sortBy, page]);
 
   useEffect(() => {
-    fetchPosts();
+    void (async () => { await fetchPosts(); })();
   }, [fetchPosts]);
 
   const fetchUpvotes = useCallback(async () => {
@@ -175,20 +170,16 @@ const Community = () => {
   }, [user]);
 
   useEffect(() => {
-    fetchUpvotes();
+    void (async () => { await fetchUpvotes(); })();
   }, [fetchUpvotes]);
 
-  // Reset to first page whenever filters change
-  useEffect(() => {
-    setPage(0);
-  }, [category, search, sortBy]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [page]);
 
   useEffect(() => {
-    fetchCounts(posts.map((p) => p.id));
+    if (posts.length) void (async () => { await fetchCounts(posts.map((p) => p.id)); })();
   }, [posts]);
 
   const openCreate = () => {

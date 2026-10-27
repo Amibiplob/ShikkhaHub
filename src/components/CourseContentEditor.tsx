@@ -1,7 +1,6 @@
-import type { Course, Module, Lesson } from "@/lib/models";
+import type { Module, Lesson } from "@/lib/models";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +19,6 @@ interface CourseContentEditorProps {
 }
 
 const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) => {
-  const { user } = useAuth();
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +57,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
   }, [courseId]);
 
   useEffect(() => {
-    fetchModules();
+    void (async () => { await fetchModules(); })();
   }, [fetchModules]);
 
   const handleCreateModule = async (e: React.FormEvent) => {

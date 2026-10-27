@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ArrowRight, Award, CalendarDays, Clock3, MessageSquare, PlayCircle, Radio, Star, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
@@ -33,16 +33,13 @@ type DiscussionPreview = {
   created_at: string;
 };
 
-const ContinueLearningSection = () => {
+const ContinueLearningContent = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [courses, setCourses] = useState<ContinueCourse[]>([]);
 
   useEffect(() => {
-    if (!user) {
-      setCourses([]);
-      return;
-    }
+    if (!user) return;
 
     let active = true;
     const load = async () => {
@@ -235,6 +232,12 @@ const CredentialsSection = () => {
       </div>
     </section>
   );
+};
+
+// Reset user-scoped discovery state before rendering a different account.
+const ContinueLearningSection = () => {
+  const { user } = useAuth();
+  return user ? <ContinueLearningContent key={user.id} /> : null;
 };
 
 const HomeDiscoverySections = {

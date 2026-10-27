@@ -2,13 +2,12 @@ import LessonBookmark from "@/components/LessonBookmark";
 import CourseSettings from "@/components/CourseSettings";
 import PrivateVideo from "@/components/PrivateVideo";
 import type {
-  Course,
-  Module,
-  Lesson,
-  LiveSession,
-  Assignment,
-  Recording,
-  Discussion,
+Course,
+Module,
+Lesson,
+LiveSession,
+Assignment,
+Recording
 } from "@/lib/models";
 import ReactMarkdown from "react-markdown";
 import { privateFileUrl } from "@/lib/storage";
@@ -17,7 +16,7 @@ import { useEffect, useState } from "react";
 import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CourseReviews from "@/components/CourseReviews";
@@ -36,40 +35,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+Accordion,
+AccordionContent,
+AccordionItem,
+AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Bookmark,
-  BookOpen,
-  CheckCircle2,
-  ClipboardList,
-  Eye,
-  EyeOff,
-  FileText,
-  Loader2,
-  PlayCircle,
-  Plus,
-  Video,
-  Download,
-  Film,
-  Calendar,
+BookOpen,
+CheckCircle2,
+ClipboardList,
+Eye,
+EyeOff,
+FileText,
+Loader2,
+PlayCircle,
+Plus,
+Video,
+Download,
+Film,
+Calendar
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const CourseDetail = () => {
+const CourseDetailContent = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, hasRole } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [course, setCourse] = useState<Course>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -78,8 +76,9 @@ const CourseDetail = () => {
   const [revision, setRevision] = useState(0);
   const [enrolling, setEnrolling] = useState(false);
   const [savingProgress, setSavingProgress] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [video, setVideo] = useState<{ path: string; url: string } | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson>(null);
+  const videoUrl = video && video.path === activeLesson?.video_url ? video.url : null;
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [liveClasses, setLiveClasses] = useState<LiveSession[]>([]);
@@ -104,10 +103,6 @@ const CourseDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    setEnrolled(false);
-    setProgress({});
-    setActiveLesson(null);
-    setLoading(true);
     let active = true;
     const fetch = async () => {
       const [courseRes, modulesRes, assignRes, liveRes, recRes] =
@@ -192,11 +187,11 @@ const CourseDetail = () => {
 
   useEffect(() => {
     let active = true;
-    setVideoUrl(null);
-    if (activeLesson?.video_url)
-      privateFileUrl("lesson-files", activeLesson.video_url)
+    const path = activeLesson?.video_url;
+    if (path)
+      privateFileUrl("lesson-files", path)
         .then((url) => {
-          if (active) setVideoUrl(url);
+          if (active) setVideo({ path, url });
         })
         .catch(() => {
           if (active) toast.error("Could not load this video");
@@ -1026,4 +1021,8 @@ const CourseDetail = () => {
   );
 };
 
-export default CourseDetail;
+export default function CourseDetail() {
+  const { id } = useParams();
+  const { user } = useAuth();
+  return <CourseDetailContent key={`${id}:${user?.id || "guest"}`} />;
+}

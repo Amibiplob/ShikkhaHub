@@ -1,8 +1,8 @@
 import type { Tables } from "@/integrations/supabase/types";
-import type { Discussion, Post } from "@/lib/models";
+import type { Discussion } from "@/lib/models";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -51,7 +51,7 @@ const CourseDiscussions = ({ courseId, enrolled, isTeacher }: CourseDiscussionsP
   }, [courseId]);
 
   useEffect(() => {
-    fetchDiscussions();
+    void (async () => { await fetchDiscussions(); })();
   }, [fetchDiscussions]);
 
   const handlePost = async (parentId: string | null = null) => {

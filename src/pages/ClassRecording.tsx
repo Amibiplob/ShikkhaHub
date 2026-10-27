@@ -1,7 +1,7 @@
 import PrivateVideo from "@/components/PrivateVideo";
 import type { LiveSession, Recording } from "@/lib/models";
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";

@@ -1,108 +1,30 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
+import { assistantHandler } from "../_shared/assistantHandler.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const clientFor = (authorization: string) => createClient(
+  Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!,
+  { global: { headers: { Authorization: authorization } }, auth: { persistSession: false } },
+);
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  try {
-    const authorization = req.headers.get("Authorization");
-    if (!authorization?.startsWith("Bearer ")) return new Response(JSON.stringify({error:"Sign in required"}), {status:401,headers:{...corsHeaders,"Content-Type":"application/json"}});
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authorization } } });
-    const { data: {user}, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return new Response(JSON.stringify({error:"Invalid session"}), {status:401,headers:{...corsHeaders,"Content-Type":"application/json"}});
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
-    const { messages, courseId } = await req.json();
-
-    if (!Array.isArray(messages) || messages.length < 1 || messages.length > 20 || messages.some(m => !m || !["user","assistant"].includes(m.role) || typeof m.content !== "string" || m.content.length > 4000)) {
-      return new Response(JSON.stringify({error:"Invalid conversation"}), {status:400,headers:{...corsHeaders,"Content-Type":"application/json"}});
-    }
-    // The caller's JWT and RLS govern all context reads; no service-role bypass.
-
-
-    let courseContext = "";
-    if (courseId) {
-      const { data: course } = await supabase
-        .from("courses")
-        .select("title, description, category, difficulty")
-        .eq("id", courseId)
-        .single();
-
-      const { data: modules } = await supabase
-        .from("modules")
-        .select("title, description, lessons(title, type, content)")
-        .eq("course_id", courseId)
-        .order("sort_order");
-
-      if (course) {
-        courseContext = `\n\nCOURSE CONTEXT:\nTitle: ${course.title}\nDescription: ${course.description || "N/A"}\nCategory: ${course.category || "N/A"}\nDifficulty: ${course.difficulty || "N/A"}`;
-        if (modules?.length) {
-          courseContext += "\n\nMODULES & LESSONS:";
-          for (const mod of modules) {
-            courseContext += `\n\n## ${mod.title}`;
-            if (mod.description) courseContext += `\n${mod.description}`;
-            for (const lesson of mod.lessons || []) {
-              courseContext += `\n- ${lesson.title} (${lesson.type})`;
-              if (lesson.content) courseContext += `\n  Content: ${lesson.content.substring(0, 500)}`;
-            }
-          }
-        }
-      }
-    }
-
-    const systemPrompt = `You are a helpful AI teaching assistant for an online learning platform. You help students understand course material, answer questions, explain concepts, and provide study guidance.
-
-Be concise, encouraging, and educational. Use markdown formatting for clarity. If a student asks something outside the course scope, gently redirect them.${courseContext}`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
-        stream: true,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI usage limit reached. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI service temporarily unavailable." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
-  } catch (e) {
-    console.error("course-assistant error:", e);
-    return new Response(JSON.stringify({ error: "Assistant unavailable. Please try again later." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-});
+Deno.serve(assistantHandler({
+  origins: (Deno.env.get("APP_ALLOWED_ORIGINS") || "").split(",").map(s => s.trim()).filter(Boolean),
+  endpoint: Deno.env.get("AI_CHAT_COMPLETIONS_URL"),
+  apiKey: Deno.env.get("AI_API_KEY"),
+  model: Deno.env.get("AI_MODEL"),
+  authorize: async authorization => {
+    const { data, error } = await clientFor(authorization).auth.getUser();
+    return !error && !!data.user;
+  },
+  courseContext: async (authorization, courseId) => {
+    // RLS governs both course metadata and lesson content; no service role.
+    const client = clientFor(authorization);
+    const { data: course, error } = await client.from("courses")
+      .select("title, description, category, difficulty").eq("id", courseId).single();
+    if (error || !course) return null;
+    const { data: modules, error: moduleError } = await client.from("modules")
+      .select("title, description, lessons(title, type, content)")
+      .eq("course_id", courseId).order("sort_order").limit(30);
+    if (moduleError) return null;
+    return JSON.stringify({ course, modules }).slice(0, 24_000);
+  },
+}));

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, Code2, Play, Radio, Users, Zap } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { ArrowRight, BookOpen, Code2, Play, Users, Zap } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 
 const HeroSection = () => {
@@ -63,23 +63,26 @@ const HeroSection = () => {
 
           </div>
 
+          <div className="space-y-4">
+            <img src="/artwork/learning-workspace.svg" alt={t("hero.artworkAlt")} width={800} height={450} fetchPriority="high" className="w-full rounded-xl border border-border shadow-lg" />
           <div className="grid grid-cols-2 gap-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="group rounded-lg border border-border bg-card/80 p-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
-                <div className="mb-5 flex h-11 w-11 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+              <div key={stat.label} className="group rounded-lg border border-border bg-card/80 p-4 shadow-xs backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
+                <div className="mb-3 flex h-9 w-11 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <stat.icon className="h-5 w-5" />
                 </div>
                 <p className="font-heading text-4xl font-bold text-foreground">{stat.value}</p>
                 <p className="mt-1 font-mono text-xs uppercase text-muted-foreground">{stat.label}</p>
               </div>
             ))}
-            <Link to="/courses" className="group flex min-h-40 flex-col justify-between rounded-lg bg-primary p-6 text-primary-foreground shadow-glow transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90">
+            <Link to="/courses" className="group flex min-h-32 flex-col justify-between rounded-lg bg-primary p-6 text-primary-foreground shadow-glow transition-all duration-300 hover:-translate-y-0.5 hover:opacity-90">
               <BookOpen className="h-6 w-6" />
               <div>
                 <p className="font-heading text-xl font-bold">{t("hero.catalogTitle")}</p>
                 <p className="mt-1 flex items-center gap-2 text-sm">{t("hero.catalogCta")} <ArrowRight className="h-4 w-4" /></p>
               </div>
             </Link>
+          </div>
           </div>
         </div>
       </div>
