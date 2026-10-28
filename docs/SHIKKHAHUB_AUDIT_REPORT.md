@@ -1,6 +1,10 @@
 # ShikkhaHub stabilization and staging audit
 
-## Current repair scope — 28 October 2026
+## Latest live classroom verification — 29 October 2026
+
+The full unchanged verification chain exited 0: **127 Vitest, 52 SQL, 77 Chrome, six security and three build/config tests**, plus **three headed recording repetitions** and **four native PostgreSQL races**. TypeScript, lint, build, current npm audit (zero known vulnerabilities), staged secrets and whitespace checks passed. Real encoded VP8/Opus output includes teacher, student and presentation media; background audio, actual mute silence, timestamps and stable recorder tracks are asserted. Supabase remains intercepted in browser tests. The new migration is not applied remotely; STUN-only ICE and the hosted/native-picker/physical-device/load gates prevent production acceptance. Exact files, failures retained during development and final evidence: [TESTING.md](../TESTING.md), [LIVE_CLASSROOM.md](LIVE_CLASSROOM.md), [verification JSON](live-classroom-verification.json). No push/deployment/hosted mutation.
+
+## Earlier routing/completion repair — 28 October 2026
 
 Final local verification passed: 122 Vitest, 49 SQL, 62 real-Chrome fixture-backed browser scenarios, six repository-security and three build/config regressions, plus four independent PostgreSQL races. TypeScript, lint, production build, current npm audit (zero known findings), final staged secret checks and whitespace checks passed. The complete successful verification used the configured single browser worker; the earlier one-worker run had all 62 passes but outer exit 143 after its summary. Exact attempts and evidence boundaries are preserved in TESTING.md.
 
@@ -95,3 +99,10 @@ No fee is charged, no qualifications are fabricated, no certificate signature/se
 Current exact local counts: **53 Vitest tests in 16 files, 46 PGlite database tests, 34 Chrome scenarios, one independent PostgreSQL integration test containing four races; zero failures in the final component runs**. Actual Deno frozen typecheck/runtime smoke passes with synthetic adapters; all 31 locked Edge package-version entries have zero known registry advisories. Full verification was split after an interrupted long run and a temporary occupied-port retry; logs retain those outcomes. Types, lint, unit, SQL and build passed together, then the complete browser suite passed separately. The nine original Fast Refresh warnings and main-chunk build warning remain.
 
 A final seven-scenario feature recheck passed at the actual named viewport sizes after correcting independent test contexts and SH-032 mobile admin filter layout. It is reported as a separate rerun, not seven additional unique scenarios. Inspected screenshots and hashes reflect that final run. The post-layout production build passed (main JS 1,570.42 kB; CSS 79.18 kB).
+
+
+## Live classroom redesign — 28 October 2026
+
+The confirmed tab-return failure was auth-driven route unmounting and track teardown. Same-identity revalidation now preserves the media route while server-role refresh remains authoritative. The classroom adds bidirectional host/student media with capped fixed relay slots, independent devices, user-initiated host presentation, consent-aware grid/presentation recording, audio mixing, stable recorder outputs and bounded IndexedDB chunk journaling. Private notice delivery is required before recording begins.
+
+An additive, locally tested migration expands only host-authenticated meeting-state and participant media-state events and validates new recording object paths. Course/Storage/Realtime RLS and server-stamped identities remain intact. It has not been applied remotely. Fixture-backed Chrome plus actual encoded-media decoding and local PostgreSQL tests do not prove hosted provider acceptance. See [LIVE_CLASSROOM.md](LIVE_CLASSROOM.md) and [verification data](live-classroom-verification.json) for changed files, test results, real-media inspection and limitations. STUN-only ICE, native picker/system-audio acceptance, other physical browsers, seven-party load, local-draft privacy/retention and hosted migration/service acceptance prevent a production-readiness claim. No push, deployment or hosted mutation occurred.

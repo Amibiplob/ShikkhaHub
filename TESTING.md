@@ -1,6 +1,36 @@
 # ShikkhaHub testing
 
-Latest repair verification: **28 October 2026, Asia/Dhaka**; see the repair section below. The **27 October 2026** results in the following historical sections describe their own snapshots. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
+Latest classroom verification: **29 October 2026, Asia/Dhaka**; see the classroom section below. The **27 October 2026** results in the following historical sections describe their own snapshots. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
+
+## Live classroom redesign and recording — verified 29 October 2026
+
+Implementation started 28 October; final verification completed 29 October (Asia/Dhaka). Baseline commit: `1ef1b2d`. The workspace already contained task-related implementation when this completion pass began; it was reviewed, repaired and verified. No unrelated changes, environment files, old migrations or hosted resources were edited. See [engineering, privacy and limits](docs/LIVE_CLASSROOM.md) and [exact files/results/media measurements](docs/live-classroom-verification.json).
+
+| Check | Final result |
+| --- | --- |
+| `npm run verify` | **Exit 0**, unchanged complete chain |
+| Git-index secret scan / repository security | Passed / **6 tests passed** |
+| Build/environment/routing regressions | **3 passed** |
+| TypeScript / ESLint / production build | Passed; zero lint errors/warnings |
+| Vitest | **127 passed in 25 files** |
+| PGlite SQL/migration integration | **52 passed**, zero skipped; Auth/Storage/Realtime shims |
+| Complete Chrome suite | **77 passed, 0 failed, 0 skipped, 0 flaky**, configured single worker |
+| Headed Chrome recording stress | **3/3 repetitions passed**; same real-media assertions |
+| Independent PostgreSQL 18.4 | **1 test passed**, covering **4 races**, zero skipped |
+| Current `npm audit` | **0 known vulnerabilities**; dependencies unchanged |
+| Git whitespace / final staged secret checks | Passed before local commits |
+
+The final browser suite exercised all existing journeys plus 15 classroom scenarios. Recording stress repeats are additional executions of one existing scenario, not additional unique tests. Installed Google Chrome 156.0.8078.47 on Linux, Node 24.22.1/npm 11.19.1 and FFmpeg/FFprobe 6.1.1 were used. Actual WebRTC/media encoding/playback, IndexedDB and decoding run in Chrome; Supabase HTTP/Auth/Storage/Realtime are intercepted fixtures. The deterministic presentation stream does not prove an OS picker was accepted or real system audio was supplied. The native permission-negative test obtains no stream without approval.
+
+The fresh unchanged-app baseline with independent teacher/student contexts reproduces native tab-return teardown, with ended tracks after refocus. The same-user auth regression preserves protected media after repair. Before/after browser traces additionally prove pending-notice cancellation and muted replacement-track privacy. A preliminary classroom run had **14 passes/1 audio-gap failure**; the recording diagnostic passed, followed by the complete successful verification above. The preliminary gap and setup mistakes remain preserved, not counted as final passes. No assertions were removed or timeouts raised. The final analyser aligns audio samples to media timestamps and tests long packet gaps, both voices during a real hidden interval, actual mute silence, all three tones/colors, stable recorder tracks, playable nonempty output and duration tolerance.
+
+The full-run recording is **53.553 seconds / 1,758,031 bytes**, VP8/Opus, **1280×720**, zero clipped decoded samples, maximum audio-packet gap **217 ms**, with a **14.764-second** native hidden interval plus four rapid switches. Headed measurements, file SHA-256 hashes and per-run media values are in the JSON report. Four final full-recording runs (one headless, three headed) each include a hidden interval and four rapid switches. Renderer-only task-time was 29.373276 seconds; sampled JS heap was 35,772,580 → 33,203,188 bytes. These short snapshots include test overhead and do not establish sustained performance or lossless recording under resource pressure.
+
+Raw logs/status, baseline traces, recordings, decoded measurements and final browser report are ignored under `artifacts/classroom-completion/`. `verify.log` / `verify-exit.txt`, `full-browser/`, `headed-stress/`, `headed-stress.log`, `media-evidence/` and `original-final/` identify the final evidence. Final presentation screenshots at 375/768/1024/1440 and teacher/student grid views were opened and inspected; selected fixtures are checked in under `docs/screenshots/live-classroom-*`. Bangla chat and keyboard controls fit the 375px viewport. This is viewport review, not physical-device acceptance.
+
+The temporary PostgreSQL binaries came from pinned `@embedded-postgres/linux-x64@18.4.0-beta.17` in `/tmp`; bundled library symlinks and `LD_LIBRARY_PATH` were restored there. No dependency, system installation or hosted database changed.
+
+**Release is gated:** the additive migration remains unapplied remotely; hosted Auth/private Realtime/Storage and revocation, native screen/audio sources, credentialed TURN/cross-network calls, other browsers/physical devices, sustained seven-party load, long recordings and retention approval remain open. ICE remains STUN-only. Client recording does not guarantee continuous hidden video or recovery after browser/OS termination. No push, deployment or production-readiness claim.
 
 ## Routing, CI, mobile menu and course completion repair
 

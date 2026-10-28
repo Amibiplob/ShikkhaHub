@@ -1,0 +1,426 @@
+{
+  "baseline": "1ef1b2d",
+  "startedLocalDate": "2026-10-28",
+  "verifiedLocalDate": "2026-10-29",
+  "timezone": "Asia/Dhaka",
+  "generatedAt": "2026-10-28T18:14:33.856Z",
+  "deploymentReady": false,
+  "hostedResourcesModified": false,
+  "pushed": false,
+  "deployed": false,
+  "rootCause": "Same-user SIGNED_IN revalidation set loading=true; ProtectedRoute unmounted the live route and cleanup ended recorder/capture tracks on native tab return. No React or encoder exception was required.",
+  "baselineReproduction": "artifacts/classroom-completion/original-final",
+  "fixes": [
+    "Same-user session revalidation preserves the mounted media route; identity changes and role failures still fail closed.",
+    "Pending recording notices are cancelled by the meeting generation after leave/end.",
+    "Muted replacement tracks are disabled before sender replacement.",
+    "Stable recording output tracks mix authorized participant audio and compose grid/presentation video."
+  ],
+  "environment": {
+    "node": "v24.22.1",
+    "npm": "11.19.1",
+    "browser": "Google Chrome 156.0.8078.47",
+    "os": "Linux",
+    "ffmpeg": "6.1.1",
+    "postgres": "18.4"
+  },
+  "results": {
+    "verifyExit": 0,
+    "securityTests": 6,
+    "buildConfigTests": 3,
+    "vitestTests": 127,
+    "vitestFiles": 25,
+    "databaseTests": 52,
+    "concurrencyTests": 1,
+    "concurrencyRaces": 4,
+    "concurrencySkipped": 0,
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed",
+    "fullChrome": {
+      "startTime": "2026-10-28T17:50:08.974Z",
+      "duration": 1075394.4209999999,
+      "expected": 77,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "headedRecordingRepetitions": {
+      "startTime": "2026-10-28T18:08:34.885Z",
+      "duration": 343412.901,
+      "expected": 3,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "npmAudit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "source": "artifacts/classroom-completion/verify.log",
+    "headedSource": "artifacts/classroom-completion/headed-stress.log"
+  },
+  "scope": {
+    "realBrowserMedia": [
+      "WebRTC",
+      "Web Audio",
+      "canvas capture",
+      "MediaRecorder",
+      "IndexedDB",
+      "Chrome playback",
+      "FFmpeg decoding"
+    ],
+    "simulatedServices": [
+      "Supabase HTTP/Auth/Storage/Realtime"
+    ],
+    "devices": "Native Chrome fake-device permission/capture path followed by generated camera/microphone patterns; presentation selection is an explicit test-only stream fixture.",
+    "nativeScreenPermission": "A separate native API test without fake-device/UI flags supplies no capture stream without user approval; actual OS source selection is unverified.",
+    "database": "All migrations in PGlite with explicit Auth/Storage/Realtime shims; separate native PostgreSQL cluster for four concurrency races."
+  },
+  "recordings": {
+    "headless": [
+      {
+        "title": "complete meeting recording contains participant media and presentation across tab and device transitions",
+        "status": "passed",
+        "durationMs": 116929,
+        "media": {
+          "peakAmplitude": 0.3203674554824829,
+          "audioPacketMaxGap": 0.21700000000000053,
+          "clippedSamples": 0,
+          "streams": [
+            {
+              "codec": "vp8",
+              "type": "video",
+              "width": 1280,
+              "height": 720
+            },
+            {
+              "codec": "opus",
+              "type": "audio"
+            }
+          ],
+          "duration": 53.553,
+          "tones": {
+            "teacher440": 0.11780855980652523,
+            "student880": 0.11765822071682096,
+            "presentation1320": 0.11740579566794915
+          },
+          "colorPixels": {
+            "teacher": 155326,
+            "student": 142214,
+            "presentation": 63150
+          },
+          "bytes": 1758031
+        },
+        "lifecycle": {
+          "nativeDurationSeconds": 52.07,
+          "firstHiddenSeconds": 14.764,
+          "hiddenIntervals": 5,
+          "recorderStarts": 1,
+          "recorderStops": 1,
+          "outputTrackCount": 2,
+          "unhandledRejections": [],
+          "audioContextStates": [
+            "running",
+            "running",
+            "running",
+            "running",
+            "closed",
+            "running",
+            "closed",
+            "closed"
+          ]
+        }
+      }
+    ],
+    "headed": [
+      {
+        "title": "complete meeting recording contains participant media and presentation across tab and device transitions",
+        "status": "passed",
+        "durationMs": 113647,
+        "media": {
+          "peakAmplitude": 0.35162296891212463,
+          "audioPacketMaxGap": 0.18399999999999928,
+          "clippedSamples": 0,
+          "streams": [
+            {
+              "codec": "vp8",
+              "type": "video",
+              "width": 1280,
+              "height": 720
+            },
+            {
+              "codec": "opus",
+              "type": "audio"
+            }
+          ],
+          "duration": 58.586,
+          "tones": {
+            "teacher440": 0.11742430096795606,
+            "student880": 0.11762850755806027,
+            "presentation1320": 0.11740889552875199
+          },
+          "colorPixels": {
+            "teacher": 179988,
+            "student": 152863,
+            "presentation": 72150
+          },
+          "bytes": 2486125
+        },
+        "lifecycle": {
+          "nativeDurationSeconds": 58.085,
+          "firstHiddenSeconds": 16.43,
+          "hiddenIntervals": 5,
+          "recorderStarts": 1,
+          "recorderStops": 1,
+          "outputTrackCount": 2,
+          "unhandledRejections": [],
+          "audioContextStates": [
+            "running",
+            "running",
+            "running",
+            "running",
+            "closed",
+            "running",
+            "closed",
+            "closed"
+          ]
+        }
+      },
+      {
+        "title": "complete meeting recording contains participant media and presentation across tab and device transitions",
+        "status": "passed",
+        "durationMs": 106733,
+        "media": {
+          "peakAmplitude": 0.3525179326534271,
+          "audioPacketMaxGap": 0.09700000000000131,
+          "clippedSamples": 0,
+          "streams": [
+            {
+              "codec": "vp8",
+              "type": "video",
+              "width": 1280,
+              "height": 720
+            },
+            {
+              "codec": "opus",
+              "type": "audio"
+            }
+          ],
+          "duration": 56.229,
+          "tones": {
+            "teacher440": 0.11731122672620277,
+            "student880": 0.11783659614765861,
+            "presentation1320": 0.11859318547050578
+          },
+          "colorPixels": {
+            "teacher": 162471,
+            "student": 152368,
+            "presentation": 72151
+          },
+          "bytes": 2244344
+        },
+        "lifecycle": {
+          "nativeDurationSeconds": 55.034,
+          "firstHiddenSeconds": 16.051,
+          "hiddenIntervals": 5,
+          "recorderStarts": 1,
+          "recorderStops": 1,
+          "outputTrackCount": 2,
+          "unhandledRejections": [],
+          "audioContextStates": [
+            "running",
+            "running",
+            "running",
+            "running",
+            "closed",
+            "running",
+            "closed",
+            "closed"
+          ]
+        }
+      },
+      {
+        "title": "complete meeting recording contains participant media and presentation across tab and device transitions",
+        "status": "passed",
+        "durationMs": 111417,
+        "media": {
+          "peakAmplitude": 0.3496072292327881,
+          "audioPacketMaxGap": 0.11500000000000199,
+          "clippedSamples": 0,
+          "streams": [
+            {
+              "codec": "vp8",
+              "type": "video",
+              "width": 1280,
+              "height": 720
+            },
+            {
+              "codec": "opus",
+              "type": "audio"
+            }
+          ],
+          "duration": 59.67,
+          "tones": {
+            "teacher440": 0.11731324297495078,
+            "student880": 0.11886598967061116,
+            "presentation1320": 0.11749134802908655
+          },
+          "colorPixels": {
+            "teacher": 173779,
+            "student": 156356,
+            "presentation": 81179
+          },
+          "bytes": 2502096
+        },
+        "lifecycle": {
+          "nativeDurationSeconds": 58.795,
+          "firstHiddenSeconds": 16.147,
+          "hiddenIntervals": 5,
+          "recorderStarts": 1,
+          "recorderStops": 1,
+          "outputTrackCount": 2,
+          "unhandledRejections": [],
+          "audioContextStates": [
+            "running",
+            "running",
+            "running",
+            "running",
+            "closed",
+            "running",
+            "closed",
+            "closed"
+          ]
+        }
+      }
+    ],
+    "files": [
+      {
+        "path": "artifacts/classroom-completion/full-browser/classroom-complete-meeting-2f4eb--tab-and-device-transitions/complete-meeting.webm",
+        "bytes": 1758031,
+        "sha256": "04e6fafeddd257d48f11d7eadc04d60c02e22e77fc6488e2986f3e51222c1961"
+      },
+      {
+        "path": "artifacts/classroom-completion/headed-stress/classroom-complete-meeting-2f4eb--tab-and-device-transitions/complete-meeting.webm",
+        "bytes": 2486125,
+        "sha256": "e95162dc9d25dd993c37aab96d6ac9a601c758dfd4af433276d9883bbaee1868"
+      },
+      {
+        "path": "artifacts/classroom-completion/headed-stress/classroom-complete-meeting-2f4eb--tab-and-device-transitions-repeat1/complete-meeting.webm",
+        "bytes": 2244344,
+        "sha256": "bceecd5b99de47deedc227c2e4a3ed6f7805a281c7f666581cd4be3053fcde96"
+      },
+      {
+        "path": "artifacts/classroom-completion/headed-stress/classroom-complete-meeting-2f4eb--tab-and-device-transitions-repeat2/complete-meeting.webm",
+        "bytes": 2502096,
+        "sha256": "823804a079a035961888ec5916241c5476a7cfcb70af4930bda3d4b45a4d993f"
+      }
+    ]
+  },
+  "screenshots": [
+    "docs/screenshots/live-classroom-375.png",
+    "docs/screenshots/live-classroom-768.png",
+    "docs/screenshots/live-classroom-1024.png",
+    "docs/screenshots/live-classroom-1440.png",
+    "docs/screenshots/live-classroom-bangla-375.png",
+    "docs/screenshots/live-classroom-teacher.png",
+    "docs/screenshots/live-classroom-student.png"
+  ],
+  "performance": {
+    "profile": "640x360 camera up to 24fps; 1280x720 recording up to 15fps",
+    "studentsLimit": 6,
+    "recordingSoftMinutes": 30,
+    "recordingSoftMiB": 128,
+    "scope": "Short renderer task-time/heap snapshots only; no sustained seven-party CPU, bandwidth or long-duration memory acceptance."
+  },
+  "migration": {
+    "file": "supabase/migrations/202610280001_live_meeting_state.sql",
+    "additive": true,
+    "hostedApplied": false,
+    "olderMigrationsChanged": false
+  },
+  "preliminaryRuns": [
+    {
+      "scope": "Fresh original two-context headed reproduction",
+      "result": "Expected failure after native hidden/visible return; both original recorder tracks ended.",
+      "artifacts": "artifacts/classroom-completion/original-final"
+    },
+    {
+      "scope": "Delayed recording notice regression",
+      "result": "Failed before repair: one recorder created after class end; passed after repair.",
+      "artifacts": "artifacts/classroom-completion/before"
+    },
+    {
+      "scope": "Muted input replacement regression",
+      "result": "Failed before repair: sender states [false,true]; passed after repair. Initial harness lacked the join-completion wait.",
+      "artifacts": "artifacts/classroom-completion/muted-before"
+    },
+    {
+      "scope": "Preliminary classroom run",
+      "passed": 14,
+      "failed": 1,
+      "result": "A roughly nine-second audio timestamp gap failed media duration. Concurrent database work was present; its causal role was not proven.",
+      "artifacts": "artifacts/classroom-completion/focused"
+    },
+    {
+      "scope": "Recording diagnostic",
+      "passed": 1,
+      "failed": 0,
+      "result": "Native recorder start awaited; AudioContext lifecycle captured; no long packet gap. Final analyser additionally preserves timestamps and explicitly asserts packet gaps and muted audio.",
+      "artifacts": "artifacts/classroom-completion/audio-diagnostic"
+    }
+  ],
+  "remainingGates": [
+    "Authorized hosted migration and PostgREST/private Realtime/Storage acceptance",
+    "Native screen/window/tab picker and actually supplied tab/system audio",
+    "Credentialed TURN integration and cross-network/multi-device acceptance",
+    "Firefox/Safari/iOS/physical Android and hardware device switching",
+    "Seven-party sustained CPU/bandwidth/load and long-duration/resource-limit acceptance",
+    "Retention/deletion policy approval and physical-device/accessibility review"
+  ],
+  "guaranteesAndLimits": [
+    "Completed IndexedDB drafts survive normal reload; upload failure retains drafts and retry reuses recording/object IDs.",
+    "Interrupted chunks may be incomplete or unplayable; no resumable encoder/server upload or browser-termination/shutdown recovery guarantee.",
+    "Hidden video can freeze; background audio and capture remain subject to browser/OS scheduling and resource pressure.",
+    "Local drafts are origin storage, not encrypted per-user storage; signed URLs expire after 300 seconds and existing downloads cannot be revoked.",
+    "Only consenting media is included; listeners can join without sharing devices; only the host can record/present under existing authority."
+  ],
+  "changedFiles": [
+    "README.md",
+    "TESTING.md",
+    "docs/BUG_FIX_LOG.md",
+    "docs/LIVE_CLASSROOM.md",
+    "docs/SHIKKHAHUB_AUDIT_REPORT.md",
+    "docs/live-classroom-verification.json",
+    "docs/screenshots/live-classroom-1024.png",
+    "docs/screenshots/live-classroom-1440.png",
+    "docs/screenshots/live-classroom-375.png",
+    "docs/screenshots/live-classroom-768.png",
+    "docs/screenshots/live-classroom-bangla-375.png",
+    "docs/screenshots/live-classroom-student.png",
+    "docs/screenshots/live-classroom-teacher.png",
+    "e2e/classroom-media.ts",
+    "e2e/classroom.spec.ts",
+    "e2e/fixture.ts",
+    "e2e/live.spec.ts",
+    "e2e/native-chrome.ts",
+    "src/features/auth/AuthContext.test.tsx",
+    "src/features/auth/AuthContext.tsx",
+    "src/features/live-classes/LiveClassroom.tsx",
+    "src/features/live-classes/MediaTile.tsx",
+    "src/features/live-classes/MeetingRecorder.ts",
+    "src/features/live-classes/RecordingPanel.tsx",
+    "src/features/live-classes/media-errors.test.ts",
+    "src/features/live-classes/recording-store.ts",
+    "src/features/live-classes/useWebRTCBroadcast.ts",
+    "src/pages/LiveClass.tsx",
+    "supabase/migrations/202610280001_live_meeting_state.sql",
+    "tests/database.mjs",
+    "tests/database.test.mjs"
+  ],
+  "implementationCommit": "387b1b4"
+}
