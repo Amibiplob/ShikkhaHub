@@ -5,12 +5,16 @@ export async function patternDevices(
   page: Page,
   color: string,
   frequency: number,
+  inputs = { audio: true, video: true },
 ) {
   await page.addInitScript(
-    ({ color, frequency }) => {
+    ({ color, frequency, inputs }) => {
       const events: object[] = [];
       const tracks: MediaStreamTrack[] = [];
       const recorders: MediaRecorder[] = [];
+      const peers: RTCPeerConnection[] = [];
+      const captureRequests: MediaStreamConstraints[] = [];
+      const failures: Partial<Record<"audio" | "video", string>> = {};
       const NativeAudio = window.AudioContext;
       window.AudioContext = class extends NativeAudio {
         constructor(options?: AudioContextOptions) {
@@ -25,6 +29,8 @@ export async function patternDevices(
       let display: MediaStream | null = null;
       let denyScreen = false;
       let cameraDelay = 0;
+      let cameraHold: Promise<void> | undefined;
+      let releaseCamera: (() => void) | undefined;
       const NativeRecorder = window.MediaRecorder;
       window.MediaRecorder = class extends NativeRecorder {
         constructor(stream: MediaStream, options?: MediaRecorderOptions) {
@@ -52,6 +58,7 @@ export async function patternDevices(
       window.RTCPeerConnection = class extends NativePeer {
         constructor(options?: RTCConfiguration) {
           super(options);
+          peers.push(this);
           this.addEventListener("connectionstatechange", () =>
             events.push({
               event: "peer",
@@ -120,10 +127,18 @@ export async function patternDevices(
       const native = navigator.mediaDevices.getUserMedia.bind(
         navigator.mediaDevices,
       );
+      const enumerate = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
+      navigator.mediaDevices.enumerateDevices = async () => (await enumerate()).filter(d =>
+        d.kind === "audioinput" ? inputs.audio : d.kind === "videoinput" ? inputs.video : true);
       navigator.mediaDevices.getUserMedia = async (constraints) => {
+        captureRequests.push(constraints || {});
+        const kind = constraints?.audio ? "audio" : "video";
+        if (!inputs[kind]) throw new DOMException("Device absent in fixture", "NotFoundError");
+        if (failures[kind]) throw new DOMException("Device failure in fixture", failures[kind]);
         // Actual Chrome fake-device permission/capture path is exercised first.
         const permission = await native(constraints);
         permission.getTracks().forEach((t) => t.stop());
+        if (constraints?.video && cameraHold) await cameraHold;
         if (constraints?.video && cameraDelay)
           await new Promise((resolve) => setTimeout(resolve, cameraDelay));
         const next = [
@@ -144,9 +159,26 @@ export async function patternDevices(
           events,
           tracks,
           recorders,
+          peers,
+          captureRequests,
+          setInputs: (next: Partial<typeof inputs>) => {
+            Object.assign(inputs, next);
+            navigator.mediaDevices.dispatchEvent(new Event("devicechange"));
+          },
+          failInput: (kind: "audio" | "video", error?: string) => { failures[kind] = error; },
+          disconnect: (kind: "audio" | "video") => {
+            inputs[kind] = false;
+            for (const track of tracks.filter(t => t.kind === kind && t.readyState === "live")) {
+              track.stop();
+              track.dispatchEvent(new Event("ended"));
+            }
+            navigator.mediaDevices.dispatchEvent(new Event("devicechange"));
+          },
           delayCamera: () => {
             cameraDelay = 700;
           },
+          holdCamera: () => { cameraHold = new Promise(resolve => { releaseCamera = resolve; }); },
+          releaseCamera: () => { releaseCamera?.(); cameraHold = undefined; },
           stopScreen: () => {
             const track = display?.getVideoTracks()[0];
             track?.stop();
@@ -158,6 +190,6 @@ export async function patternDevices(
         },
       });
     },
-    { color, frequency },
+    { color, frequency, inputs },
   );
 }

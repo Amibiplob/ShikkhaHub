@@ -2,6 +2,34 @@
 
 Latest classroom verification: **29 October 2026, Asia/Dhaka**; see the classroom section below. The **27 October 2026** results in the following historical sections describe their own snapshots. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
 
+## Device-free joining and simpler controls — verified 29 October 2026
+
+Baseline: clean `4bdb3be`. Device capture previously ran before admission and required a microphone for hosts/consenting participants. The new admission path requests no device permissions and accepts zero tracks. Preview and in-meeting inputs are independent and user-initiated; listener consent can be granted later. Screen sharing/recording do not depend on a local input. Current architecture, root cause and browser limits are in [LIVE_CLASSROOM.md](docs/LIVE_CLASSROOM.md); the exact changed files, recordings and hashes are in [device-free-verification.json](docs/device-free-verification.json).
+
+| Check | Final result |
+| --- | --- |
+| Complete `npm run verify` | **Exit 0**, unchanged configured chain |
+| Repository secret scan / security | Passed / **6 passed** |
+| Build/environment/routing regressions | **3 passed** |
+| TypeScript / ESLint / production build | Passed; zero lint errors/warnings |
+| Vitest | **129 passed in 25 files** |
+| PGlite SQL/migrations | **52 passed, zero skipped**; existing Auth/Storage/Realtime shims |
+| Complete installed Chrome suite | **102 passed, zero failed/skipped/flaky**, one worker |
+| Final Chrome regressions after cleanup refinement | **6/6 passed**, one new case and five repeats |
+| Earlier targeted recording/replacement recheck | **3/3 passed**, additional executions |
+| Current `npm audit` | **0 known vulnerabilities**, dependencies unchanged |
+| Git whitespace / final staged secret scan | Passed before local commit |
+
+There are 26 new browser cases: 25 included in the full 102-case run, plus a final admission-failure regression checked separately after that run. Eight cases check teacher/student at 320/375/768/1440px, with light at 375px and dark at other widths. They assert native denied permissions, zero application capture calls/tracks, friendly missing-device text, enabled Join, chat, normal exit, visible controls and no horizontal overflow. Chrome's separate zero-device factory launch and absent-input contract exercise the original regression. Actual RTP sender states cover audio-only/video-only/both, mute/off, late attachment/removal and source-isolated permission/busy/constraint failures. A pending preview can be abandoned by joining; declining consent requests no device. Existing Bangla, keyboard, relay, tab-return, recording recovery/upload/retry, private access, certificate and other learning journeys remain in the full run.
+
+Actual Chrome media encoding/playback and FFmpeg decoding verify a device-free host recording remote microphone/camera and presentation video/audio, with a native hidden/visible interval and normal stop. A separate placeholder-only file decodes to silence. Host admission sends no dummy tracks. Backend Auth/HTTP/Realtime/Storage are intercepted; input/presentation fixtures are explicitly synthetic, and physical devices/native presentation-picker acceptance are unverified. The separate native host profile uses no fake input flags and has no local capture permissions. Browser background throttling remains material: the preliminary device-free sample had a 3.661-second audio gap; final measured gaps are recorded in the JSON. A playable file after return does not establish uninterrupted hidden audio/video.
+
+Retained attempts: baseline admission failed; a configuration-only attempt rejected a describe-scoped launch override; focused retry **15 passed/2 failed** (accessible select label and waiting for real recorder startup were corrected, assertions retained); recording/replacement recheck **3 passed**. A preliminary unit run failed five DOMException cases because the name detector only recognized Error; supporting both realms restored all 129 passes. The first full chain was externally terminated after ten Chrome passes (tool exit 143, no final npm exit). The detached restart ran the complete unchanged chain to completion. Final review then reproduced stale preview toggles after a rejected private join; resetting local preview state in the failure branch repairs it. The new regression failed before repair and six relevant Chrome scenarios passed afterward. TypeScript, lint, all 129 unit tests and production build were rerun on the final source. The complete-chain count is 102; one added final regression makes the current collection 103. No failures or incomplete runs are counted as final passes.
+
+Logs, traces, encoded media and report: ignored `artifacts/device-free/`, especially `verify-final.log`, `verify-final-exit.txt`, `npm-audit.json`, `full-browser/`, `recording-check/`, `focused-retry/`, `admission-cleanup-before/`, `final-regressions/`, `final-source-checks.log` and `before/`. Selected current screenshots are in `docs/screenshots/device-free-*`; they were opened and visually reviewed. No backend/schema/dependency/env changes, hosted writes, push or deployment. STUN-only ICE, hosted migration/private topic/storage, real screen/system audio, other browsers, physical-device tests, sustained load/duration and browser/OS termination recovery remain unverified. PostgreSQL concurrency was not rerun because no database code changed; prior results below retain their historical scope.
+
+The next section records the earlier classroom redesign snapshot, before this optional-device revision.
+
 ## Live classroom redesign and recording — verified 29 October 2026
 
 Implementation started 28 October; final verification completed 29 October (Asia/Dhaka). Baseline commit: `1ef1b2d`. The workspace already contained task-related implementation when this completion pass began; it was reviewed, repaired and verified. No unrelated changes, environment files, old migrations or hosted resources were edited. See [engineering, privacy and limits](docs/LIVE_CLASSROOM.md) and [exact files/results/media measurements](docs/live-classroom-verification.json).

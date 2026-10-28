@@ -6,6 +6,8 @@ describe("media recovery messages", () => {
     ["NotAllowedError", "Permission denied"],
     ["NotFoundError", "Device unavailable"],
     ["NotReadableError", "Device is busy or disconnected"],
+    ["OverconstrainedError", "Device settings unavailable"],
+    ["NotSupportedError", "You can still join without devices"],
   ])("explains %s without exposing provider objects", (name, text) => {
     expect(mediaError(new DOMException("internal details", name))).toContain(
       text,

@@ -29,15 +29,19 @@ type Peer = {
   slot: number;
   timer?: ReturnType<typeof setTimeout>;
 };
-type Mode = "camera" | "audio-only" | "screen" | "listen";
+export type MediaKind = "audio" | "video";
 export function mediaError(error: unknown) {
-  const name = error instanceof DOMException ? error.name : "";
+  const name = error instanceof DOMException || error instanceof Error ? error.name : "";
   if (name === "NotAllowedError")
     return "Permission denied. Allow the requested device in browser settings and retry.";
   if (name === "NotFoundError")
     return "Device unavailable. Connect a microphone or camera and retry.";
   if (name === "NotReadableError")
     return "Device is busy or disconnected. Close other apps using it and retry.";
+  if (name === "OverconstrainedError")
+    return "Device settings unavailable. Choose another input or the default device and retry.";
+  if (["SecurityError", "NotSupportedError", "TypeError"].includes(name))
+    return "Device capture is unavailable in this browser. You can still join without devices.";
   return error instanceof Error
     ? error.message
     : "Media unavailable. Check your devices and retry.";
@@ -61,6 +65,11 @@ export function useClassroomMedia(
   const [hands, setHands] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [localMedia, setLocalMedia] = useState({
+    stream: null as MediaStream | null, muted: true, cameraOff: true, consent: false,
+  });
+  const [deviceErrors, setDeviceErrors] = useState<Partial<Record<MediaKind, string>>>({});
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [recordingNotice, setRecordingNotice] = useState(false);
@@ -158,6 +167,9 @@ export function useClassroomMedia(
       );
   }, [host]);
   const updateMe = useCallback(async () => {
+    setLocalMedia({ stream: local.current, ...own.current });
+    // A local preview is not meeting admission or permission to broadcast.
+    if (!channel.current) return;
     roster.current = [me(), ...roster.current.filter((p) => p.id !== userId)];
     publish();
     await replace();
@@ -321,7 +333,7 @@ export function useClassroomMedia(
       const stream = await navigator.mediaDevices.getUserMedia(
         kind === "audio"
           ? {
-              audio: deviceId
+              audio: deviceId && deviceId !== "default"
                 ? { deviceId: { exact: deviceId }, echoCancellation: true }
                 : { echoCancellation: true },
               video: false,
@@ -332,15 +344,16 @@ export function useClassroomMedia(
                 width: { ideal: 640 },
                 height: { ideal: 360 },
                 frameRate: { ideal: 15, max: 24 },
-                ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+                ...(deviceId && deviceId !== "default" ? { deviceId: { exact: deviceId } } : {}),
               },
             },
       );
       if (generation !== epoch.current) {
         stream.getTracks().forEach((t) => t.stop());
-        throw new Error("Meeting has closed.");
+        throw new DOMException("Media request cancelled", "AbortError");
       }
       const track = stream.getTracks()[0];
+      if (!track) throw new DOMException("No requested device track", "NotFoundError");
       // Apply privacy state before exposing a replacement to any sender.
       track.enabled = enabled;
       const existing = local.current?.getTracks() || [];
@@ -352,13 +365,14 @@ export function useClassroomMedia(
         track,
       ]);
       track.onended = () => {
+        local.current = new MediaStream(local.current?.getTracks().filter(t => t !== track) || []);
         own.current = {
           ...own.current,
           ...(kind === "audio" ? { muted: true } : { cameraOff: true }),
         };
-        setError(
-          `${kind === "audio" ? "Microphone" : "Camera"} disconnected. Select a device to recover.`,
-        );
+        setDeviceErrors((previous) => ({ ...previous,
+          [kind]: `${kind === "audio" ? "Microphone" : "Camera"} disconnected. Select a device to recover.`,
+        }));
         safe(updateMe);
       };
       await replace();
@@ -371,18 +385,17 @@ export function useClassroomMedia(
     [replace, safe, updateMe],
   );
   const device = useCallback(
-    async (kind: "audio" | "video", deviceId?: string) => {
+    async (kind: MediaKind, deviceId?: string, consent = false) => {
       if (deviceBusy.current.has(kind)) return;
-      if (!own.current.consent) {
-        setError(
-          "Enable recording consent before sharing microphone or camera media.",
-        );
+      if (channel.current && !own.current.consent && !consent) {
         return;
       }
+      if (channel.current && consent) own.current.consent = true;
+      const generation = epoch.current;
       const ticket = Symbol(kind);
       deviceBusy.current.set(kind, ticket);
       setBusy(true);
-      setError("");
+      setDeviceErrors((previous) => ({ ...previous, [kind]: undefined }));
       try {
         const off =
           kind === "audio" ? own.current.muted : own.current.cameraOff;
@@ -391,6 +404,7 @@ export function useClassroomMedia(
           .find((t) => t.kind === kind && t.readyState === "live");
         if (!track || deviceId)
           track = await acquire(kind, deviceId, deviceId ? !off : off);
+        if (generation !== epoch.current) return;
         track.enabled = deviceId ? !off : off;
         own.current = {
           ...own.current,
@@ -398,10 +412,14 @@ export function useClassroomMedia(
             ? { muted: !track.enabled }
             : { cameraOff: !track.enabled }),
         };
-        await updateMe();
       } catch (e) {
-        setError(mediaError(e));
+        if (generation === epoch.current)
+          setDeviceErrors((previous) => ({ ...previous, [kind]: mediaError(e) }));
       } finally {
+        if (generation === epoch.current) {
+          try { await updateMe(); }
+          catch (e) { if (generation === epoch.current) setError(mediaError(e)); }
+        }
         if (deviceBusy.current.get(kind) === ticket)
           deviceBusy.current.delete(kind);
         setBusy(mediaBusy.current || deviceBusy.current.size > 0);
@@ -423,6 +441,7 @@ export function useClassroomMedia(
       t.stop();
     });
     local.current = null;
+    own.current = { muted: true, cameraOff: true, consent: false };
     presentation.current?.getTracks().forEach((t) => {
       t.onended = null;
       t.stop();
@@ -450,45 +469,35 @@ export function useClassroomMedia(
     setRecordingNotice(false);
     setRecordingState((current) => current === "starting" ? "idle" : current);
     setConnection("idle");
+    setLocalMedia({ stream: null, muted: true, cameraOff: true, consent: false });
+    setDeviceErrors({});
   }, [host, signal, dispose]);
 
   const join = useCallback(
-    async (mode: Mode, consent: boolean, startMuted = false) => {
+    async (consent: boolean) => {
       if (starting.current || channel.current) return;
       starting.current = true;
+      setJoining(true);
       setBusy(true);
       setError("");
       setEnded(false);
       setConnection("connecting");
-      const generation = epoch.current;
+      // Admission never waits for a device prompt. Cancel unfinished preview
+      // requests; reuse only tracks the user already enabled intentionally.
+      const generation = ++epoch.current;
+      deviceBusy.current.clear();
       try {
-        // Capture is requested before any asynchronous auth/signaling work so
-        // the browser still has the user's transient activation.
-        if (mode === "screen" && !(await shareScreen()))
-          throw new Error(
-            "Screen sharing was not started. Retry from the lobby.",
-          );
         own.current = {
-          muted: true,
-          cameraOff: true,
+          ...own.current,
           consent: host || consent,
         };
-        local.current = new MediaStream();
-        if ((host || consent) && mode !== "listen") {
-          const mic = await acquire("audio");
-          mic.enabled = !startMuted;
-          own.current.muted = startMuted;
-          if (mode === "camera") {
-            try {
-              await acquire("video");
-              own.current.cameraOff = false;
-            } catch (e) {
-              setError(
-                `Camera unavailable; joined with audio. ${mediaError(e)}`,
-              );
-            }
-          }
+        if (!own.current.consent) {
+          local.current?.getTracks().forEach((t) => { t.onended = null; t.stop(); });
+          local.current = null;
+          own.current = { muted: true, cameraOff: true, consent: false };
         }
+        local.current ||= new MediaStream();
+        setLocalMedia({ stream: local.current, ...own.current });
         if (generation !== epoch.current) return;
         roster.current = [me()];
         publish();
@@ -658,6 +667,7 @@ export function useClassroomMedia(
                     ...p,
                     muted: payload.muted !== false,
                     cameraOff: payload.cameraOff !== false,
+                    consent: payload.consent === true,
                   }
                 : p,
             );
@@ -762,11 +772,13 @@ export function useClassroomMedia(
         setActive(true);
       } catch (e) {
         dispose();
+        setLocalMedia({ stream: null, muted: true, cameraOff: true, consent: false });
         setConnection("idle");
         setError(mediaError(e));
         throw e;
       } finally {
         starting.current = false;
+        setJoining(false);
         setBusy(false);
       }
     },
@@ -775,7 +787,6 @@ export function useClassroomMedia(
       userId,
       room,
       hostId,
-      acquire,
       me,
       publish,
       safe,
@@ -788,7 +799,6 @@ export function useClassroomMedia(
       receiveState,
       addCandidates,
       dispose,
-      shareScreen,
     ],
   );
 
@@ -897,6 +907,9 @@ export function useClassroomMedia(
     hands,
     error,
     busy,
+    joining,
+    localMedia,
+    deviceErrors,
     recordingState,
     recordingDuration,
     recordingNotice,

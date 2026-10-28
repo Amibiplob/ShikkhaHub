@@ -21,6 +21,7 @@ import {
   GraduationCap,
   X,
   ShieldCheck,
+  Ellipsis,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,11 @@ import type { LiveSession } from "@/types/models";
 import { useClassroomMedia } from "./useWebRTCBroadcast";
 import MediaTile from "./MediaTile";
 import RecordingPanel from "./RecordingPanel";
+import PreJoinLobby from "./PreJoinLobby";
+import DeviceSettings from "./DeviceSettings";
+import { useDeviceInventory } from "./useDeviceInventory";
+import type { MediaKind } from "./useWebRTCBroadcast";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 export default function LiveClassroom({
   session,
@@ -63,12 +69,11 @@ export default function LiveClassroom({
   >(null);
   const [input, setInput] = useState("");
   const [consent, setConsent] = useState(false);
-  const [startMuted, setStartMuted] = useState(false);
-  const [startCameraOff, setStartCameraOff] = useState(false);
+  const inventory = useDeviceInventory();
+  const [mediaConsent, setMediaConsent] = useState<{ kind: MediaKind; deviceId?: string } | null>(null);
   const [recordDialog, setRecordDialog] = useState(false);
   const [ending, setEnding] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const started = useRef(0);
   const chatEnd = useRef<HTMLDivElement>(null);
@@ -90,34 +95,28 @@ export default function LiveClassroom({
   useEffect(() => {
     chatEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [meeting.messages]);
-  useEffect(() => {
-    const update = () => {
-      void navigator.mediaDevices
-        ?.enumerateDevices()
-        .then(setDevices)
-        .catch(() => undefined);
-    };
-    update();
-    navigator.mediaDevices?.addEventListener("devicechange", update);
-    return () =>
-      navigator.mediaDevices?.removeEventListener("devicechange", update);
-  }, [meeting.active, meeting.busy]);
-  const join = async (mode: "camera" | "audio-only" | "screen" | "listen") => {
+  const requestDevice = (kind: MediaKind, deviceId?: string) => {
+    if (meeting.active && !host && !me?.consent) {
+      setMediaConsent({ kind, deviceId });
+      return;
+    }
+    void meeting.device(kind, deviceId);
+  };
+  const join = async () => {
     try {
-      await meeting.join(mode, consent, startMuted);
+      await meeting.join(consent);
       if (host) {
-        const { error } = await supabase
-          .from("live_classes")
-          .update({ status: "live" })
-          .eq("id", session.id);
+        const { error } = await supabase.from("live_classes")
+          .update({ status: "live" }).eq("id", session.id);
         if (error) {
+          setActionError(l("Could not start the class. Check your connection and retry.", "ক্লাস শুরু করা যায়নি। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"));
           await meeting.leave();
           return;
         }
         setClassStatus("live");
       }
     } catch {
-      /* The hook presents the recoverable media error. */
+      // Admission errors are separate from optional device errors.
     }
   };
   const end = async () => {
@@ -159,10 +158,12 @@ export default function LiveClassroom({
     action: () => void,
     pressed?: boolean,
     disabled = false,
+    reason?: string,
   ) => (
+    <span title={reason} className="inline-flex">
     <Button
       aria-label={label}
-      title={label}
+      title={reason || label}
       aria-pressed={pressed}
       variant={pressed ? "secondary" : "outline"}
       size="icon"
@@ -172,6 +173,7 @@ export default function LiveClassroom({
     >
       <Icon className="h-5 w-5" />
     </Button>
+    </span>
   );
   const expired =
     meeting.ended || ["expired", "completed"].includes(classStatus);
@@ -195,7 +197,7 @@ export default function LiveClassroom({
           <h1 className="truncate text-base font-semibold sm:text-xl">
             {session.title}
           </h1>
-          <p className="truncate text-xs text-muted-foreground">
+          <p className="hidden truncate text-xs text-muted-foreground sm:block">
             {session.courses?.title} · {hostName}
           </p>
         </div>
@@ -263,140 +265,30 @@ export default function LiveClassroom({
           {l("Hand raised", "হাত তুলেছেন")}: {meeting.hands.join(", ")}
         </div>
       )}
+      {meeting.active && Object.values(meeting.deviceErrors).some(Boolean) && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-2 bg-amber-500/10 px-4 py-2 text-sm">
+          <span>{Object.values(meeting.deviceErrors).filter(Boolean).join(" ")}</span>
+          <button className="underline" onClick={() => setPanel("settings")}>{l("Device settings", "ডিভাইস সেটিংস")}</button>
+        </div>
+      )}
       {!meeting.active ? (
-        <section className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-8 sm:py-16">
-          <div className="w-full max-w-xl rounded-3xl border bg-card p-5 shadow-sm sm:p-8">
-            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Video className="h-7 w-7" />
-            </div>
-            <h2 className="text-2xl font-semibold">
-              {expired
-                ? l("Class has ended", "ক্লাস শেষ হয়েছে")
-                : host
-                  ? l("Ready to teach?", "ক্লাস নিতে প্রস্তুত?")
-                  : l("Ready to join?", "যোগ দিতে প্রস্তুত?")}
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {expired
-                ? l(
-                    "Your session is complete. Saved recordings remain available to authorized course participants.",
-                    "সেশন সম্পন্ন হয়েছে। অনুমোদিত অংশগ্রহণকারীরা সংরক্ষিত রেকর্ডিং দেখতে পারবেন।",
-                  )
-                : l(
-                    "A focused space to learn together. Check your media preferences before entering.",
-                    "একসাথে শেখার শ্রেণিকক্ষ। প্রবেশের আগে আপনার মিডিয়া পছন্দ ঠিক করুন।",
-                  )}
-            </p>
-            {!expired && (
-              <>
-                <p className="mt-4 text-xs text-muted-foreground">
-                  {new Date(session.scheduled_at).toLocaleString(
-                    lang === "bn" ? "bn-BD" : "en-GB",
-                  )}
-                </p>
-                <label className="mt-5 flex items-start gap-3 rounded-xl border p-3 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={consent}
-                    onChange={(e) => setConsent(e.target.checked)}
-                    className="mt-1 h-4 w-4 shrink-0"
-                  />
-                  <span>
-                    {l(
-                      "I consent to my shared microphone and camera being recorded by the teacher for authorized course participants. Recording is always indicated. Without consent, join as a listener.",
-                      "অনুমোদিত কোর্স অংশগ্রহণকারীদের জন্য শিক্ষক আমার শেয়ার করা মাইক্রোফোন ও ক্যামেরা রেকর্ড করতে পারবেন। রেকর্ডিং নির্দেশক দেখানো হবে। সম্মতি ছাড়া শ্রোতা হিসেবে যোগ দিন।",
-                    )}
-                  </span>
-                </label>
-                <label className="mt-4 flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={startMuted}
-                    onChange={(e) => setStartMuted(e.target.checked)}
-                  />
-                  {l(
-                    "Start with microphone muted",
-                    "মাইক্রোফোন বন্ধ রেখে শুরু করুন",
-                  )}
-                </label>
-                {!host && (
-                  <label className="mt-3 flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={startCameraOff}
-                      onChange={(e) => setStartCameraOff(e.target.checked)}
-                    />
-                    {l("Start with camera off", "ক্যামেরা বন্ধ রেখে শুরু করুন")}
-                  </label>
-                )}
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {host ? (
-                    <>
-                      <Button
-                        onClick={() => void join("camera")}
-                        disabled={meeting.busy}
-                      >
-                        <Video className="mr-2 h-4 w-4" />
-                        {l("Camera + Audio", "ক্যামেরা ও অডিও")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => void join("audio-only")}
-                        disabled={meeting.busy}
-                      >
-                        <Mic className="mr-2 h-4 w-4" />
-                        {l("Audio Only", "শুধু অডিও")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => void join("screen")}
-                        disabled={meeting.busy}
-                      >
-                        <MonitorUp className="mr-2 h-4 w-4" />
-                        {l("Screen Share", "স্ক্রিন শেয়ার")}
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      onClick={() =>
-                        void join(
-                          consent
-                            ? startCameraOff
-                              ? "audio-only"
-                              : "camera"
-                            : "listen",
-                        )
-                      }
-                      disabled={meeting.busy}
-                    >
-                      <Video className="mr-2 h-4 w-4" />
-                      {l("Join Stream", "ক্লাসে যোগ দিন")}
-                    </Button>
-                  )}
-                </div>
-                {meeting.busy && (
-                  <p role="status" className="mt-4 text-sm">
-                    {l("Connecting securely…", "নিরাপদে সংযোগ হচ্ছে…")}
-                  </p>
-                )}
-              </>
-            )}
-            <Button variant="ghost" asChild className="mt-4">
-              <Link to="/dashboard">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {l("Back to dashboard", "ড্যাশবোর্ডে ফিরুন")}
-              </Link>
-            </Button>
-          </div>
-          {host && (
-            <div className="mt-6 w-full max-w-xl rounded-2xl border bg-card p-5">
-              <RecordingPanel
-                userId={userId}
-                classId={session.id}
-                revision={meeting.recordingState}
-              />
-            </div>
-          )}
+        <section className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-10">
+          {expired ? <div className="mx-auto max-w-xl rounded-3xl border bg-card p-6 text-center">
+            <h2 className="text-2xl font-semibold">{l("Class has ended", "ক্লাস শেষ হয়েছে")}</h2>
+            <p className="mt-3 text-sm text-muted-foreground">{l("Saved recordings remain available to authorized course participants.", "অনুমোদিত কোর্স অংশগ্রহণকারীরা সংরক্ষিত রেকর্ডিং দেখতে পারবেন।")}</p>
+            <Button asChild variant="outline" className="mt-5"><Link to="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />{l("Back", "ফিরুন")}</Link></Button>
+          </div> : <PreJoinLobby
+            title={session.title}
+            participant={{ id: userId, name, slot: -1, connected: false, ...meeting.localMedia }}
+            host={host} consent={consent} setConsent={setConsent} joining={meeting.joining}
+            devices={inventory.devices} known={inventory.known} missing={inventory.missing}
+            refresh={inventory.refresh} errors={meeting.deviceErrors} onDevice={requestDevice}
+            onJoin={() => void join()}
+          />}
+          {host && <details open={expired} className="mx-auto mt-6 w-full max-w-5xl rounded-2xl border bg-card p-4">
+            <summary className="cursor-pointer text-sm font-medium">{l("Recordings on this device", "এই ডিভাইসে রেকর্ডিং")}</summary>
+            <div className="mt-4"><RecordingPanel userId={userId} classId={session.id} revision={meeting.recordingState} /></div>
+          </details>}
         </section>
       ) : (
         <>
@@ -443,11 +335,6 @@ export default function LiveClassroom({
                     local={p.id === userId}
                   />
                 ))}
-                {me?.cameraOff && (
-                  <p className="col-span-full text-center text-xs text-slate-400">
-                    {l("Audio Only Mode", "শুধু অডিও মোড")}
-                  </p>
-                )}
               </div>
             </section>
             {panel && (
@@ -540,41 +427,7 @@ export default function LiveClassroom({
                           "ডিভাইসের নিয়ন্ত্রণ আপনার হাতে। স্ক্রিন শেয়ারের জন্য ব্রাউজারে আলাদা অনুমতি প্রয়োজন।",
                         )}
                       </p>
-                      {(["audio", "video"] as const).map((kind) => (
-                        <label key={kind} className="block text-sm font-medium">
-                          {kind === "audio"
-                            ? l("Microphone input", "মাইক্রোফোন")
-                            : l("Camera input", "ক্যামেরা")}
-                          <select
-                            aria-label={
-                              kind === "audio"
-                                ? "Microphone input"
-                                : "Camera input"
-                            }
-                            className="mt-2 w-full min-w-0 rounded-lg border bg-background p-2"
-                            defaultValue=""
-                            disabled={!me?.consent}
-                            onChange={(e) => {
-                              if (e.target.value)
-                                void meeting.device(kind, e.target.value);
-                            }}
-                          >
-                            <option value="">
-                              {l("Choose device", "ডিভাইস নির্বাচন")}
-                            </option>
-                            {devices
-                              .filter((d) => d.kind === `${kind}input`)
-                              .map((d, i) => (
-                                <option
-                                  key={d.deviceId || i}
-                                  value={d.deviceId}
-                                >
-                                  {d.label || `${kind} ${i + 1}`}
-                                </option>
-                              ))}
-                          </select>
-                        </label>
-                      ))}
+                      <DeviceSettings devices={inventory.devices} onDevice={requestDevice} refresh={inventory.refresh} />
                       <p className="text-xs text-muted-foreground">
                         {l(
                           "Capture: 640 × 360 at up to 24 fps. Recording: 1280 × 720 at up to 15 fps; 30 minutes or 128 MiB per recording. Background video can freeze while audio continues when supported.",
@@ -630,10 +483,11 @@ export default function LiveClassroom({
                 me?.muted ? l("Unmute", "মাইক চালু") : l("Mute", "মাইক বন্ধ"),
                 me?.muted ? MicOff : Mic,
                 () => {
-                  void meeting.device("audio");
+                  requestDevice("audio");
                 },
                 me?.muted,
-                !me?.consent,
+                inventory.missing("audio", me?.stream),
+                inventory.missing("audio", me?.stream) ? l("No microphone detected. You can still listen and chat.", "মাইক্রোফোন নেই। শুনতে ও চ্যাট করতে পারবেন।") : undefined,
               )}
               {control(
                 me?.cameraOff
@@ -641,10 +495,11 @@ export default function LiveClassroom({
                   : l("Camera off", "ক্যামেরা বন্ধ"),
                 me?.cameraOff ? VideoOff : Video,
                 () => {
-                  void meeting.device("video");
+                  requestDevice("video");
                 },
                 me?.cameraOff,
-                !me?.consent,
+                inventory.missing("video", me?.stream),
+                inventory.missing("video", me?.stream) ? l("No camera detected. You can join with camera off.", "ক্যামেরা নেই। ক্যামেরা বন্ধ রেখেই ক্লাস করা যাবে।") : undefined,
               )}
               {host &&
                 control(
@@ -672,8 +527,6 @@ export default function LiveClassroom({
                 () => setPanel(panel === "chat" ? null : "chat"),
                 panel === "chat",
               )}
-              {!host &&
-                control(l("Raise hand", "হাত তুলুন"), Hand, meeting.raiseHand)}
               {host &&
                 control(
                   recording
@@ -691,19 +544,16 @@ export default function LiveClassroom({
                     meeting.recordingState,
                   ),
                 )}
-              {host &&
-                control(
-                  l("View recordings", "রেকর্ডিং দেখুন"),
-                  Film,
-                  () => setPanel(panel === "recordings" ? null : "recordings"),
-                  panel === "recordings",
-                )}
-              {control(
-                l("Device settings", "ডিভাইস সেটিংস"),
-                Settings2,
-                () => setPanel(panel === "settings" ? null : "settings"),
-                panel === "settings",
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button aria-label={l("More options", "আরও বিকল্প")} title={l("More options", "আরও বিকল্প")} variant="outline" size="icon" className="h-11 w-11 rounded-xl"><Ellipsis className="h-5 w-5" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setPanel("settings")}><Settings2 className="mr-2 h-4 w-4" />{l("Device settings", "ডিভাইস সেটিংস")}</DropdownMenuItem>
+                  {host && <DropdownMenuItem onSelect={() => setPanel("recordings")}><Film className="mr-2 h-4 w-4" />{l("View recordings", "রেকর্ডিং দেখুন")}</DropdownMenuItem>}
+                  {!host && <DropdownMenuItem onSelect={meeting.raiseHand}><Hand className="mr-2 h-4 w-4" />{l("Raise hand", "হাত তুলুন")}</DropdownMenuItem>}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 aria-label={host ? l("End", "ক্লাস শেষ") : l("Leave", "বের হন")}
                 variant="destructive"
@@ -718,6 +568,20 @@ export default function LiveClassroom({
           </footer>
         </>
       )}
+      <Dialog open={!!mediaConsent} onOpenChange={open => { if (!open) setMediaConsent(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{l("Share your media?", "আপনার মিডিয়া শেয়ার করবেন?")}</DialogTitle>
+            <DialogDescription>{l("Your shared microphone or camera may be recorded by the teacher for authorized course participants. Recording is always indicated. You can keep listening and chatting without sharing devices.", "অনুমোদিত কোর্স অংশগ্রহণকারীদের জন্য শিক্ষক আপনার শেয়ার করা মাইক্রোফোন বা ক্যামেরা রেকর্ড করতে পারবেন। রেকর্ডিং নির্দেশক দেখানো হবে। ডিভাইস শেয়ার না করেও শুনতে ও চ্যাট করতে পারবেন।")}</DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => {
+            if (!mediaConsent) return;
+            setConsent(true);
+            void meeting.device(mediaConsent.kind, mediaConsent.deviceId, true);
+            setMediaConsent(null);
+          }}>{l("I consent — enable device", "সম্মতি দিচ্ছি — ডিভাইস চালু")}</Button>
+        </DialogContent>
+      </Dialog>
       <Dialog open={recordDialog} onOpenChange={setRecordDialog}>
         <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader>

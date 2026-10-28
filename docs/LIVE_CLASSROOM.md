@@ -2,6 +2,38 @@
 
 Implementation 28 October; final verification 29 October 2026 (Asia/Dhaka). Local implementation and verification; **not deployed or approved for production**. The previous hosted staging subset predates this change. The new migration has not been applied to any hosted backend.
 
+## Device-free classroom revision — 29 October 2026
+
+Baseline: clean `4bdb3be`. The previous join path requested a microphone for every host and every consenting non-listener before opening the private room. `NotFoundError` therefore aborted admission on a computer without inputs; camera-only admission also depended on microphone success. The original Chrome regression failed to reach the End control. Baseline trace/screenshots are retained under `artifacts/device-free/before/`.
+
+Admission now creates an empty local `MediaStream` and subscribes to the existing private room. It never calls `getUserMedia` or `getDisplayMedia`. Already enabled, intentional preview tracks can be retained; incomplete preview requests are invalidated and late tracks stopped. A nonconsenting student's preview is stopped before admission. No dummy microphone/camera tracks are inserted into outgoing WebRTC senders.
+
+The prejoin lobby has a preview/initials, separate microphone/camera controls, availability text, optional device settings, Back and one Join Class action. Both inputs start off. Enumeration is a hint; missing inputs disable only their own controls. Join remains available while an input permission request is pending. No permission request occurs on opening the page or joining with inputs off. Students can attend as listeners and later explicitly consent before sharing media; declining leaves chat and attendance available.
+
+Microphone/camera capture is requested independently after interaction. Existing fixed audio/video transceivers accept the resulting tracks with `replaceTrack`; switching a muted input applies mute before the replacement reaches a sender. Device errors remain separate from admission. Device change refreshes the inventory without capture; ended tracks are removed independently and can be enabled again after reconnecting hardware. Browser default selection omits an exact device constraint. A denied request is retried only after another user action.
+
+The host's screen-share button invokes its separate display-capture path regardless of microphone/camera state. Stopping presentation clears only the presentation tracks. Recording uses the existing compositor, consent filtering, private notices/storage and IndexedDB retry journal. A host with no inputs records authorized remote/presentation sources; the stable recording audio destination encodes silence if there are no sources. It is not a microphone track and is never sent merely to admit a participant.
+
+The compact toolbar keeps microphone, camera, host presentation/recording, chat, participants and leave/end available. Device settings, recording history and student hand raise are in More options. One requested side panel opens at a time. Saved drafts/history remain available from the collapsed lobby section. Existing design tokens and English/Bangla labels support light/dark layouts.
+
+Verification uses actual Linux Chrome, WebRTC senders, recording/playback, IndexedDB and FFmpeg/FFprobe. Backend services are intercepted fixtures. Device-free cases explicitly deny native camera/microphone permissions, enumerate no inputs and reject/count application capture requests; an additional zero-device launch uses Chrome's `device-count=0` factory. Dynamic input tests use actual generated tracks after the native Chrome capture/permission path. The device-free recording host uses a separate native Chrome profile without fake input flags and no capture permissions. Presentation is a generated test stream: native picker operation, physical unplugging and real system/tab audio are not claimed.
+
+Eight role/viewport cases cover teacher/student at 320/375/768/1440px, with light at 375px and dark at the other widths; existing Bangla coverage exercises the new lobby/chat at 375px. Checks include enabled Join, disabled missing inputs, zero capture calls/tracks, chat, normal exit, visible controls and no horizontal overflow. Other tests cover microphone-only, camera-only, both, late attachment/removal, independent failures, pending previews, consent refusal, source replacement and encoded recording.
+
+The preliminary targeted run passed 15/17: one failure exposed the selector's missing explicit accessible label, and the silent-recording timer began before the encoder started. Both were corrected with assertions retained; the subsequent recording/replacement check passed 3/3. An earlier configuration-only attempt failed because Playwright disallows a worker-scoped launch override inside describe; the no-device launch is now a separate spec. All attempts remain in `artifacts/device-free/`.
+
+Known limits: desktop Chrome fixture evidence is not hosted Supabase, native picker, physical-device, other-browser or cross-network acceptance. The prior additive migration is still unapplied remotely. ICE is STUN-only; TURN integration remains a release gate. Browsers may throttle hidden video/audio, and a preliminary device-free encoded sample contained a 3.661-second audio-packet gap around its hidden interval. Playback after return and media presence do not prove uninterrupted background audio/video. Computer/browser termination, quota eviction, long duration and seven-party performance remain outside this run. No dependencies, auth policies, RLS, migrations, environment files or hosted resources change; no push or deployment occurs.
+
+The first full verification process was externally terminated after ten Chrome passes (tool exit 143, no recorded npm exit). Its incomplete log remains `artifacts/device-free/verify.log`. The unchanged complete chain was restarted under a detached local supervisor; `verify-final.log` and `verify-final-exit.txt` record the completed run.
+
+After the complete chain, final review reproduced stale preview toggles following a rejected private join. The stopped preview is now reset to off in that failure branch. Its new Chrome regression failed before repair and passed afterward; six relevant media/recording scenarios passed on the final source. Final TypeScript, lint, all 129 unit tests and production build were also rerun. The full-chain count below is the 102-case snapshot before that final one-line cleanup; the checked-in collection now has 103 scenarios.
+
+Final complete chain: **129 Vitest tests / 25 files, 52 SQL tests, 102 Chrome scenarios, six security and three build/config tests**, all passed. TypeScript, lint and production build passed; npm audit reports zero known vulnerabilities. No hosted staging suite or PostgreSQL race rerun was required for this frontend-only revision. The earlier native PostgreSQL results below describe the previous revision.
+
+The complete-run device-free file contains VP8/Opus at 1280×720: **13.356 seconds / 707,499 bytes**, remote/presentation tones present, 18,521 remote-colored pixels and 81,148 presentation-colored pixels across 1-fps downscaled samples, zero clipped samples. Maximum audio-packet gap: **0.077 seconds**. The silent placeholder file is **3.270 seconds / 77,814 bytes**, with decoded RMS/peak both zero. These are synthetic authorized source checks, not human listening or gapless recording acceptance. Exact measurements, hashes, files and evidence boundaries are in [device-free-verification.json](device-free-verification.json).
+
+The final focused repeat after the admission-cleanup refinement produced **13.292 seconds / 574,198 bytes**, with remote and presentation media, zero clipped samples and a **144-ms** maximum audio-packet gap. Its silent placeholder is **3.259 seconds / 79,523 bytes**, with zero decoded RMS/peak. Both files passed advancing-frame playback in Chrome; repeat values and hashes are retained separately in the JSON.
+
 ## Confirmed tab-return failure
 
 Baseline: `1ef1b2d`. A separate checkout in `/tmp` ran the original classroom in real headed Google Chrome, connected through CDP without Playwright's default focus/visibility overrides. The test asserts a native `hidden` state, waits five seconds, brings the class back and asserts `visible`. Returning causes the original End/Stop recording controls to disappear. Its lifecycle attachment shows live audio/video while hidden, followed by `dataavailable`/`stop` with both tracks ended on return. This is a meeting teardown, not a demonstrated React exception or MediaRecorder encoder crash.
@@ -16,11 +48,11 @@ Reference: [Supabase auth events](https://supabase.com/docs/reference/javascript
 
 ## Media and classroom behavior
 
-The route queries class metadata through existing RLS and composes `LiveClassroom`. The lobby offers camera/audio, audio-only, host presentation, start-muted, student camera-off and participant media-consent choices. A student without consent can attend as a listener without device capture. Enabling student media requires consent in the lobby; leave and rejoin to change that choice. Hosts confirm their own recording consent separately when starting each recording.
+The route queries class metadata through existing RLS and composes `LiveClassroom`. The current lobby and media behavior are described in the device-free revision above. Students can join without sharing devices and explicitly consent before enabling them later. Hosts confirm their own recording consent separately when starting each recording.
 
 The interface uses ShikkhaHub branding, the existing design tokens, English/Bangla controls, status/time/count/recording indicators, a responsive participant grid, a presentation-priority stage, real audio-activity borders, participant/chat/device/recording panels and keyboard-accessible controls. At narrow widths panels overlay the stage and keep the toolbar accessible; controls wrap without horizontal document overflow.
 
-Microphone and camera use separate capture requests. Mute updates `MediaStreamTrack.enabled`. Camera off keeps the connection and microphone alive. Re-enabling a missing/ended camera acquires a track and replaces the sender. Device selectors use exact device IDs; denied, missing, busy and ended devices get recovery messages. Capture defaults to 640×360, up to 24 fps. Camera failure can fall back to an explicitly requested microphone without silently requesting screen access.
+Microphone and camera use separate capture requests. Mute updates `MediaStreamTrack.enabled`. Camera off keeps the connection and microphone alive. Re-enabling a missing/ended camera acquires a track and replaces the sender. Device selectors use exact device IDs; denied, missing, busy and ended devices get recovery messages. Capture defaults to 640×360, up to 24 fps. Camera failure leaves microphone control and meeting attendance available; it never silently requests another input or screen access.
 
 Chrome regressions also confirmed two lifecycle defects during final review. A delayed recording-notice response could create a recorder after the class ended; a session-generation check now cancels that continuation. Switching a muted microphone could pass an enabled replacement to `RTCRtpSender` before applying mute; the replacement is now disabled before it reaches any sender. New input streams have a new identity so audio meters and video elements reconnect to the selected tracks. Both browser regressions failed before the repairs and passed afterward.
 
@@ -88,7 +120,9 @@ Validated browser scope is desktop Google Chrome on Linux, headed and headless a
 
 No Google Meet parity, uninterrupted background video, production readiness, push or deployment is claimed.
 
-## Delivery evidence
+## Previous redesign delivery evidence
+
+The following counts, measurements and file list describe the previous `387b1b4` / `4bdb3be` revision, before optional-device joining. The device-free revision above is current.
 
 Final checks: **127 Vitest / 52 SQL / 77 Chrome / 3 headed recording repetitions / 4 native PostgreSQL races**, all passed. Security: six tests; build/config: three tests; current npm audit: zero known findings. The full verify chain exited 0. See [TESTING.md](../TESTING.md#live-classroom-redesign-and-recording--verified-29-october-2026) for exact scope, attempts and commands.
 

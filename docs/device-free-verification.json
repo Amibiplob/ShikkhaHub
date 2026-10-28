@@ -1,0 +1,675 @@
+{
+  "verified_date": "2026-10-29",
+  "timezone": "Asia/Dhaka",
+  "baseline_commit": "4bdb3be",
+  "baseline_working_tree": "clean",
+  "delivery": "local commit only; no push, deployment or hosted mutation",
+  "root_cause": "The old join path acquired a microphone before private room admission for hosts/consenting non-listeners. Capture errors aborted admission even when local media was unnecessary.",
+  "implementation": {
+    "admission": "Existing private subscription and an empty local MediaStream; no getUserMedia/getDisplayMedia. Completed intentional previews can be retained; unfinished results are cancelled and stopped.",
+    "permissions": "Off by default. Enumeration is a hint. Separate intentional audio/video requests and explicit listener consent; no auto capture/devicechange or denial retry loop.",
+    "senders": "Existing fixed transceivers; replaceTrack for optional sources, mute applied before replacement; no fake admission tracks.",
+    "screen": "Existing host-only user-initiated getDisplayMedia path, independent of local inputs; browser-supplied presentation audio only.",
+    "recording": "Existing stable canvas/WebAudio composition, authorized remote/presentation media, private notices/storage, IndexedDB drafts and retry. No input sources yields silence in the recording audio destination.",
+    "ui": "Focused preview/availability/Join lobby, compact toolbar, More options and one requested side panel; English/Bangla and existing light/dark tokens."
+  },
+  "verification": {
+    "full_command": "npm run verify",
+    "full_exit": 0,
+    "unit_tests": 129,
+    "unit_files": 25,
+    "sql_tests": 52,
+    "sql_skipped": 0,
+    "repository_security_tests": 6,
+    "build_configuration_tests": 3,
+    "typescript": "passed",
+    "eslint": "passed, zero errors/warnings",
+    "production_build": "passed",
+    "chrome": {
+      "startTime": "2026-10-28T23:04:25.792Z",
+      "duration": 1172734.03,
+      "expected": 102,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "new_unique_browser_tests": 26,
+    "current_browser_collection": 103,
+    "final_post_full_chrome_regressions": {
+      "passed": 6,
+      "failed": 0,
+      "new_cases": 1,
+      "repeats": 5,
+      "repair": "Reset stopped preview UI after a rejected private join; failed before repair, passed afterward"
+    },
+    "targeted_recording_and_replacement_recheck": {
+      "passed": 3,
+      "failed": 0
+    },
+    "npm_audit": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependencies": {
+        "prod": 202,
+        "dev": 312,
+        "optional": 50,
+        "peer": 9,
+        "peerOptional": 0,
+        "total": 514
+      }
+    },
+    "viewports": [
+      320,
+      375,
+      768,
+      1440
+    ],
+    "roles": [
+      "teacher",
+      "student"
+    ],
+    "themes": "375px light; other new widths dark; existing Bangla mobile and theme tests retained",
+    "git_diff_check": "passed",
+    "final_staged_secret_scan": "passed before commit",
+    "additional_post_ui_checks": "TypeScript, ESLint, all 129 unit tests and production build rerun after the final rejected-join preview cleanup refinement",
+    "postgres_concurrency": "not rerun; no database code changed; earlier results are historical"
+  },
+  "evidence_boundaries": {
+    "real": "Installed Chrome, native permission state and negative capture probe, actual WebRTC sender tracks, canvas/audio tracks, recording/playback, IndexedDB and FFmpeg/FFprobe decoding.",
+    "fixtures": "Supabase Auth/HTTP/Realtime/Storage; absent-input/devicechange/failure contracts and deterministic source media; generated presentation stream.",
+    "zero_device_configuration": "Explicit denied native input permissions, enumerateDevices empty and throwing/counting capture contract; separate device-count=0 Chrome factory launch.",
+    "recording_host_configuration": "Separate native Chrome default profile without fake input/UI flags, empty capture permissions, no application input-capture requests or local input tracks.",
+    "unverified": [
+      "Hosted Supabase private topics/storage/revocation and prior additive migration",
+      "Physical devices and hardware unplugging",
+      "Native screen/window/tab picker and real shared system/tab audio",
+      "Other browsers and physical mobile devices",
+      "TURN/cross-network delivery",
+      "Sustained seven-party performance and long duration",
+      "Browser/OS termination and lossless hidden capture"
+    ]
+  },
+  "attempts": [
+    {
+      "run": "before",
+      "result": "baseline admission failed; retained original mandatory-device regression"
+    },
+    {
+      "run": "focused",
+      "result": "configuration discovery failed: worker-scoped launch override inside describe; split launch into separate spec"
+    },
+    {
+      "run": "unit preliminary",
+      "result": "124 passed, 5 failed; DOMException name detection restored; full unit rerun 129 passed"
+    },
+    {
+      "run": "focused-retry",
+      "passed": 15,
+      "failed": 2,
+      "repairs": "Explicit select aria-label; wait for actual recorder startup before silent recording duration check; assertions retained"
+    },
+    {
+      "run": "recording-check",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "run": "verify",
+      "result": "external termination after 10 Chrome passes, tool exit 143; no final npm status; incomplete"
+    },
+    {
+      "run": "verify-final",
+      "result": "complete unchanged chain, exit 0, 102 Chrome passes"
+    },
+    {
+      "run": "admission-cleanup-before",
+      "result": "new rejected-join regression failed: capture stopped but preview toggles remained on"
+    },
+    {
+      "run": "final-regressions",
+      "passed": 6,
+      "failed": 0,
+      "result": "Final one-line preview cleanup checked with the new admission-failure case and five related existing cases"
+    }
+  ],
+  "recordings": {
+    "device-free-decoded-media.json": {
+      "audioWindows": [
+        {
+          "start": 0,
+          "teacher440": 0.00010826339898003392,
+          "student880": 0.09315069435115658
+        },
+        {
+          "start": 0.5,
+          "teacher440": 1.5049581266456523e-06,
+          "student880": 0.11684254753075078
+        },
+        {
+          "start": 1,
+          "teacher440": 4.010208169556166e-06,
+          "student880": 0.11719466614454277
+        },
+        {
+          "start": 1.5,
+          "teacher440": 2.1461804575465565e-06,
+          "student880": 0.11669897727409363
+        },
+        {
+          "start": 2,
+          "teacher440": 2.012256147931814e-06,
+          "student880": 0.11666451379374225
+        },
+        {
+          "start": 2.5,
+          "teacher440": 0.0002970776403580441,
+          "student880": 0.06779446956412764
+        },
+        {
+          "start": 3,
+          "teacher440": 7.970536321267587e-06,
+          "student880": 0.11710336469445295
+        },
+        {
+          "start": 3.5,
+          "teacher440": 1.3865332857302003e-06,
+          "student880": 0.1171973588416831
+        },
+        {
+          "start": 4,
+          "teacher440": 3.162140405298096e-06,
+          "student880": 0.11729956270502873
+        },
+        {
+          "start": 4.5,
+          "teacher440": 6.975631352008981e-06,
+          "student880": 0.1170806706745435
+        },
+        {
+          "start": 5,
+          "teacher440": 7.960418451157236e-06,
+          "student880": 0.11717594602217814
+        },
+        {
+          "start": 5.5,
+          "teacher440": 4.628687723307678e-06,
+          "student880": 0.11720333278766405
+        },
+        {
+          "start": 6,
+          "teacher440": 5.016018668882415e-06,
+          "student880": 0.11720303867853844
+        },
+        {
+          "start": 6.5,
+          "teacher440": 5.130686251385968e-05,
+          "student880": 0.10456004445735163
+        },
+        {
+          "start": 7,
+          "teacher440": 5.519345420165401e-05,
+          "student880": 0.11306721107877434
+        },
+        {
+          "start": 7.5,
+          "teacher440": 5.985835823264745e-06,
+          "student880": 0.1171677837426193
+        },
+        {
+          "start": 8,
+          "teacher440": 0.0002175829625128892,
+          "student880": 0.06354460022555063
+        },
+        {
+          "start": 8.5,
+          "teacher440": 8.263167764497707e-06,
+          "student880": 0.11636549300096043
+        },
+        {
+          "start": 9,
+          "teacher440": 3.416365025137896e-06,
+          "student880": 0.11662151776848984
+        },
+        {
+          "start": 9.5,
+          "teacher440": 4.2641648018406475e-06,
+          "student880": 0.11701572715935571
+        },
+        {
+          "start": 10,
+          "teacher440": 8.195861632060885e-06,
+          "student880": 0.11717991846648451
+        },
+        {
+          "start": 10.5,
+          "teacher440": 3.661343973675979e-06,
+          "student880": 0.11684183983491875
+        },
+        {
+          "start": 11,
+          "teacher440": 0.00010067194911570034,
+          "student880": 0.11686762425870018
+        },
+        {
+          "start": 11.5,
+          "teacher440": 3.301289953034623e-06,
+          "student880": 0.11702307679773742
+        },
+        {
+          "start": 12,
+          "teacher440": 1.7376255487368702e-06,
+          "student880": 0.11682394282414019
+        },
+        {
+          "start": 12.5,
+          "teacher440": 1.7576456799757113e-06,
+          "student880": 0.11636359293734512
+        }
+      ],
+      "peakAmplitude": 0.2359786331653595,
+      "audioRms": 0.105462790587409,
+      "videoFrames": 13,
+      "audioPacketMaxGap": 0.07699999999999996,
+      "clippedSamples": 0,
+      "streams": [
+        {
+          "codec": "vp8",
+          "type": "video",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "codec": "opus",
+          "type": "audio"
+        }
+      ],
+      "duration": 13.356,
+      "tones": {
+        "teacher440": 0.0002970776403580441,
+        "student880": 0.11729956270502873,
+        "presentation1320": 0.11750697814703034
+      },
+      "colorPixels": {
+        "teacher": 0,
+        "student": 18521,
+        "presentation": 81148
+      },
+      "bytes": 707499
+    },
+    "silent-decoded-media.json": {
+      "audioWindows": [
+        {
+          "start": 0,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 0.5,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 1,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 1.5,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 2,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 2.5,
+          "teacher440": 0,
+          "student880": 0
+        }
+      ],
+      "peakAmplitude": 0,
+      "audioRms": 0,
+      "videoFrames": 3,
+      "audioPacketMaxGap": 0.07200000000000001,
+      "clippedSamples": 0,
+      "streams": [
+        {
+          "codec": "vp8",
+          "type": "video",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "codec": "opus",
+          "type": "audio"
+        }
+      ],
+      "duration": 3.27,
+      "tones": {
+        "teacher440": 0,
+        "student880": 0,
+        "presentation1320": 0
+      },
+      "colorPixels": {
+        "teacher": 0,
+        "student": 0,
+        "presentation": 0
+      },
+      "bytes": 77814
+    }
+  },
+  "encoded_files": {
+    "artifacts/device-free/full-browser/device-free-optional-local-cf460-ut-requesting-input-devices/silent-placeholder.webm": {
+      "bytes": 77814,
+      "sha256": "38f4c0e6787ac68a51e3119bf21e13dbe3ae8e9993880a09f5bd33b89ae12a56"
+    },
+    "artifacts/device-free/full-browser/classroom-recording-draft--ff704-oad-then-saves-exactly-once/recovered-download.webm": {
+      "bytes": 106489,
+      "sha256": "e9e2d465512095799a746711e86c052be720c2e51ecdd0d5b429a0e2ac8979b0"
+    },
+    "artifacts/device-free/full-browser/classroom-complete-meeting-2f4eb--tab-and-device-transitions/complete-meeting.webm": {
+      "bytes": 1899262,
+      "sha256": "fa4f7cb749b9afdfd3cf5b82a576564b677fa1225bf5ea50137eead45e780ce8"
+    },
+    "artifacts/device-free/full-browser/device-free-optional-local-039b5-through-a-native-tab-switch/device-free-meeting.webm": {
+      "bytes": 707499,
+      "sha256": "b16a2a2761be7db403b84797236220a38b2747736352e06f18c24dc542ee6c33"
+    }
+  },
+  "background_limit": "A preliminary device-free file had a 3.661-second audio-packet gap around the native hidden interval. Final measurements are retained without a gapless claim. Playback after return is not uninterrupted background capture acceptance.",
+  "artifacts": "artifacts/device-free/ (ignored local logs, encoded media, screenshots, lifecycle and traces); full-browser/results.json retains the full report",
+  "screenshots": [
+    "docs/screenshots/device-free-teacher-prejoin-320.png",
+    "docs/screenshots/device-free-student-prejoin-375-light.png",
+    "docs/screenshots/device-free-teacher-chat-768.png",
+    "docs/screenshots/device-free-student-chat-1440.png",
+    "docs/screenshots/device-free-teacher-prejoin-1440.png",
+    "docs/screenshots/device-free-bangla-375.png",
+    "docs/screenshots/device-free-host-recording.png"
+  ],
+  "files_changed": [
+    "TESTING.md",
+    "docs/BUG_FIX_LOG.md",
+    "docs/LIVE_CLASSROOM.md",
+    "docs/SHIKKHAHUB_AUDIT_REPORT.md",
+    "docs/device-free-verification.json",
+    "docs/screenshots/device-free-bangla-375.png",
+    "docs/screenshots/device-free-host-recording.png",
+    "docs/screenshots/device-free-student-chat-1440.png",
+    "docs/screenshots/device-free-student-prejoin-375-light.png",
+    "docs/screenshots/device-free-teacher-chat-768.png",
+    "docs/screenshots/device-free-teacher-prejoin-1440.png",
+    "docs/screenshots/device-free-teacher-prejoin-320.png",
+    "e2e/classroom-actions.ts",
+    "e2e/classroom-media.ts",
+    "e2e/classroom.spec.ts",
+    "e2e/device-free-admission.spec.ts",
+    "e2e/device-free.spec.ts",
+    "e2e/live.spec.ts",
+    "e2e/recorded-media.ts",
+    "src/features/live-classes/DeviceSettings.tsx",
+    "src/features/live-classes/LiveClassroom.tsx",
+    "src/features/live-classes/MediaTile.tsx",
+    "src/features/live-classes/PreJoinLobby.tsx",
+    "src/features/live-classes/media-errors.test.ts",
+    "src/features/live-classes/useDeviceInventory.ts",
+    "src/features/live-classes/useWebRTCBroadcast.ts"
+  ],
+  "preserved": [
+    "React/Vite architecture",
+    "Authentication and membership checks",
+    "Private Realtime authority",
+    "Teacher/student permissions",
+    "Consent and recording notice",
+    "Storage RLS and private paths",
+    "IndexedDB recovery and upload retry",
+    "Courses and certificates",
+    "All environment files and existing migrations"
+  ],
+  "final_post_full_recordings": {
+    "device-free-decoded-media.json": {
+      "audioWindows": [
+        {
+          "start": 0,
+          "teacher440": 4.9592494893141796e-05,
+          "student880": 0.10332983691225073
+        },
+        {
+          "start": 0.5,
+          "teacher440": 5.977977960414943e-07,
+          "student880": 0.11690565960565744
+        },
+        {
+          "start": 1,
+          "teacher440": 1.599353275255963e-06,
+          "student880": 0.11745352997921822
+        },
+        {
+          "start": 1.5,
+          "teacher440": 2.6240986833480725e-06,
+          "student880": 0.11763702546194725
+        },
+        {
+          "start": 2,
+          "teacher440": 0.0001775506881015772,
+          "student880": 0.10438268600764684
+        },
+        {
+          "start": 2.5,
+          "teacher440": 0.0001897528762411588,
+          "student880": 0.1164678640485861
+        },
+        {
+          "start": 3,
+          "teacher440": 9.041865831076119e-06,
+          "student880": 0.11737546723286973
+        },
+        {
+          "start": 3.5,
+          "teacher440": 1.0811012547164105e-05,
+          "student880": 0.1174345103612022
+        },
+        {
+          "start": 4,
+          "teacher440": 1.2012671006327612e-05,
+          "student880": 0.1170347296816615
+        },
+        {
+          "start": 4.5,
+          "teacher440": 1.2252041718050939e-05,
+          "student880": 0.11737794786501266
+        },
+        {
+          "start": 5,
+          "teacher440": 7.740005537585248e-06,
+          "student880": 0.1173782389642087
+        },
+        {
+          "start": 5.5,
+          "teacher440": 1.3021111431543778e-05,
+          "student880": 0.11739282851357287
+        },
+        {
+          "start": 6,
+          "teacher440": 6.0726135815287545e-06,
+          "student880": 0.11740347093739795
+        },
+        {
+          "start": 6.5,
+          "teacher440": 6.8254981205429025e-06,
+          "student880": 0.11739486816908273
+        },
+        {
+          "start": 7,
+          "teacher440": 4.635347683120701e-06,
+          "student880": 0.11722483116373161
+        },
+        {
+          "start": 7.5,
+          "teacher440": 6.8938667158350845e-06,
+          "student880": 0.11741484933164374
+        },
+        {
+          "start": 8,
+          "teacher440": 1.071139589550485e-05,
+          "student880": 0.11741925178616901
+        },
+        {
+          "start": 8.5,
+          "teacher440": 6.939495496258814e-06,
+          "student880": 0.11740135055061013
+        },
+        {
+          "start": 9,
+          "teacher440": 6.112430574700889e-06,
+          "student880": 0.11741222505931578
+        },
+        {
+          "start": 9.5,
+          "teacher440": 7.314742032526335e-06,
+          "student880": 0.11741877362725286
+        },
+        {
+          "start": 10,
+          "teacher440": 1.2997841256502857e-05,
+          "student880": 0.11743458655070105
+        },
+        {
+          "start": 10.5,
+          "teacher440": 6.220817776531558e-06,
+          "student880": 0.11739888312010668
+        },
+        {
+          "start": 11,
+          "teacher440": 9.18616130613423e-05,
+          "student880": 0.11693126964421992
+        },
+        {
+          "start": 11.5,
+          "teacher440": 3.4652622463268164e-06,
+          "student880": 0.11655663513160061
+        },
+        {
+          "start": 12,
+          "teacher440": 0.00017694676693427296,
+          "student880": 0.11402421099558369
+        },
+        {
+          "start": 12.5,
+          "teacher440": 3.2764318577658757e-06,
+          "student880": 0.11645393743590751
+        }
+      ],
+      "peakAmplitude": 0.23757673799991608,
+      "audioRms": 0.10586087070243806,
+      "videoFrames": 11,
+      "audioPacketMaxGap": 0.14400000000000013,
+      "clippedSamples": 0,
+      "streams": [
+        {
+          "codec": "vp8",
+          "type": "video",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "codec": "opus",
+          "type": "audio"
+        }
+      ],
+      "duration": 13.292,
+      "tones": {
+        "teacher440": 0.0001897528762411588,
+        "student880": 0.11763702546194725,
+        "presentation1320": 0.117240164465293
+      },
+      "colorPixels": {
+        "teacher": 0,
+        "student": 11607,
+        "presentation": 72131
+      },
+      "bytes": 574198
+    },
+    "silent-decoded-media.json": {
+      "audioWindows": [
+        {
+          "start": 0,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 0.5,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 1,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 1.5,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 2,
+          "teacher440": 0,
+          "student880": 0
+        },
+        {
+          "start": 2.5,
+          "teacher440": 0,
+          "student880": 0
+        }
+      ],
+      "peakAmplitude": 0,
+      "audioRms": 0,
+      "videoFrames": 3,
+      "audioPacketMaxGap": 0.10199999999999987,
+      "clippedSamples": 0,
+      "streams": [
+        {
+          "codec": "vp8",
+          "type": "video",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "codec": "opus",
+          "type": "audio"
+        }
+      ],
+      "duration": 3.259,
+      "tones": {
+        "teacher440": 0,
+        "student880": 0,
+        "presentation1320": 0
+      },
+      "colorPixels": {
+        "teacher": 0,
+        "student": 0,
+        "presentation": 0
+      },
+      "bytes": 79523
+    }
+  },
+  "final_post_full_encoded_files": {
+    "artifacts/device-free/final-regressions/device-free-optional-local-cf460-ut-requesting-input-devices/silent-placeholder.webm": {
+      "bytes": 79523,
+      "sha256": "da0ae924322c1df3cdc3556650b6b0db716c07a3a3fbf334658804dc97a7f2db"
+    },
+    "artifacts/device-free/final-regressions/device-free-optional-local-039b5-through-a-native-tab-switch/device-free-meeting.webm": {
+      "bytes": 574198,
+      "sha256": "8dc63c590013490fc72a17195b3fc570703ecc1909b42e92364960615b1c4163"
+    }
+  }
+}

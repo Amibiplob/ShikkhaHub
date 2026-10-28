@@ -1,6 +1,14 @@
 # ShikkhaHub stabilization and staging audit
 
-## Latest live classroom verification — 29 October 2026
+## Latest device-free classroom verification — 29 October 2026
+
+Baseline `4bdb3be`: microphone capture was an admission prerequisite. Admission now uses zero local tracks and no capture permissions; optional independent previews/inputs, late device changes, listener consent, host presentation and recording share the existing authorized meeting. The simpler lobby/toolbar support English/Bangla, light/dark and 320/375/768/1440px role-based viewport checks.
+
+The full unchanged chain exited **0**: **129 Vitest / 25 files, 52 SQL, 102 Chrome, six security and three build/config tests**; TypeScript, lint, build, npm audit (zero findings), whitespace and staged secrets passed. Native sender states and encoded remote/presentation media are checked; a placeholder-only recording decodes to zero RMS/peak. A final rejected-join preview-state cleanup regression was added after the 102-case full run: it failed before repair and passed afterward in six final focused Chrome checks. Types/lint/129 unit tests/build passed again on the final source; the current collection has 103 cases. Earlier failures and an externally terminated partial full run remain documented. Background audio gaps remain an explicit limitation; no gapless or physical-device acceptance is claimed.
+
+No dependencies, authentication/RLS/storage policies, migrations, environment files or hosted resources changed. Existing private channels, host authority, consent, journal recovery and upload retry remain. The prior migration stays unapplied remotely; STUN-only ICE and hosted/native picker/physical device/load gates remain. Exact files/media/attempts: [device-free-verification.json](device-free-verification.json), [TESTING.md](../TESTING.md), [LIVE_CLASSROOM.md](LIVE_CLASSROOM.md). Local commit only; no push/deployment.
+
+## Previous classroom redesign verification — 29 October 2026
 
 The full unchanged verification chain exited 0: **127 Vitest, 52 SQL, 77 Chrome, six security and three build/config tests**, plus **three headed recording repetitions** and **four native PostgreSQL races**. TypeScript, lint, build, current npm audit (zero known vulnerabilities), staged secrets and whitespace checks passed. Real encoded VP8/Opus output includes teacher, student and presentation media; background audio, actual mute silence, timestamps and stable recorder tracks are asserted. Supabase remains intercepted in browser tests. The new migration is not applied remotely; STUN-only ICE and the hosted/native-picker/physical-device/load gates prevent production acceptance. Exact files, failures retained during development and final evidence: [TESTING.md](../TESTING.md), [LIVE_CLASSROOM.md](LIVE_CLASSROOM.md), [verification JSON](live-classroom-verification.json). No push/deployment/hosted mutation.
 

@@ -75,7 +75,7 @@ export default function MediaTile({
         className={`h-full max-h-[65dvh] w-full object-contain ${cameraOff && !presentation ? "opacity-0" : ""}`}
       />
       {cameraOff && !presentation && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-300">
+        <div className="absolute inset-x-0 top-0 bottom-10 flex flex-col items-center justify-center gap-2 text-slate-300">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/25 text-xl font-semibold text-indigo-100">
             {name.slice(0, 2).toUpperCase()}
           </div>
