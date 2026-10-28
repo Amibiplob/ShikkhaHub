@@ -636,7 +636,7 @@ export const test = base.extend<{ backend: Backend; browserErrors: string[] }>({
   ],
 });
 export async function login(page: Page, backend: Backend, role: Role) {
-  await page.goto("/auth");
+  await page.goto(`${mockOrigin}/auth`);
   await page.getByLabel("Email", { exact: true }).fill(users[role].email);
   await page.getByLabel("Password", { exact: true }).fill(backend.password);
   await page.getByRole("button", { name: "Sign In", exact: true }).click();

@@ -14,11 +14,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let active = true;
     let generation = 0;
+    let currentUserId: string | null | undefined;
     const applySession = async (next: Session | null) => {
       const request = ++generation;
-      setLoading(true);
-      setRoles([]);
-      setProfile(null);
+      const identityChanged = currentUserId !== (next?.user.id ?? null);
+      currentUserId = next?.user.id ?? null;
+      // Supabase revalidates SIGNED_IN on tab return. Refresh server roles in
+      // place for the same identity; unmounting here destroys live media.
+      if (identityChanged) { setLoading(true); setRoles([]); setProfile(null); }
       setSession(next);
       setUser(next?.user ?? null);
       try {
@@ -32,7 +35,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(profileRes.data ?? null);
         }
       } catch {
-        // Role/profile failures leave access denied, never reuse previous privileges.
+        if (active && request === generation) { setRoles([]); setProfile(null); }
+        // Revalidation fails closed for role-gated controls without resetting media routes.
       } finally {
         if (active && request === generation) setLoading(false);
       }

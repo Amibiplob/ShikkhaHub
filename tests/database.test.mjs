@@ -179,3 +179,36 @@ test('cross-course discussion parents are rejected',async()=>{
  const p=(await sql(ids.teacher,"INSERT INTO course_discussions(course_id,user_id,content) VALUES($1,$2,'Private question') RETURNING id",[c,ids.teacher])).rows[0].id;
  await assert.rejects(()=>sql(ids.student,"INSERT INTO course_discussions(course_id,user_id,parent_id,content) VALUES($1,$2,$3,'Wrong course reply')",[ids.course,ids.student,p]),/same course/);
 });
+
+test('meeting state is host-only, participant state is identity stamped, outsiders are denied', async () => {
+ await assert.rejects(() => sql(ids.student, "SELECT send_live_signal('private-room','meeting-state','{\"recording\":true}')"), /Only the teacher/);
+ await assert.rejects(() => sql(ids.other, "SELECT send_live_signal('private-room','media-state','{}')"), /Course access/);
+ await sql(ids.teacher, "SELECT send_live_signal('private-room','meeting-state','{\"recording\":true}')");
+ await sql(ids.student, "SELECT send_live_signal('private-room','media-state','{\"fromId\":\"spoof\",\"muted\":true}')");
+ const row = (await db.query("SELECT payload FROM realtime.messages WHERE event='media-state' ORDER BY id DESC LIMIT 1")).rows[0];
+ assert.equal(row.payload.fromId, ids.student); assert.equal(row.payload.muted, true);
+});
+test('recording storage and metadata remain class-scoped and reject unrelated paths', async () => {
+ const lc = (await sql(ids.teacher, "SELECT id FROM live_classes WHERE room_name='private-room'")).rows[0].id;
+ const path = `${lc}/90000000-0000-4000-8000-000000000001.webm`;
+ await assert.rejects(() => sql(ids.student, "INSERT INTO class_recordings(live_class_id,teacher_id,title,file_url) VALUES($1,$2,'forged',$3)", [lc, ids.student, path]), /row-level security/);
+ await assert.rejects(() => sql(ids.teacher, "INSERT INTO class_recordings(live_class_id,teacher_id,title,file_url) VALUES($1,$2,'bad path','https://example.test/private.webm')", [lc, ids.teacher]), /path must belong/);
+ await sql(ids.teacher, "INSERT INTO class_recordings(live_class_id,teacher_id,title,file_url) VALUES($1,$2,'Scoped recording',$3)", [lc, ids.teacher, path]);
+ assert.equal((await sql(ids.student, "SELECT id FROM class_recordings WHERE live_class_id=$1", [lc])).rows.length, 1);
+ assert.equal((await sql(ids.other, "SELECT id FROM class_recordings WHERE live_class_id=$1", [lc])).rows.length, 0);
+ await sql(ids.teacher, "INSERT INTO storage.objects(bucket_id,name) VALUES('class-recordings',$1)", [path]);
+ assert.equal((await sql(ids.other, "SELECT name FROM storage.objects WHERE name=$1", [path])).rows.length, 0);
+ assert.equal((await sql(null, "SELECT name FROM storage.objects WHERE name=$1", [path])).rows.length, 0);
+ await assert.rejects(() => sql(ids.student, "INSERT INTO storage.objects(bucket_id,name) VALUES('class-recordings',$1)", [`${lc}/forged.webm`]), /row-level security/);
+});
+
+test('committed class completion preserves the final private end event without reopening joins', async () => {
+ await sql(ids.teacher, "INSERT INTO live_classes(course_id,teacher_id,title,room_name,scheduled_at,status) VALUES($1,$2,'Ending','ending-room',now(),'live')", [ids.course, ids.teacher]);
+ await sql(ids.teacher, "UPDATE live_classes SET status='completed' WHERE room_name='ending-room'");
+ await sql(ids.teacher, "SELECT send_live_signal('ending-room','teacher-ended','{}')");
+ await db.query("SELECT set_config('realtime.topic','live-ending-room',false)");
+ assert.equal((await sql(ids.student, "SELECT id FROM realtime.messages WHERE topic='live-ending-room'")).rows.length, 1);
+ assert.equal((await sql(ids.other, "SELECT id FROM realtime.messages WHERE topic='live-ending-room'")).rows.length, 0);
+ await assert.rejects(() => sql(ids.student, "SELECT send_live_signal('ending-room','join-request','{}')"), /Class has ended/);
+ await assert.rejects(() => sql(ids.student, "SELECT send_live_signal('ending-room','teacher-ended','{}')"), /Only the teacher/);
+});

@@ -1,24 +1,17 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Json } from "@/integrations/supabase/types";
-import { toast } from "sonner";
-import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  MeetingRecorder,
+  type RecordingState,
+  type MeetingSource,
+} from "./MeetingRecorder";
 
+export const MAX_STUDENTS = 6;
 const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
 ];
-
-async function sendLive(room: string, message: { type: string; event: string; payload: object }) {
-  const { error } = await supabase.rpc("send_live_signal", { room, signal_event: message.event, signal_payload: message.payload as Json });
-  if (error) { toast.error("Live connection failed. Check your access and retry."); return "error"; }
-  return "ok";
-}
-
-interface PeerState {
-  pc: RTCPeerConnection;
-  userId: string;
-}
-
 export interface ChatMessage {
   id: string;
   userId: string;
@@ -26,469 +19,898 @@ export interface ChatMessage {
   message: string;
   timestamp: number;
 }
-
-/**
- * Teacher broadcasts local stream to students via WebRTC.
- * Supabase Realtime channel is used for signaling + chat.
- */
-export function useTeacherBroadcast(roomName: string, userId: string, userName: string) {
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
-  const [isLive, setIsLive] = useState(false);
-  const [viewerCount, setViewerCount] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isCamOff, setIsCamOff] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [raisedHands, setRaisedHands] = useState<string[]>([]);
-  const peersRef = useRef<Map<string, PeerState>>(new Map());
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const screenStreamRef = useRef<MediaStream | null>(null);
-  const activeTrackRef = useRef<MediaStreamTrack | null>(null);
-
-  const stopBroadcast = useCallback(() => {
-    localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current = null;
-    peersRef.current.forEach(({ pc }) => pc.close());
-    peersRef.current.clear();
-    if (channelRef.current) {
-      sendLive(roomName, { type: "broadcast", event: "teacher-ended", payload: {} });
-      channelRef.current.unsubscribe();
-    }
-    setLocalStream(null);
-    setScreenStream(null);
-    setIsLive(false);
-    setViewerCount(0);
-    setIsMuted(false);
-    setIsCamOff(false);
-  }, [roomName]);
-
-  const startBroadcast = useCallback(async (mode: "camera" | "screen" | "audio-only") => {
-    try {
-      let stream: MediaStream;
-
-      if (mode === "screen") {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        // Try to get mic audio separately
-        let audioTrack: MediaStreamTrack | null = null;
-        try {
-          const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-          audioTrack = audioStream.getAudioTracks()[0];
-        } catch { /* mic unavailable, use screen audio only */ }
-
-        stream = new MediaStream([
-          ...screenStream.getVideoTracks(),
-          ...(audioTrack ? [audioTrack] : screenStream.getAudioTracks()),
-        ]);
-        setScreenStream(screenStream);
-        screenStreamRef.current = screenStream;
-
-        screenStream.getVideoTracks()[0].onended = () => {
-          stopBroadcast();
-        };
-      } else if (mode === "audio-only") {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        setIsCamOff(true);
-      } else {
-        // Camera mode - try video+audio, fallback to audio-only
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: true,
-          });
-        } catch {
-          // Fallback: try audio only
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            setIsCamOff(true);
-          } catch {
-            // Fallback: screen share
-            const ss = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-            stream = ss;
-            setScreenStream(ss);
-            screenStreamRef.current = ss;
-            ss.getVideoTracks()[0].onended = () => stopBroadcast();
-          }
-        }
-      }
-
-      setLocalStream(stream);
-      localStreamRef.current = stream;
-      activeTrackRef.current = stream.getVideoTracks()[0] || null;
-      setIsLive(true);
-
-      const channel = supabase.channel(`live-${roomName}`, {
-        config: { private: true, broadcast: { self: false } },
-      });
-
-      channel
-        .on("broadcast", { event: "join-request" }, async ({ payload }) => {
-          const studentId = payload.studentId;
-          if (!studentId || peersRef.current.has(studentId)) return;
-
-          const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-          peersRef.current.set(studentId, { pc, userId: studentId });
-          setViewerCount(peersRef.current.size);
-
-          localStreamRef.current?.getTracks().forEach((track) => {
-            pc.addTrack(track, localStreamRef.current!);
-          });
-
-          pc.onicecandidate = (e) => {
-            if (e.candidate) {
-              sendLive(roomName, {
-                type: "broadcast",
-                event: "ice-candidate",
-                payload: { candidate: e.candidate.toJSON(), targetId: studentId, fromId: userId },
-              });
-            }
-          };
-
-          pc.onconnectionstatechange = () => {
-            if (["disconnected", "failed", "closed"].includes(pc.connectionState)) {
-              pc.close();
-              peersRef.current.delete(studentId);
-              setViewerCount(peersRef.current.size);
-            }
-          };
-
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-
-          sendLive(roomName, {
-            type: "broadcast",
-            event: "offer",
-            payload: { sdp: offer, targetId: studentId, fromId: userId },
-          });
-        })
-        .on("broadcast", { event: "answer" }, async ({ payload }) => {
-          if (payload.targetId !== userId) return;
-          const peer = peersRef.current.get(payload.fromId);
-          if (peer && peer.pc.signalingState !== "stable") {
-            await peer.pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-          }
-        })
-        .on("broadcast", { event: "ice-candidate" }, async ({ payload }) => {
-          if (payload.targetId !== userId) return;
-          const peer = peersRef.current.get(payload.fromId);
-          if (peer) {
-            try { await peer.pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* Stale candidate after a peer disconnect. */ }
-          }
-        })
-        .on("broadcast", { event: "chat-message" }, ({ payload }) => {
-          setChatMessages((prev) => [...prev, payload as ChatMessage]);
-        })
-        .on("broadcast", { event: "leave" }, ({ payload }) => {
-          const peer = peersRef.current.get(payload.fromId);
-          peer?.pc.close(); peersRef.current.delete(payload.fromId); setViewerCount(peersRef.current.size);
-        })
-        .on("broadcast", { event: "raise-hand" }, ({ payload }) => {
-          setRaisedHands((prev) =>
-            prev.includes(payload.userName) ? prev : [...prev, payload.userName]
-          );
-          // Auto-remove after 10s
-          setTimeout(() => {
-            setRaisedHands((prev) => prev.filter((n) => n !== payload.userName));
-          }, 10000);
-        });
-
-      channelRef.current = channel;
-
-      // Announce only after the server has authorized the private subscription.
-      await new Promise<void>((resolve, reject) => {
-        channel.subscribe(status => {
-          if (status === "SUBSCRIBED") { void sendLive(roomName, { type: "broadcast", event: "teacher-live", payload: { teacherId: userId } }); resolve(); }
-          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { stopBroadcast(); reject(new Error("Could not connect to class")); }
-        });
-      });
-    } catch (err: unknown) {
-      localStreamRef.current?.getTracks().forEach(track => track.stop());
-      screenStreamRef.current?.getTracks().forEach(track => track.stop());
-      setIsLive(false);
-      throw err;
-    }
-  }, [roomName, userId, stopBroadcast]);
-
-  const sendChat = useCallback((message: string) => {
-    if (!channelRef.current || !message.trim()) return;
-    const msg: ChatMessage = {
-      id: crypto.randomUUID(),
-      userId,
-      userName,
-      message: message.trim(),
-      timestamp: Date.now(),
-    };
-    sendLive(roomName, { type: "broadcast", event: "chat-message", payload: msg });
-
-  }, [roomName, userId, userName]);
-
-  const toggleMute = useCallback(() => {
-    localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
-    setIsMuted((m) => !m);
-  }, []);
-
-  const toggleCamera = useCallback(async () => {
-    const videoTracks = localStreamRef.current?.getVideoTracks();
-    if (videoTracks && videoTracks.length > 0) {
-      videoTracks.forEach((t) => (t.enabled = !t.enabled));
-      setIsCamOff((c) => !c);
-    }
-  }, []);
-
-  const shareScreen = useCallback(async () => {
-    try {
-      const screen = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      setScreenStream(screen);
-      screenStreamRef.current = screen;
-      const videoTrack = screen.getVideoTracks()[0];
-
-      peersRef.current.forEach(({ pc }) => {
-        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-        if (sender) sender.replaceTrack(videoTrack);
-      });
-
-      videoTrack.onended = () => {
-        const camTrack = localStreamRef.current?.getVideoTracks()[0];
-        if (camTrack) {
-          peersRef.current.forEach(({ pc }) => {
-            const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-            if (sender) sender.replaceTrack(camTrack);
-          });
-        }
-        setScreenStream(null);
-      };
-    } catch (err) {
-      console.error("Screen share failed:", err);
-    }
-  }, []);
-
-  // ========= Recording via MediaRecorder =========
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    const peers = peersRef.current;
-    return () => {
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
-      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-      if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
-      peers.forEach(({ pc }) => pc.close());
-      peers.clear();
-      channelRef.current?.unsubscribe();
-    };
-  }, []);
-
-  const startRecording = useCallback(() => {
-    const stream = localStreamRef.current;
-    if (!stream) return;
-    recordedChunksRef.current = [];
-    setRecordingDuration(0);
-
-    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-      ? "video/webm;codecs=vp9,opus"
-      : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-        ? "video/webm;codecs=vp8,opus"
-        : "video/webm";
-
-    const mr = new MediaRecorder(stream, { mimeType });
-    mr.ondataavailable = (e) => {
-      if (e.data.size > 0) recordedChunksRef.current.push(e.data);
-    };
-    mr.onstop = () => {
-      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-    };
-    mr.start(1000); // collect every second
-    mediaRecorderRef.current = mr;
-    setIsRecording(true);
-
-    recordingTimerRef.current = setInterval(() => {
-      setRecordingDuration((d) => d + 1);
-    }, 1000);
-  }, []);
-
-  const stopRecording = useCallback((): Promise<Blob> => {
-    return new Promise((resolve) => {
-      const mr = mediaRecorderRef.current;
-      if (!mr || mr.state === "inactive") {
-        resolve(new Blob(recordedChunksRef.current, { type: "video/webm" }));
-        setIsRecording(false);
-        return;
-      }
-      mr.onstop = () => {
-        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-        setIsRecording(false);
-        resolve(blob);
-      };
-      mr.stop();
-    });
-  }, []);
-
-  return {
-    localStream, screenStream, isLive, viewerCount,
-    isMuted, isCamOff, chatMessages, raisedHands,
-    isRecording, recordingDuration,
-    startBroadcast, stopBroadcast, toggleMute, toggleCamera,
-    shareScreen, sendChat, startRecording, stopRecording,
-  };
+export interface Participant extends MeetingSource {
+  slot: number;
+  connected: boolean;
+}
+type Roster = Omit<Participant, "stream">[];
+type Peer = {
+  pc: RTCPeerConnection;
+  slot: number;
+  timer?: ReturnType<typeof setTimeout>;
+};
+type Mode = "camera" | "audio-only" | "screen" | "listen";
+export function mediaError(error: unknown) {
+  const name = error instanceof DOMException ? error.name : "";
+  if (name === "NotAllowedError")
+    return "Permission denied. Allow the requested device in browser settings and retry.";
+  if (name === "NotFoundError")
+    return "Device unavailable. Connect a microphone or camera and retry.";
+  if (name === "NotReadableError")
+    return "Device is busy or disconnected. Close other apps using it and retry.";
+  return error instanceof Error
+    ? error.message
+    : "Media unavailable. Check your devices and retry.";
 }
 
-/**
- * Student receives the teacher's broadcast stream + chat.
- */
-export function useStudentViewer(roomName: string, userId: string, userName: string) {
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(false);
+/** Host-originated, fixed transceivers preserve the existing private signaling model.
+ * Slots relay each consenting participant once, excluding their own return audio. */
+export function useClassroomMedia(
+  room: string,
+  userId: string,
+  name: string,
+  hostId: string,
+) {
+  const host = userId === hostId;
+  const [active, setActive] = useState(false);
+  const [connection, setConnection] = useState("idle");
   const [ended, setEnded] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-
-  const sendChat = useCallback((message: string) => {
-    if (!channelRef.current || !message.trim()) return;
-    const msg: ChatMessage = {
-      id: crypto.randomUUID(),
-      userId,
-      userName,
-      message: message.trim(),
-      timestamp: Date.now(),
-    };
-    sendLive(roomName, { type: "broadcast", event: "chat-message", payload: msg });
-
-  }, [roomName, userId, userName]);
-
-  const raiseHand = useCallback(() => {
-    if (channelRef.current) void sendLive(roomName, {
-      type: "broadcast",
-      event: "raise-hand",
-      payload: { userId, userName },
-    });
-  }, [roomName, userId, userName]);
-
-  const joinBroadcast = useCallback(() => {
-    setConnecting(true);
-    setEnded(false);
-
-    const channel = supabase.channel(`live-${roomName}`, {
-      config: { private: true, broadcast: { self: false } },
-    });
-
-    channel
-      .on("broadcast", { event: "offer" }, async ({ payload }) => {
-        if (payload.targetId !== userId) return;
-
-        const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-        pcRef.current = pc;
-
-        const stream = new MediaStream();
-        pc.ontrack = (e) => {
-          e.streams[0]?.getTracks().forEach((track) => stream.addTrack(track));
-          setRemoteStream(new MediaStream(stream.getTracks()));
-          setConnected(true);
-          setConnecting(false);
-        };
-
-        pc.onicecandidate = (e) => {
-          if (e.candidate) {
-            sendLive(roomName, {
-              type: "broadcast",
-              event: "ice-candidate",
-              payload: { candidate: e.candidate.toJSON(), targetId: payload.fromId, fromId: userId },
-            });
-          }
-        };
-
-        pc.onconnectionstatechange = () => {
-          if (["disconnected", "failed"].includes(pc.connectionState)) {
-            setConnected(false);
-            setConnecting(false);
-          }
-        };
-
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        sendLive(roomName, {
-          type: "broadcast",
-          event: "answer",
-          payload: { sdp: answer, targetId: payload.fromId, fromId: userId },
-        });
-      })
-      .on("broadcast", { event: "ice-candidate" }, async ({ payload }) => {
-        if (payload.targetId !== userId) return;
-        if (pcRef.current) {
-          try { await pcRef.current.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch { /* Stale candidate after a peer disconnect. */ }
-        }
-      })
-      .on("broadcast", { event: "teacher-live" }, () => {
-        sendLive(roomName, {
-          type: "broadcast",
-          event: "join-request",
-          payload: { studentId: userId, studentName: userName },
-        });
-      })
-      .on("broadcast", { event: "teacher-ended" }, () => {
-        setConnected(false);
-        setConnecting(false);
-        setEnded(true);
-        pcRef.current?.close();
-        pcRef.current = null;
-      })
-      .on("broadcast", { event: "chat-message" }, ({ payload }) => {
-        setChatMessages((prev) => [...prev, payload as ChatMessage]);
-      })
-      .subscribe((status) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { setConnecting(false); toast.error("Could not connect to class"); return; }
-        if (status !== "SUBSCRIBED") return;
-        {
-          sendLive(roomName, {
-            type: "broadcast",
-            event: "join-request",
-            payload: { studentId: userId, studentName: userName },
-          });
-        }
-      });
-
-    channelRef.current = channel;
-  }, [roomName, userId, userName]);
-
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [screen, setScreen] = useState<MediaStream | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [hands, setHands] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [recordingNotice, setRecordingNotice] = useState(false);
+  const channel = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const peers = useRef(new Map<string, Peer>());
+  const roster = useRef<Participant[]>([]);
+  const local = useRef<MediaStream | null>(null);
+  const presentation = useRef<MediaStream | null>(null);
+  const recorder = useRef<MeetingRecorder | null>(null);
+  const starting = useRef(false);
+  const mediaBusy = useRef(false);
+  const deviceBusy = useRef(new Map<"audio" | "video", symbol>());
+  const epoch = useRef(0);
+  const ice = useRef(new Map<string, RTCIceCandidateInit[]>());
+  const handTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const isRecording = useRef(false);
+  const own = useRef({ muted: true, cameraOff: true, consent: false });
+  const names = useRef({ name, hostId });
   useEffect(() => {
-    if (!connecting) return;
-    const timeout = setTimeout(() => {
-      setConnecting(false); pcRef.current?.close(); channelRef.current?.unsubscribe();
-      toast.error("Connection timed out. Check that the teacher is live and try again.");
-    }, 15000);
-    return () => clearTimeout(timeout);
-  }, [connecting]);
+    names.current = { name, hostId };
+  }, [name, hostId]);
 
-  const leaveBroadcast = useCallback(() => {
-    if (channelRef.current) void sendLive(roomName, { type: "broadcast", event: "leave", payload: {} });
-    pcRef.current?.close();
-    pcRef.current = null;
-    channelRef.current?.unsubscribe();
-    channelRef.current = null;
-    setRemoteStream(null);
-    setConnected(false);
-    setConnecting(false);
-  }, [roomName]);
-
-  useEffect(() => {
-    return () => {
-      pcRef.current?.close();
-      channelRef.current?.unsubscribe();
-    };
+  const signal = useCallback(
+    async (event: string, payload: object = {}) => {
+      try {
+        const { error } = await supabase.rpc("send_live_signal", {
+          room,
+          signal_event: event,
+          signal_payload: payload as Json,
+        });
+        if (error) throw error;
+        return true;
+      } catch {
+        setError("Live connection failed. Check your access and retry.");
+        return false;
+      }
+    },
+    [room],
+  );
+  const publish = useCallback(() => {
+    setParticipants([...roster.current]);
   }, []);
+  const me = useCallback(
+    (): Participant => ({
+      id: userId,
+      name: names.current.name,
+      stream: local.current,
+      slot: -1,
+      connected: true,
+      ...own.current,
+    }),
+    [userId],
+  );
+  const state = useCallback(
+    () => roster.current.map(({ stream: _stream, ...p }) => p),
+    [],
+  );
+  const announce = useCallback(
+    () =>
+      signal("meeting-state", {
+        roster: state(),
+        recording: isRecording.current,
+        presenting: !!presentation.current,
+      }),
+    [signal, state],
+  );
+  const replace = useCallback(async () => {
+    const tasks: Promise<void>[] = [];
+    for (const [id, peer] of peers.current) {
+      if (peer.pc.signalingState === "closed") continue;
+      const transceivers = peer.pc.getTransceivers();
+      const put = (index: number, track?: MediaStreamTrack) => {
+        const sender = transceivers[index]?.sender;
+        if (sender && sender.track !== (track || null))
+          tasks.push(sender.replaceTrack(track || null));
+      };
+      put(0, local.current?.getAudioTracks()[0]);
+      put(1, local.current?.getVideoTracks()[0]);
+      if (host) {
+        put(2, presentation.current?.getVideoTracks()[0]);
+        put(3, presentation.current?.getAudioTracks()[0]);
+        for (let slot = 0; slot < MAX_STUDENTS; slot++) {
+          const p = roster.current.find(
+            (p) => p.slot === slot && p.id !== id && p.consent,
+          );
+          put(4 + slot * 2, p?.stream?.getAudioTracks()[0]);
+          put(5 + slot * 2, p?.stream?.getVideoTracks()[0]);
+        }
+      }
+    }
+    const results = await Promise.allSettled(tasks);
+    if (results.some((r) => r.status === "rejected"))
+      setError(
+        "A media track could not be updated. Reconnect if the participant cannot hear or see you.",
+      );
+  }, [host]);
+  const updateMe = useCallback(async () => {
+    roster.current = [me(), ...roster.current.filter((p) => p.id !== userId)];
+    publish();
+    await replace();
+    if (host) await announce();
+    else await signal("media-state", own.current);
+  }, [me, userId, publish, replace, host, announce, signal]);
+  const safe = useCallback((work: () => Promise<unknown>) => {
+    void work().catch((e) => setError(mediaError(e)));
+  }, []);
+  const addCandidates = useCallback(
+    async (id: string, pc: RTCPeerConnection) => {
+      for (const candidate of ice.current.get(id) || []) {
+        try {
+          await pc.addIceCandidate(candidate);
+        } catch {
+          /* Candidate belongs to a closed ICE generation. */
+        }
+      }
+      ice.current.delete(id);
+    },
+    [],
+  );
+  const removePeer = useCallback(
+    (id: string) => {
+      const peer = peers.current.get(id);
+      clearTimeout(peer?.timer);
+      peer?.pc.close();
+      peers.current.delete(id);
+      ice.current.delete(id);
+      roster.current = roster.current.filter((p) => p.id !== id);
+      publish();
+    },
+    [publish],
+  );
+  const wire = useCallback(
+    (id: string, peer: Peer) => {
+      const pc = peer.pc;
+      pc.onicecandidate = (e) => {
+        if (e.candidate)
+          void signal("ice-candidate", {
+            targetId: id,
+            candidate: e.candidate.toJSON(),
+          });
+      };
+      pc.onconnectionstatechange = () => {
+        if (peers.current.get(id)?.pc !== pc) return;
+        clearTimeout(peer.timer);
+        if (pc.connectionState === "connected") {
+          setConnection("connected");
+          roster.current = roster.current.map((p) =>
+            p.id === id ? { ...p, connected: true } : p,
+          );
+          publish();
+        } else if (
+          pc.connectionState === "disconnected" ||
+          pc.connectionState === "failed"
+        ) {
+          setConnection("reconnecting");
+          // A transient disconnection does not destroy the stream. Give ICE time to recover.
+          peer.timer = setTimeout(
+            () => {
+              if (host) {
+                removePeer(id);
+                safe(async () => {
+                  await replace();
+                  await announce();
+                });
+              } else {
+                removePeer(id);
+                void signal("join-request", { ...own.current });
+              }
+            },
+            pc.connectionState === "failed" ? 1500 : 10_000,
+          );
+        }
+      };
+    },
+    [signal, publish, host, removePeer, safe, replace, announce],
+  );
+  const receiveState = useCallback(
+    (list: Roster) => {
+      if (!Array.isArray(list)) return;
+      const receivers = peers.current
+        .get(names.current.hostId)
+        ?.pc.getTransceivers();
+      roster.current = list.map((p) => {
+        const offset = p.id === names.current.hostId ? 0 : 4 + p.slot * 2;
+        const tracks = [
+          receivers?.[offset]?.receiver.track,
+          receivers?.[offset + 1]?.receiver.track,
+        ].filter((t): t is MediaStreamTrack => !!t);
+        return {
+          ...p,
+          stream:
+            p.id === userId
+              ? local.current
+              : tracks.length
+                ? new MediaStream(tracks)
+                : roster.current.find((old) => old.id === p.id)?.stream ||
+                  new MediaStream(),
+        };
+      });
+      publish();
+    },
+    [publish, userId],
+  );
+  const stopScreen = useCallback(async () => {
+    const old = presentation.current;
+    presentation.current = null;
+    setScreen(null);
+    old?.getTracks().forEach((t) => {
+      t.onended = null;
+      t.stop();
+    });
+    await replace();
+    if (host && channel.current) await announce();
+  }, [replace, host, announce]);
+  const shareScreen = useCallback(async () => {
+    if (!host || mediaBusy.current) return;
+    mediaBusy.current = true;
+    setBusy(true);
+    const generation = epoch.current;
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia)
+        throw new Error("Screen sharing is unsupported in this browser.");
+      const next = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 15 },
+        audio: true,
+      });
+      if (generation !== epoch.current) {
+        next.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      const old = presentation.current;
+      presentation.current = next;
+      setScreen(next);
+      next.getVideoTracks()[0].onended = () => safe(stopScreen);
+      await replace();
+      if (channel.current) await announce();
+      old?.getTracks().forEach((t) => {
+        t.onended = null;
+        t.stop();
+      });
+      return true;
+    } catch (e) {
+      setError(mediaError(e));
+      return false;
+    } finally {
+      mediaBusy.current = false;
+      setBusy(deviceBusy.current.size > 0);
+    }
+  }, [host, safe, stopScreen, replace, announce]);
 
+  const acquire = useCallback(
+    async (kind: "audio" | "video", deviceId?: string, enabled = true) => {
+      if (!navigator.mediaDevices?.getUserMedia)
+        throw new Error(
+          "Devices require a supported browser and a secure connection.",
+        );
+      const generation = epoch.current;
+      const stream = await navigator.mediaDevices.getUserMedia(
+        kind === "audio"
+          ? {
+              audio: deviceId
+                ? { deviceId: { exact: deviceId }, echoCancellation: true }
+                : { echoCancellation: true },
+              video: false,
+            }
+          : {
+              audio: false,
+              video: {
+                width: { ideal: 640 },
+                height: { ideal: 360 },
+                frameRate: { ideal: 15, max: 24 },
+                ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+              },
+            },
+      );
+      if (generation !== epoch.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        throw new Error("Meeting has closed.");
+      }
+      const track = stream.getTracks()[0];
+      // Apply privacy state before exposing a replacement to any sender.
+      track.enabled = enabled;
+      const existing = local.current?.getTracks() || [];
+      const old = existing.filter((t) => t.kind === kind);
+      // A new stream identity also reconnects video elements and audio meters
+      // to a changed input; a Web Audio source stays bound to its original track.
+      local.current = new MediaStream([
+        ...existing.filter((t) => t.kind !== kind),
+        track,
+      ]);
+      track.onended = () => {
+        own.current = {
+          ...own.current,
+          ...(kind === "audio" ? { muted: true } : { cameraOff: true }),
+        };
+        setError(
+          `${kind === "audio" ? "Microphone" : "Camera"} disconnected. Select a device to recover.`,
+        );
+        safe(updateMe);
+      };
+      await replace();
+      old.forEach((t) => {
+        t.onended = null;
+        t.stop();
+      });
+      return track;
+    },
+    [replace, safe, updateMe],
+  );
+  const device = useCallback(
+    async (kind: "audio" | "video", deviceId?: string) => {
+      if (deviceBusy.current.has(kind)) return;
+      if (!own.current.consent) {
+        setError(
+          "Enable recording consent before sharing microphone or camera media.",
+        );
+        return;
+      }
+      const ticket = Symbol(kind);
+      deviceBusy.current.set(kind, ticket);
+      setBusy(true);
+      setError("");
+      try {
+        const off =
+          kind === "audio" ? own.current.muted : own.current.cameraOff;
+        let track = local.current
+          ?.getTracks()
+          .find((t) => t.kind === kind && t.readyState === "live");
+        if (!track || deviceId)
+          track = await acquire(kind, deviceId, deviceId ? !off : off);
+        track.enabled = deviceId ? !off : off;
+        own.current = {
+          ...own.current,
+          ...(kind === "audio"
+            ? { muted: !track.enabled }
+            : { cameraOff: !track.enabled }),
+        };
+        await updateMe();
+      } catch (e) {
+        setError(mediaError(e));
+      } finally {
+        if (deviceBusy.current.get(kind) === ticket)
+          deviceBusy.current.delete(kind);
+        setBusy(mediaBusy.current || deviceBusy.current.size > 0);
+      }
+    },
+    [acquire, updateMe],
+  );
+
+  const dispose = useCallback(() => {
+    epoch.current++;
+    starting.current = false;
+    deviceBusy.current.clear();
+    handTimers.current.forEach((timer) => clearTimeout(timer));
+    handTimers.current.clear();
+    recorder.current?.abort();
+    isRecording.current = false;
+    local.current?.getTracks().forEach((t) => {
+      t.onended = null;
+      t.stop();
+    });
+    local.current = null;
+    presentation.current?.getTracks().forEach((t) => {
+      t.onended = null;
+      t.stop();
+    });
+    presentation.current = null;
+    for (const p of peers.current.values()) {
+      clearTimeout(p.timer);
+      p.pc.close();
+    }
+    peers.current.clear();
+    ice.current.clear();
+    if (channel.current)
+      void supabase.removeChannel(channel.current).catch(() => undefined);
+    channel.current = null;
+    roster.current = [];
+  }, []);
+  useEffect(() => () => dispose(), [dispose, room, userId]);
+  const leave = useCallback(async () => {
+    if (channel.current) await signal(host ? "teacher-ended" : "leave");
+    dispose();
+    setActive(false);
+    setScreen(null);
+    setParticipants([]);
+    setHands([]);
+    setRecordingNotice(false);
+    setRecordingState((current) => current === "starting" ? "idle" : current);
+    setConnection("idle");
+  }, [host, signal, dispose]);
+
+  const join = useCallback(
+    async (mode: Mode, consent: boolean, startMuted = false) => {
+      if (starting.current || channel.current) return;
+      starting.current = true;
+      setBusy(true);
+      setError("");
+      setEnded(false);
+      setConnection("connecting");
+      const generation = epoch.current;
+      try {
+        // Capture is requested before any asynchronous auth/signaling work so
+        // the browser still has the user's transient activation.
+        if (mode === "screen" && !(await shareScreen()))
+          throw new Error(
+            "Screen sharing was not started. Retry from the lobby.",
+          );
+        own.current = {
+          muted: true,
+          cameraOff: true,
+          consent: host || consent,
+        };
+        local.current = new MediaStream();
+        if ((host || consent) && mode !== "listen") {
+          const mic = await acquire("audio");
+          mic.enabled = !startMuted;
+          own.current.muted = startMuted;
+          if (mode === "camera") {
+            try {
+              await acquire("video");
+              own.current.cameraOff = false;
+            } catch (e) {
+              setError(
+                `Camera unavailable; joined with audio. ${mediaError(e)}`,
+              );
+            }
+          }
+        }
+        if (generation !== epoch.current) return;
+        roster.current = [me()];
+        publish();
+        const ch = supabase.channel(`live-${room}`, {
+          config: { private: true, broadcast: { self: false } },
+        });
+        channel.current = ch;
+        ch.on("broadcast", { event: "join-request" }, ({ payload }) => {
+          if (!host || payload.fromId === userId) return;
+          const previous = peers.current.get(payload.fromId);
+          if (
+            previous &&
+            !["failed", "disconnected", "closed"].includes(
+              previous.pc.connectionState,
+            )
+          )
+            return;
+          if (previous) removePeer(payload.fromId);
+          safe(async () => {
+            const slot = Array.from({ length: MAX_STUDENTS }, (_, i) => i).find(
+              (i) => !roster.current.some((p) => p.slot === i),
+            );
+            if (slot === undefined) {
+              await signal("meeting-state", {
+                targetId: payload.fromId,
+                full: true,
+              });
+              return;
+            }
+            const id = payload.fromId;
+            const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+            const peer = { pc, slot };
+            peers.current.set(id, peer);
+            const p: Participant = {
+              id,
+              name: payload.userName || "Participant",
+              slot,
+              stream: new MediaStream(),
+              connected: false,
+              consent: payload.consent === true,
+              muted: payload.muted !== false,
+              cameraOff: payload.cameraOff !== false,
+            };
+            roster.current.push(p);
+            publish();
+            wire(id, peer);
+            pc.addTransceiver("audio", { direction: "sendrecv" });
+            pc.addTransceiver("video", { direction: "sendrecv" });
+            pc.addTransceiver("video", { direction: "sendonly" });
+            pc.addTransceiver("audio", { direction: "sendonly" });
+            for (let i = 0; i < MAX_STUDENTS; i++) {
+              pc.addTransceiver("audio", { direction: "sendonly" });
+              pc.addTransceiver("video", { direction: "sendonly" });
+            }
+            pc.ontrack = (e) => {
+              const person = roster.current.find((p) => p.id === id);
+              if (!person) return;
+              const tracks = person
+                .stream!.getTracks()
+                .filter((t) => t.kind !== e.track.kind);
+              person.stream = new MediaStream([...tracks, e.track]);
+              publish();
+              safe(replace);
+            };
+            await replace();
+            await pc.setLocalDescription(await pc.createOffer());
+            await signal("offer", {
+              targetId: id,
+              sdp: pc.localDescription!.toJSON(),
+              roster: state(),
+              recording: isRecording.current,
+              presenting: !!presentation.current,
+            });
+            await announce();
+          });
+        })
+          .on("broadcast", { event: "offer" }, ({ payload }) => {
+            if (
+              host ||
+              payload.targetId !== userId ||
+              payload.fromId !== hostId
+            )
+              return;
+            safe(async () => {
+              removePeer(hostId);
+              receiveState(payload.roster);
+              setRecordingNotice(payload.recording === true);
+              const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+              const peer = { pc, slot: -1 };
+              peers.current.set(hostId, peer);
+              wire(hostId, peer);
+              pc.ontrack = (e) => {
+                const index = Number(e.transceiver.mid);
+                if (index === 2 || index === 3) {
+                  presentation.current ||= new MediaStream();
+                  const tracks = presentation.current
+                    .getTracks()
+                    .filter((t) => t.kind !== e.track.kind);
+                  presentation.current = new MediaStream([...tracks, e.track]);
+                  if (payload.presenting) setScreen(presentation.current);
+                } else {
+                  const person = roster.current.find((p) =>
+                    index < 2
+                      ? p.id === hostId
+                      : p.slot === Math.floor((index - 4) / 2),
+                  );
+                  if (!person || person.id === userId) return;
+                  const tracks =
+                    person.stream
+                      ?.getTracks()
+                      .filter((t) => t.kind !== e.track.kind) || [];
+                  person.stream = new MediaStream([...tracks, e.track]);
+                  publish();
+                }
+              };
+              await pc.setRemoteDescription(payload.sdp);
+              pc.getTransceivers()
+                .slice(0, 2)
+                .forEach((t) => {
+                  t.direction = "sendrecv";
+                });
+              await addCandidates(hostId, pc);
+              await replace();
+              await pc.setLocalDescription(await pc.createAnswer());
+              await signal("answer", {
+                targetId: hostId,
+                sdp: pc.localDescription!.toJSON(),
+              });
+            });
+          })
+          .on("broadcast", { event: "answer" }, ({ payload }) => {
+            if (!host || payload.targetId !== userId) return;
+            safe(async () => {
+              const pc = peers.current.get(payload.fromId)?.pc;
+              if (pc?.signalingState === "have-local-offer") {
+                await pc.setRemoteDescription(payload.sdp);
+                await addCandidates(payload.fromId, pc);
+              }
+            });
+          })
+          .on("broadcast", { event: "ice-candidate" }, ({ payload }) => {
+            if (
+              payload.targetId !== userId ||
+              (!host && payload.fromId !== hostId)
+            )
+              return;
+            const pc = peers.current.get(payload.fromId)?.pc;
+            if (pc?.remoteDescription)
+              safe(async () => {
+                try {
+                  await pc.addIceCandidate(payload.candidate);
+                } catch {
+                  /* Ignore stale generation. */
+                }
+              });
+            else {
+              const list = ice.current.get(payload.fromId) || [];
+              if (list.length < 100) list.push(payload.candidate);
+              ice.current.set(payload.fromId, list);
+            }
+          })
+          .on("broadcast", { event: "media-state" }, ({ payload }) => {
+            if (!host) return;
+            roster.current = roster.current.map((p) =>
+              p.id === payload.fromId
+                ? {
+                    ...p,
+                    muted: payload.muted !== false,
+                    cameraOff: payload.cameraOff !== false,
+                  }
+                : p,
+            );
+            publish();
+            safe(async () => {
+              await replace();
+              await announce();
+            });
+          })
+          .on("broadcast", { event: "meeting-state" }, ({ payload }) => {
+            if (
+              host ||
+              payload.fromId !== hostId ||
+              (payload.targetId && payload.targetId !== userId)
+            )
+              return;
+            if (payload.full) {
+              setError(
+                "This classroom is full (six students). Please try another session.",
+              );
+              return;
+            }
+            receiveState(payload.roster);
+            setRecordingNotice(payload.recording === true);
+            setScreen(payload.presenting ? presentation.current : null);
+          })
+          .on("broadcast", { event: "teacher-live" }, ({ payload }) => {
+            if (!host && payload.fromId === hostId)
+              void signal("join-request", own.current);
+          })
+          .on("broadcast", { event: "teacher-ended" }, ({ payload }) => {
+            if (!host && payload.fromId === hostId) {
+              dispose();
+              setActive(false);
+              setEnded(true);
+              setConnection("ended");
+              setScreen(null);
+              setRecordingNotice(false);
+            }
+          })
+          .on("broadcast", { event: "leave" }, ({ payload }) => {
+            if (host) {
+              removePeer(payload.fromId);
+              safe(async () => {
+                await replace();
+                await announce();
+              });
+            }
+          })
+          .on("broadcast", { event: "chat-message" }, ({ payload }) => {
+            setMessages((previous) =>
+              previous.some((m) => m.id === payload.id)
+                ? previous
+                : [...previous.slice(-199), payload as ChatMessage],
+            );
+          })
+          .on("broadcast", { event: "raise-hand" }, ({ payload }) => {
+            if (generation !== epoch.current) return;
+            const handName = payload.userName || "Participant";
+            clearTimeout(handTimers.current.get(handName));
+            setHands((previous) =>
+              previous.includes(handName) ? previous : [...previous, handName],
+            );
+            const timer = setTimeout(() => {
+              if (handTimers.current.get(handName) !== timer) return;
+              handTimers.current.delete(handName);
+              setHands((previous) =>
+                previous.filter((value) => value !== handName),
+              );
+            }, 10_000);
+            handTimers.current.set(handName, timer);
+          });
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(
+            () =>
+              reject(new Error("Class connection timed out. Retry joining.")),
+            12_000,
+          );
+          ch.subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              clearTimeout(timeout);
+              setConnection(
+                host ||
+                  peers.current.get(hostId)?.pc.connectionState === "connected"
+                  ? "connected"
+                  : "waiting",
+              );
+              if (host) {
+                void signal("teacher-live");
+                void announce();
+              } else void signal("join-request", own.current);
+              resolve();
+            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+              clearTimeout(timeout);
+              setConnection("reconnecting");
+              reject(
+                new Error("Private class connection failed. Retry joining."),
+              );
+            }
+          });
+        });
+        setActive(true);
+      } catch (e) {
+        dispose();
+        setConnection("idle");
+        setError(mediaError(e));
+        throw e;
+      } finally {
+        starting.current = false;
+        setBusy(false);
+      }
+    },
+    [
+      host,
+      userId,
+      room,
+      hostId,
+      acquire,
+      me,
+      publish,
+      safe,
+      signal,
+      wire,
+      replace,
+      state,
+      announce,
+      removePeer,
+      receiveState,
+      addCandidates,
+      dispose,
+      shareScreen,
+    ],
+  );
+
+  useEffect(() => {
+    if (
+      !active ||
+      host ||
+      !["waiting", "reconnecting", "connecting"].includes(connection)
+    )
+      return;
+    // A peer from a reloaded tab can take time to disconnect at the host. Retry
+    // discovery on the existing subscription; host-side deduplication owns offers.
+    const retry = setInterval(() => {
+      void signal("join-request", own.current);
+    }, 4000);
+    return () => clearInterval(retry);
+  }, [active, host, connection, signal]);
+
+  const sendChat = useCallback(
+    (message: string) => {
+      if (message.trim())
+        void signal("chat-message", {
+          id: crypto.randomUUID(),
+          message: message.trim().slice(0, 2000),
+          timestamp: Date.now(),
+        });
+    },
+    [signal],
+  );
+  const startRecording = useCallback(
+    async (classId: string, title: string) => {
+      if (
+        !host ||
+        !active ||
+        isRecording.current ||
+        (recorder.current &&
+          !["completed", "failed", "idle"].includes(recorder.current.state))
+      )
+        return;
+      isRecording.current = true;
+      const generation = epoch.current;
+      setRecordingState("starting");
+      setRecordingNotice(true);
+      const notified = await announce();
+      // Leaving/unmounting while the RPC is pending must never start a recorder.
+      if (generation !== epoch.current) return;
+      if (!notified) {
+        isRecording.current = false;
+        setRecordingNotice(false);
+        setRecordingState("failed");
+        setError(
+          "Recording did not start because participant notice could not be sent. Reconnect and retry.",
+        );
+        return;
+      }
+      const next = new MeetingRecorder(
+        { id: crypto.randomUUID(), userId, classId, title },
+        () => ({ participants: roster.current, screen: presentation.current }),
+        (nextState, seconds, message) => {
+          setRecordingState(nextState);
+          setRecordingDuration(seconds);
+          const recording = [
+            "starting",
+            "recording",
+            "stopping",
+            "processing",
+          ].includes(nextState);
+          if (isRecording.current !== recording) {
+            isRecording.current = recording;
+            setRecordingNotice(recording);
+            void announce();
+          }
+          if (message) setError(message);
+        },
+      );
+      recorder.current = next;
+      try {
+        await next.start();
+      } catch (e) {
+        setError(mediaError(e));
+      }
+    },
+    [host, active, userId, announce],
+  );
+  const stopRecording = useCallback(async () => {
+    if (!recorder.current) return;
+    await recorder.current.stop();
+  }, []);
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (isRecording.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
   return {
-    remoteStream, connected, connecting, ended,
-    chatMessages, joinBroadcast, leaveBroadcast,
-    sendChat, raiseHand,
+    active,
+    connection,
+    ended,
+    participants,
+    screen,
+    messages,
+    hands,
+    error,
+    busy,
+    recordingState,
+    recordingDuration,
+    recordingNotice,
+    join,
+    leave,
+    device,
+    shareScreen,
+    stopScreen,
+    sendChat,
+    startRecording,
+    stopRecording,
+    raiseHand: () => {
+      void signal("raise-hand");
+    },
+    clearError: () => setError(""),
   };
 }

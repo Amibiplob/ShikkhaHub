@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session } from '@supabase/supabase-js';
@@ -26,4 +27,20 @@ describe('session and role synchronization',()=>{
  it('fails closed when the role request rejects',async()=>{
  fake.roles.mockRejectedValue(new Error('offline'));render(<AuthProvider><State /></AuthProvider>);await screen.findByText('guest:');act(()=>fake.listener?.('SIGNED_IN',next('user')));await waitFor(()=>expect(screen.getByText('user:')).toBeInTheDocument());
  });
+});
+
+it('keeps a protected media session mounted during same-user SIGNED_IN revalidation', async () => {
+  const cleanup = vi.fn();
+  function MediaSession() { useEffect(() => cleanup, []); return <p>live media</p>; }
+  function ProtectedMedia() { const auth = useAuth(); return auth.loading ? <p>loading media</p> : auth.user ? <MediaSession /> : null; }
+  render(<AuthProvider><ProtectedMedia /></AuthProvider>);
+  await waitFor(() => expect(fake.listener).toBeTypeOf('function'));
+  await act(async () => fake.listener?.('SIGNED_IN', next('teacher')));
+  await screen.findByText('live media');
+  let resolve: (value: unknown) => void;
+  fake.roles.mockReturnValue(new Promise(r => resolve = r));
+  await act(async () => fake.listener?.('SIGNED_IN', next('teacher')));
+  expect(cleanup).not.toHaveBeenCalled();
+  expect(screen.getByText('live media')).toBeInTheDocument();
+  await act(async () => resolve({ data: [{ role: 'teacher' }] }));
 });
