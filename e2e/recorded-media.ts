@@ -94,7 +94,7 @@ export function inspectMedia(file: string) {
   const probe = JSON.parse(
     execFileSync(
       "ffprobe",
-      ["-v", "error", "-show_streams", "-show_format", "-of", "json", file],
+      ["-v", "error", "-count_frames", "-show_streams", "-show_format", "-of", "json", file],
       { encoding: "utf8" },
     ),
   );
@@ -184,7 +184,8 @@ export function inspectMedia(file: string) {
     audioWindows,
     peakAmplitude,
     audioRms: Math.sqrt(samples.reduce((sum, sample) => sum + sample * sample, 0) / Math.max(samples.length, 1)),
-    videoFrames: frames.length / (160 * 90 * 3),
+    videoFrames: Number(probe.streams.find((s: Record<string, unknown>) => s.codec_type === "video")?.nb_read_frames || 0),
+    sampledVideoFrames: frames.length / (160 * 90 * 3),
     audioPacketMaxGap,
     clippedSamples,
     streams: probe.streams.map((s: Record<string, unknown>) => ({

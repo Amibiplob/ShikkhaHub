@@ -9,6 +9,7 @@ import { join } from "node:path";
 export async function nativeChrome(
   headless: boolean,
   fakeDevices = true,
+  allowAutoplay = true,
 ): Promise<{ context: BrowserContext; close: () => Promise<void> }> {
   const directory = await mkdtemp(join(tmpdir(), "shikkha-native-chrome-"));
   const child = spawn(
@@ -20,7 +21,6 @@ export async function nativeChrome(
       "--no-default-browser-check",
       "--no-sandbox",
       "--disable-dev-shm-usage",
-      "--autoplay-policy=no-user-gesture-required",
       ...(fakeDevices
         ? [
             "--use-fake-device-for-media-stream",
@@ -28,6 +28,7 @@ export async function nativeChrome(
           ]
         : []),
       ...(headless ? ["--headless=new"] : []),
+      ...(allowAutoplay ? ["--autoplay-policy=no-user-gesture-required"] : []),
       "about:blank",
     ],
     { stdio: ["ignore", "ignore", "pipe"] },

@@ -1,3 +1,4 @@
+import { createRecordingEncoder, encoderDeadline, verifyRecordingVideo } from "./recording-encoder";
 import {
   saveChunk,
   saveDraft,
@@ -38,6 +39,8 @@ export class MeetingRecorder {
   private output?: MediaStream;
   private timer?: ReturnType<typeof setInterval>;
   private started = 0;
+  private stopped = 0;
+  private silence?: ConstantSourceNode;
   private bytes = 0;
   private index = 0;
   private pending = Promise.resolve();
@@ -49,6 +52,9 @@ export class MeetingRecorder {
   private failure?: Error;
   private cancelled = false;
   private mix?: DynamicsCompressorNode;
+  private rejectStartup?: (error: Error) => void;
+  private stopTimer?: ReturnType<typeof setTimeout>;
+  private finalizing = false;
 
   constructor(
     draft: Pick<RecordingDraft, "id" | "userId" | "classId" | "title">,
@@ -72,7 +78,7 @@ export class MeetingRecorder {
     const previousDuration = this.draft.duration;
     this.state = state;
     this.draft.duration = this.started
-      ? Math.floor((Date.now() - this.started) / 1000)
+      ? Math.floor(((this.stopped || Date.now()) - this.started) / 1000)
       : 0;
     if (
       previousState !== state ||
@@ -93,12 +99,7 @@ export class MeetingRecorder {
         throw new Error(
           "Meeting recording is unsupported in this browser. Use desktop Chrome.",
         );
-      this.draft.mime =
-        ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"].find((m) =>
-          MediaRecorder.isTypeSupported(m),
-        ) || "";
-      if (!this.draft.mime) throw new Error("No supported recording format.");
-      await saveDraft(this.draft);
+      await encoderDeadline(saveDraft(this.draft), "Local recording storage");
       if (this.cancelled) throw new Error("Recording cancelled.");
       this.canvas = document.createElement("canvas");
       this.canvas.width = 1280;
@@ -109,18 +110,42 @@ export class MeetingRecorder {
       this.mix.threshold.value = -8;
       this.mix.ratio.value = 12;
       this.mix.connect(this.destination);
-      await this.context.resume();
+      // A real zero-valued source keeps the output graph valid with no devices.
+      this.silence = this.context.createConstantSource();
+      this.silence.offset.value = 0;
+      this.silence.connect(this.mix);
+      this.silence.start();
+      await encoderDeadline(this.context.resume(), "Recording audio startup");
+      if (this.context.state !== "running")
+        throw new Error(`Recording audio initialization failed: AudioContext is ${this.context.state}. Keep the classroom visible and retry.`);
       if (this.cancelled) throw new Error("Recording cancelled.");
-      this.update();
       this.output = new MediaStream([
         ...this.canvas.captureStream(15).getVideoTracks(),
         ...this.destination.stream.getAudioTracks(),
       ]);
-      this.recorder = new MediaRecorder(this.output, {
-        mimeType: this.draft.mime,
-        videoBitsPerSecond: 1_500_000,
-        audioBitsPerSecond: 96_000,
-      });
+      // Capture must exist before drawing, and frames must continue while the
+      // encoder is starting. Waiting for onstart before drawing deadlocks Chrome.
+      this.update();
+      this.timer = setInterval(() => {
+        try {
+          this.update();
+          if (this.state !== "recording") return;
+          if (this.output!.getTracks().some(t => t.readyState !== "live"))
+            throw new Error("Recording media ended unexpectedly. Saved chunks remain on this device.");
+          if (Date.now() - this.started > 30 * 60 * 1000)
+            void this.stop().catch(() => undefined);
+          else this.transition("recording");
+        } catch (error) {
+          this.fail(error);
+        }
+      }, 1000 / 15);
+      document.addEventListener("visibilitychange", this.visibility);
+      await verifyRecordingVideo(new MediaStream(this.output.getVideoTracks()));
+      if (this.cancelled || this.failure) throw this.failure || new Error("Recording cancelled.");
+      this.recorder = createRecordingEncoder(this.output);
+      this.draft.mime = this.recorder.mimeType;
+      await encoderDeadline(saveDraft(this.draft), "Local recording storage");
+      if (this.cancelled || this.failure) throw this.failure || new Error("Recording cancelled.");
       this.completion = new Promise<Blob>((resolve, reject) => {
         this.resolve = resolve;
         this.reject = reject;
@@ -133,7 +158,7 @@ export class MeetingRecorder {
         const index = this.index++;
         this.pending = this.pending
           .then(async () => {
-            await saveChunk(this.draft.id, index, data);
+            await encoderDeadline(saveChunk(this.draft.id, index, data), "Recording chunk storage");
           })
           .catch((error) => {
             this.fail(error);
@@ -141,53 +166,78 @@ export class MeetingRecorder {
         if (this.bytes >= RECORDING_LIMIT_BYTES)
           void this.stop().catch(() => undefined);
       };
-      this.recorder.onerror = () =>
+      this.recorder.onerror = (event) =>
         this.fail(
           new Error(
-            "The browser interrupted recording. Saved chunks remain available for recovery.",
+            `The browser interrupted recording. Encoder failure${"error" in event && event.error instanceof DOMException ? ` (${event.error.name}: ${event.error.message})` : ""}. Saved chunks remain available for recovery.`,
           ),
         );
       this.recorder.onstop = () => {
+        if (["starting", "recording"].includes(this.state) && !this.failure)
+          this.fail(new Error("Recording encoder stopped unexpectedly. Saved chunks remain on this device."));
         void this.finalize();
       };
-      this.recorder.start(1000);
+      await encoderDeadline(new Promise<void>((resolve, reject) => {
+        this.rejectStartup = reject;
+        this.recorder!.onstart = () => {
+          if (this.cancelled || this.failure || this.recorder!.state !== "recording" ||
+            this.context!.state !== "running" || this.output!.getTracks().some(t => t.readyState !== "live")) {
+            reject(this.failure || new Error("Recording encoder did not enter an active state."));
+          } else resolve();
+        };
+        this.recorder!.start(1000);
+      }), "Recording encoder startup");
+      this.rejectStartup = undefined;
+      if (this.cancelled || this.failure) throw this.failure || new Error("Recording cancelled.");
       this.started = Date.now();
       this.transition("recording");
-      this.timer = setInterval(() => {
-        try {
-          this.update();
-          if (Date.now() - this.started > 30 * 60 * 1000)
-            void this.stop().catch(() => undefined);
-          else if (this.state === "recording") this.transition("recording");
-        } catch (error) {
-          this.fail(error);
-        }
-      }, 1000 / 15);
-      document.addEventListener("visibilitychange", this.visibility);
     } catch (error) {
-      this.cleanup();
-      this.transition(
-        "failed",
-        error instanceof Error ? error.message : "Could not start recording",
-      );
-      throw error;
+      this.fail(error instanceof DOMException
+        ? new Error(`Recording media initialization failed (${error.name}): ${error.message}`)
+        : error);
+      if (this.completion) await this.completion.catch(() => undefined);
+      else this.cleanup();
+      throw this.failure;
     }
   }
   private visibility = () => {
     // Background video may freeze; audio and stable output tracks are retained.
     if (!document.hidden && this.state === "recording") {
-      void this.context?.resume().catch((error) => this.fail(error));
+      if (this.context) void encoderDeadline(this.context.resume(), "Recording audio recovery").catch((error) => this.fail(error));
       try {
         this.update();
+        this.transition("recording");
       } catch (error) {
         this.fail(error);
       }
     }
   };
   private fail(error: unknown) {
-    this.failure =
+    this.failure ||=
       error instanceof Error ? error : new Error("Recording failed");
-    if (this.recorder?.state !== "inactive") this.recorder?.stop();
+    this.rejectStartup?.(this.failure);
+    this.rejectStartup = undefined;
+    this.stopped ||= Date.now();
+    if (this.state !== "failed") this.transition("failed", this.failure.message);
+    if (this.recorder && this.completion) this.requestStop();
+    else this.cleanup();
+  }
+  private requestStop() {
+    if (this.recorder && this.recorder.state !== "inactive") {
+      try { this.recorder.stop(); }
+      catch (error) {
+        this.failure ||= error instanceof Error ? error : new Error("Recording encoder could not stop.");
+        void this.finalize();
+        return;
+      }
+    }
+    // Stop/error must settle even if a broken encoder never delivers onstop.
+    if (!this.stopTimer && !this.finalizing) {
+      this.stopTimer = setTimeout(() => {
+        this.failure ||= new Error("Recording encoder finalization timed out. Saved chunks remain on this device.");
+        void this.finalize();
+      }, 10_000);
+    }
   }
   private update() {
     if (!this.canvas || !this.context || !this.destination) return;
@@ -305,43 +355,57 @@ export class MeetingRecorder {
   }
   abort() {
     this.cancelled = true;
+    if (this.state === "starting") this.fail(new Error("Recording cancelled."));
     if (this.state === "recording") void this.stop().catch(() => undefined);
   }
   stop(): Promise<Blob> {
     if (this.state === "recording") {
+      this.stopped = Date.now();
       this.transition("stopping");
-      this.recorder?.stop();
+      this.requestStop();
     }
     return (
       this.completion || Promise.reject(new Error("No recording is available"))
     );
   }
   private async finalize() {
-    this.transition("processing");
+    if (this.finalizing) return;
+    this.finalizing = true;
+    clearTimeout(this.stopTimer);
+    this.stopped ||= Date.now();
+    if (!this.failure) this.transition("processing");
     this.cleanup();
     await this.pending;
     try {
-      this.draft.duration = Math.floor((Date.now() - this.started) / 1000);
-      this.draft.complete = !this.failure;
-      await saveDraft(this.draft);
+      this.draft.duration = this.started ? Math.floor((this.stopped - this.started) / 1000) : 0;
       if (this.failure) throw this.failure;
-      const blob = await recordingBlob(this.draft);
+      const blob = await encoderDeadline(recordingBlob(this.draft), "Recording draft recovery");
       if (blob.size < 100)
         throw new Error("Recording contains no playable media");
+      await verifyRecordingVideo(blob);
+      this.draft.complete = true;
+      await encoderDeadline(saveDraft(this.draft), "Recording draft finalization");
       this.transition("completed");
       this.resolve?.(blob);
     } catch (error) {
+      this.draft.complete = false;
+      await encoderDeadline(saveDraft(this.draft), "Recording recovery metadata").catch(() => undefined);
       const failure =
         error instanceof Error
           ? error
           : new Error("Recording could not be finalized");
-      this.transition("failed", failure.message);
+      this.failure ||= failure;
+      if (this.state !== "failed") this.transition("failed", this.failure.message);
       this.reject?.(failure);
     }
   }
   private cleanup() {
     clearInterval(this.timer);
+    clearTimeout(this.stopTimer);
     document.removeEventListener("visibilitychange", this.visibility);
+    this.silence?.stop();
+    this.silence?.disconnect();
+    this.silence = undefined;
     this.output?.getTracks().forEach((t) => t.stop());
     this.audios.forEach((n) => n.disconnect());
     this.audios.clear();
