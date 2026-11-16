@@ -37,6 +37,8 @@ describe("course completion", () => {
     mount();
     expect(await screen.findByRole("link", { name: "Pass quiz: Required quiz" })).toHaveAttribute("href", "#course-quizzes");
     expect(screen.getByRole("link", { name: "Awaiting teacher grading: Project" })).toHaveAttribute("href", "/assignments/a");
+    expect(screen.getByRole("link", { name: "Complete Requirements" })).toHaveAttribute("href", "#lesson-content");
+    expect(screen.queryByRole("button", { name: "Finish Course" })).not.toBeInTheDocument();
     expect(screen.getByText("1 / 2 lessons completed")).toBeVisible();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
     expect(screen.getByRole("link", { name: /Add your full name/ })).toHaveAttribute("href", "/profile");
@@ -50,7 +52,7 @@ describe("course completion", () => {
   });
   it("keeps a rejected finish incomplete and refreshes server guidance", async () => {
     mocks.rpc.mockResolvedValue({ data: null, error: { message: "Incomplete course" } });
-    mount();
+    mount(2, 2);
     await waitFor(() => expect(screen.getByRole("button", { name: "Finish Course" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "Finish Course" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Course completion was not verified");
@@ -61,8 +63,8 @@ describe("course completion", () => {
   it("requires a validated response and prevents concurrent finish requests", async () => {
     let resolve!: (result: unknown) => void;
     mocks.rpc.mockImplementation(() => new Promise(r => { resolve = r; }));
-    mount();
-    const finish = screen.getByRole("button", { name: "Finish Course" });
+    mount(2, 2);
+    const finish = await screen.findByRole("button", { name: "Finish Course" });
     await waitFor(() => expect(finish).toBeEnabled());
     fireEvent.click(finish);
     fireEvent.click(finish);
@@ -100,6 +102,6 @@ describe("course completion", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not load requirements");
     fireEvent.click(screen.getByRole("button", { name: "Refresh requirements" }));
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Finish Course" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Check eligibility" })).toBeEnabled();
   });
 });

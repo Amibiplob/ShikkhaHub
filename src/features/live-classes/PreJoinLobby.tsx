@@ -6,9 +6,11 @@ import MediaTile from "./MediaTile";
 import DeviceSettings from "./DeviceSettings";
 import type { Participant, MediaKind } from "./useWebRTCBroadcast";
 
-export default function PreJoinLobby({ title, participant, host, consent, setConsent, joining,
+export default function PreJoinLobby({ title, courseId, teacherName, participant, host, consent, setConsent, joining,
   devices, known, missing, refresh, errors, onDevice, onJoin }: {
   title: string;
+  courseId?: string;
+  teacherName?: string;
   participant: Participant;
   host: boolean;
   consent: boolean;
@@ -48,6 +50,8 @@ export default function PreJoinLobby({ title, participant, host, consent, setCon
       <div>
         <p className="text-sm text-muted-foreground">{l("Ready to join?", "যোগ দিতে প্রস্তুত?")}</p>
         <h2 className="mt-1 break-words text-2xl font-semibold tracking-tight">{title}</h2>
+        {teacherName && <p className="mt-2 text-sm text-muted-foreground">{l("Teacher", "শিক্ষক")}: {teacherName}</p>}
+        <p className="mt-2 text-sm">{l("Joining as", "যোগ দিচ্ছেন")}: <strong>{participant.name}</strong></p>
       </div>
       <p role="status" className="text-sm leading-relaxed text-muted-foreground">
         {noMic && noCamera ? l("No camera or microphone detected. You can join without them.", "ক্যামেরা বা মাইক্রোফোন পাওয়া যায়নি। এগুলো ছাড়াই ক্লাসে যোগ দিতে পারেন।")
@@ -70,7 +74,7 @@ export default function PreJoinLobby({ title, participant, host, consent, setCon
           {joining && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {joining ? l("Joining…", "যোগ হচ্ছে…") : l("Join Class", "ক্লাসে যোগ দিন")}
         </Button>
-        <Button asChild variant="ghost" className="rounded-full"><Link to="/dashboard">
+        <Button asChild variant="ghost" className="rounded-full"><Link to={courseId ? `/courses/${courseId}` : "/dashboard"}>
           <ArrowLeft className="mr-2 h-4 w-4" />{l("Back", "ফিরুন")}
         </Link></Button>
       </div>

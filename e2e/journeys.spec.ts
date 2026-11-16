@@ -86,6 +86,7 @@ test("student enrolls, reads Markdown, persists progress, quiz and bookmarks, di
   await expect(
     page.getByRole("heading", { name: "Browser Test Course" }),
   ).toBeVisible();
+  await page.getByText("Categories · All", { exact: true }).click();
   await page.getByRole("button", { name: "Programming", exact: true }).click();
   await expect(page).toHaveURL(/category=Programming/);
   await login(page, backend, "student");

@@ -3,7 +3,7 @@ import { Download, Upload, Trash2, Film } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadRecording } from "./recording-upload";
 import { useLanguage } from "@/hooks/useLanguage";
 import {
   deleteDraft,
@@ -23,6 +23,7 @@ export default function RecordingPanel({
 }) {
   const [drafts, setDrafts] = useState<RecordingDraft[]>([]);
   const [busy, setBusy] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
   const lock = useRef(false);
   const { lang } = useLanguage();
   const l = (en: string, bn: string) => (lang === "bn" ? bn : en);
@@ -57,50 +58,16 @@ export default function RecordingPanel({
     if (lock.current) return;
     lock.current = true;
     setBusy(draft.id);
+    setUploadStatus(l("Uploading your local recording…", "স্থানীয় রেকর্ডিং আপলোড হচ্ছে…"));
     try {
-      const file = `${classId}/${draft.id}.${draft.mime.includes("mp4") ? "mp4" : "webm"}`;
-      const { data: existing, error: lookupError } = await supabase
-        .from("class_recordings")
-        .select("id")
-        .eq("id", draft.id)
-        .maybeSingle();
-      if (lookupError) throw lookupError;
-      if (!existing) {
-        const blob = await recordingBlob(draft);
-        if (!blob.size) throw new Error("No saved recording chunks.");
-        const { error: uploadError } = await supabase.storage
-          .from("class-recordings")
-          .upload(file, blob, {
-            contentType: draft.mime.split(";")[0],
-            upsert: false,
-          });
-        if (
-          uploadError &&
-          !["409", "Duplicate"].includes(
-            String(
-              (uploadError as { statusCode?: string }).statusCode ||
-                uploadError.name,
-            ),
-          )
-        )
-          throw uploadError;
-        const { error } = await supabase
-          .from("class_recordings")
-          .insert({
-            id: draft.id,
-            teacher_id: userId,
-            live_class_id: classId,
-            file_url: file,
-            file_size: blob.size,
-            duration_seconds: draft.duration,
-            title: draft.title,
-          });
-        if (error && error.code !== "23505") throw error;
-      }
-      await deleteDraft(draft.id);
+      const result = await uploadRecording(draft, userId, classId);
+      setUploadStatus(result.localCopyRetained
+        ? l("Saved to private cloud storage. A local copy remains on this device.", "ক্লাউডে ব্যক্তিগতভাবে সংরক্ষিত। একটি স্থানীয় কপি এই ডিভাইসে রয়েছে।")
+        : l("Saved to private cloud storage.", "ক্লাউডে ব্যক্তিগতভাবে সংরক্ষিত।"));
       await refresh();
       toast.success("Recording saved privately.");
     } catch {
+      setUploadStatus(l("Upload failed. The recording remains saved on this device.", "আপলোড ব্যর্থ। রেকর্ডিং এই ডিভাইসে সংরক্ষিত আছে।"));
       toast.error(
         "Upload failed. Your local recording is retained. Retry or download it.",
       );
@@ -123,6 +90,7 @@ export default function RecordingPanel({
           {l("Saved recording history", "সংরক্ষিত রেকর্ডিং")}
         </Link>
       </Button>
+      {uploadStatus && <p role="status" className="rounded-lg bg-muted p-3 text-sm">{uploadStatus}</p>}
       {drafts
         .filter(
           (d) =>
@@ -134,12 +102,13 @@ export default function RecordingPanel({
             <p className="mt-1 text-xs text-muted-foreground">
               {new Date(draft.createdAt).toLocaleString()} · {draft.duration}s ·{" "}
               {draft.complete
-                ? l("Ready to save", "সংরক্ষণের জন্য প্রস্তুত")
+                ? l("Saved on this device · Upload pending", "এই ডিভাইসে সংরক্ষিত · আপলোড বাকি")
                 : l(
                     "Interrupted — playback may be incomplete",
                     "বাধাগ্রস্ত — সম্পূর্ণ নাও চলতে পারে",
                   )}
             </p>
+            {draft.captureInterrupted && <p role="status" className="mt-2 text-xs text-amber-700 dark:text-amber-300">{l("Capture was interrupted or delayed. Review playback before relying on this recording.", "ক্যাপচারে বাধা বা বিলম্ব হয়েছে। ব্যবহারের আগে রেকর্ডিং দেখে নিন।")}</p>}
             <div className="mt-3 flex flex-wrap gap-2">
               {draft.complete && (
                 <Button

@@ -53,7 +53,7 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex flex-1 items-center justify-center px-4 py-12">
+      <main id="main-content" tabIndex={-1} className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-primary">

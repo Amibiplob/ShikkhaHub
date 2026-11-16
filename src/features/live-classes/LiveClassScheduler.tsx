@@ -1,3 +1,4 @@
+import type { LiveSession } from "@/types/models";
 import { useState } from "react";
 import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,23 +6,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Loader2, Plus, Video } from "lucide-react";
 import { toast } from "sonner";
 
 interface LiveClassSchedulerProps {
   courses: { id: string; title: string }[];
-  onCreated?: (liveClass) => void;
+  onCreated?: (liveClass: LiveSession) => void;
 }
 
-const LiveClassScheduler = ({ courses, onCreated }: LiveClassSchedulerProps) => {
+const LiveClassScheduler = ({
+  courses,
+  onCreated,
+}: LiveClassSchedulerProps) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [courseId, setCourseId] = useState("");
+  const [courseId, setCourseId] = useState(
+    courses.length === 1 ? courses[0].id : "",
+  );
   const [scheduledAt, setScheduledAt] = useState("");
   const [duration, setDuration] = useState("60");
 
@@ -72,7 +90,7 @@ const LiveClassScheduler = ({ courses, onCreated }: LiveClassSchedulerProps) => 
       setOpen(false);
       setTitle("");
       setDescription("");
-      setCourseId("");
+      setCourseId(courses.length === 1 ? courses[0].id : "");
       setScheduledAt("");
       setDuration("60");
     }
@@ -93,34 +111,64 @@ const LiveClassScheduler = ({ courses, onCreated }: LiveClassSchedulerProps) => 
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <Label htmlFor="liveclassscheduler-select-4">Course</Label>
-            <Select value={courseId} onValueChange={setCourseId} required>
-              <SelectTrigger id="liveclassscheduler-select-4"><SelectValue placeholder="Select course" /></SelectTrigger>
-              <SelectContent>
-                {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {courses.length > 1 && (
+            <div>
+              <Label htmlFor="liveclassscheduler-select-4">Course</Label>
+              <Select value={courseId} onValueChange={setCourseId} required>
+                <SelectTrigger id="liveclassscheduler-select-4">
+                  <SelectValue placeholder="Select course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label htmlFor="liveclassscheduler-field-1">Title</Label>
-            <Input id="liveclassscheduler-field-1" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Week 3: React Hooks Deep Dive" required />
+            <Input
+              id="liveclassscheduler-field-1"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Week 3: React Hooks Deep Dive"
+              required
+            />
           </div>
           <div>
-            <Label htmlFor="liveclassscheduler-field-2">Description (optional)</Label>
-            <Textarea id="liveclassscheduler-field-2" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="What will be covered..." />
+            <Label htmlFor="liveclassscheduler-field-2">
+              Description (optional)
+            </Label>
+            <Textarea
+              id="liveclassscheduler-field-2"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="What will be covered..."
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="liveclassscheduler-field-3">Date & Time</Label>
-              <Input id="liveclassscheduler-field-3" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} required />
+              <Input
+                id="liveclassscheduler-field-3"
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                required
+              />
             </div>
             <div>
-              <Label htmlFor="liveclassscheduler-select-5">Duration (min)</Label>
+              <Label htmlFor="liveclassscheduler-select-5">
+                Duration (min)
+              </Label>
               <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger id="liveclassscheduler-select-5"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="liveclassscheduler-select-5">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="30">30 min</SelectItem>
                   <SelectItem value="45">45 min</SelectItem>
@@ -131,8 +179,13 @@ const LiveClassScheduler = ({ courses, onCreated }: LiveClassSchedulerProps) => 
               </Select>
             </div>
           </div>
-          <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={creating || !courseId}>
-            {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Schedule Class
+          <Button
+            type="submit"
+            className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90"
+            disabled={creating || !courseId}
+          >
+            {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{" "}
+            Schedule Class
           </Button>
         </form>
       </DialogContent>

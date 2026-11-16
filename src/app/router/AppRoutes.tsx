@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/features/auth/ProtectedRoute";
 import ScrollToHash from "@/components/shared/ScrollToHash";
 import Index from "@/pages/Index";
+const About = lazy(() => import("@/pages/About"));
 const Tutors = lazy(() => import("@/pages/Tutors"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const Faq = lazy(() => import("@/pages/Faq"));
@@ -40,6 +41,7 @@ export default function AppRoutes() {
       >
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/about" element={<About />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/faq" element={<Faq />} />

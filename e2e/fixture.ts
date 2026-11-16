@@ -640,9 +640,9 @@ export async function login(page: Page, backend: Backend, role: Role) {
   await page.getByLabel("Email", { exact: true }).fill(users[role].email);
   await page.getByLabel("Password", { exact: true }).fill(backend.password);
   await page.getByRole("button", { name: "Sign In", exact: true }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(role === "admin" ? /\/admin$/ : /\/dashboard/);
   await expect(
-    page.getByRole("heading", { name: `Welcome back, Test ${role}!` }),
+    page.getByRole("heading", { name: role === "admin" ? "Admin Panel" : `Welcome back, Test ${role}!` }),
   ).toBeVisible();
 }
 export { expect };

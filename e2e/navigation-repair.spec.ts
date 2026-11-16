@@ -23,7 +23,8 @@ for (const width of [320, 375, 425, 768]) {
       await expect(menu.getByRole("link", { name: "Private Tutoring", exact: true })).toBeVisible();
       await expect(menu.getByRole("link", { name: "Admin", exact: true })).toHaveCount(role === "admin" ? 1 : 0);
       await expect(menu.getByRole("link", { name: "Analytics", exact: true })).toHaveCount(role === "teacher" ? 1 : 0);
-      await expect(menu.getByRole("link", { name: "Dashboard", exact: true })).toHaveCount(role ? 1 : 0);
+      await expect(menu.getByRole("link", { name: "Dashboard", exact: true })).toHaveCount(role === "student" ? 1 : 0);
+      await expect(menu.getByRole("link", { name: "Teaching workspace", exact: true })).toHaveCount(role === "teacher" ? 1 : 0);
       await expect(menu.getByRole("link", { name: "Certificates & Badges", exact: true })).toHaveCount(role ? 1 : 0);
       await expect(menu.getByRole("link", { name: "Teach on ShikkhaHub", exact: true })).toHaveCount(!role || role === "student" ? 1 : 0);
       expect(await menu.evaluate(el => {

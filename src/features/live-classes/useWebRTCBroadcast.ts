@@ -72,6 +72,8 @@ export function useClassroomMedia(
   const [deviceErrors, setDeviceErrors] = useState<Partial<Record<MediaKind, string>>>({});
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [recordingWarning, setRecordingWarning] = useState(false);
+  const signalFailure = useRef("");
   const [recordingNotice, setRecordingNotice] = useState(false);
   const channel = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const peers = useRef(new Map<string, Peer>());
@@ -99,10 +101,13 @@ export function useClassroomMedia(
           room,
           signal_event: event,
           signal_payload: payload as Json,
-        });
+        }).abortSignal(AbortSignal.timeout(10_000));
         if (error) throw error;
         return true;
-      } catch {
+      } catch (failure) {
+        signalFailure.current = (failure as { message?: string })?.message === "Invalid signal event"
+          ? "Recording backend needs an update. Ask the administrator to check migration 202610280001."
+          : "Check your connection and course access, then retry.";
         setError("Live connection failed. Check your access and retry.");
         return false;
       }
@@ -840,6 +845,9 @@ export function useClassroomMedia(
         return;
       isRecording.current = true;
       const generation = epoch.current;
+      setRecordingWarning(false);
+      setRecordingDuration(0);
+      setError("");
       setRecordingState("starting");
       setRecordingNotice(true);
       const notified = await announce();
@@ -850,7 +858,7 @@ export function useClassroomMedia(
         setRecordingNotice(false);
         setRecordingState("failed");
         setError(
-          "Recording did not start because participant notice could not be sent. Reconnect and retry.",
+          `Recording did not start because participant notice could not be sent. ${signalFailure.current}`,
         );
         return;
       }
@@ -873,6 +881,7 @@ export function useClassroomMedia(
           }
           if (message) setError(message);
         },
+        () => setRecordingWarning(true),
       );
       recorder.current = next;
       try {
@@ -913,6 +922,7 @@ export function useClassroomMedia(
     recordingState,
     recordingDuration,
     recordingNotice,
+    recordingWarning,
     join,
     leave,
     device,

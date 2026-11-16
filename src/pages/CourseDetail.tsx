@@ -1,34 +1,44 @@
+import { nextLearningLesson } from "@/features/learning/lesson-navigation";
 import LessonBookmark from "@/features/courses/components/LessonBookmark";
 import CourseSettings from "@/features/courses/components/CourseSettings";
 import PrivateVideo from "@/components/shared/PrivateVideo";
 import type {
-Course,
-Module,
-Lesson,
-LiveSession,
-Assignment,
-Recording
+  Course,
+  Module,
+  Lesson,
+  LiveSession,
+  Assignment,
+  Recording,
 } from "@/types/models";
-import ReactMarkdown from "react-markdown";
+const LessonArticle = lazy(() => import("@/features/learning/LessonArticle"));
 import { privateFileUrl } from "@/lib/storage";
 import PrivateFileLink from "@/components/shared/PrivateFileLink";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { checkAndAwardBadges } from "@/hooks/useBadgeChecker";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useSearchParams,
+  Link,
+} from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/useAuth";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CourseReviews from "@/features/courses/components/CourseReviews";
 import CertificateCard from "@/features/certificates/CertificateCard";
-import CourseContentEditor from "@/features/courses/components/CourseContentEditor";
+const CourseContentEditor = lazy(
+  () => import("@/features/courses/components/CourseContentEditor"),
+);
 import CourseDiscussions from "@/features/courses/components/CourseDiscussions";
 import StudentProgressTracker from "@/features/learning/StudentProgressTracker";
 import QuizManager from "@/features/assessments/QuizManager";
 import BookmarkButton from "@/features/courses/components/BookmarkButton";
 import CoursePrerequisites from "@/features/courses/components/CoursePrerequisites";
 import CourseAssistant from "@/features/courses/components/CourseAssistant";
+import LiveSessionCard from "@/features/live-classes/LiveSessionCard";
+import LiveClassScheduler from "@/features/live-classes/LiveClassScheduler";
 import LiveClassModal from "@/features/live-classes/LiveClassModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,32 +46,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-Accordion,
-AccordionContent,
-AccordionItem,
-AccordionTrigger,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-Dialog,
-DialogContent,
-DialogHeader,
-DialogTitle,
-DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-BookOpen,
-CheckCircle2,
-ClipboardList,
-Eye,
-EyeOff,
-FileText,
-Loader2,
-PlayCircle,
-Plus,
-Video,
-Download,
-Film,
-Calendar
+  BookOpen,
+  CheckCircle2,
+  ClipboardList,
+  Eye,
+  EyeOff,
+  FileText,
+  Loader2,
+  PlayCircle,
+  Plus,
+  Video,
+  Download,
+  Film,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -71,18 +80,32 @@ const CourseDetailContent = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedLesson = searchParams.get("lesson");
+  const requestedLessonRef = useRef(requestedLesson);
+  useEffect(() => {
+    requestedLessonRef.current = requestedLesson;
+  }, [requestedLesson]);
   const [course, setCourse] = useState<Course>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [enrolled, setEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [revision, setRevision] = useState(0);
   const [completionRevision, setCompletionRevision] = useState(0);
   const [enrolling, setEnrolling] = useState(false);
   const [savingProgress, setSavingProgress] = useState(false);
   const progressLocked = useRef(false);
-  const [video, setVideo] = useState<{ path: string; url: string } | null>(null);
-  const [activeLesson, setActiveLesson] = useState<Lesson>(null);
-  const videoUrl = video && video.path === activeLesson?.video_url ? video.url : null;
+  const [video, setVideo] = useState<{ path: string; url: string } | null>(
+    null,
+  );
+  const [resumeLesson, setActiveLesson] = useState<Lesson>(null);
+  const activeLesson =
+    modules
+      .flatMap((m) => m.lessons || [])
+      .find((l) => l.id === requestedLesson) || resumeLesson;
+  const videoUrl =
+    video && video.path === activeLesson?.video_url ? video.url : null;
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [liveClasses, setLiveClasses] = useState<LiveSession[]>([]);
@@ -97,13 +120,6 @@ const CourseDetailContent = () => {
   const [assignDesc, setAssignDesc] = useState("");
   const [assignDue, setAssignDue] = useState("");
   const [assignMarks, setAssignMarks] = useState("100");
-  // Schedule live class state
-  const [createLiveOpen, setCreateLiveOpen] = useState(false);
-  const [creatingLive, setCreatingLive] = useState(false);
-  const [liveTitle, setLiveTitle] = useState("");
-  const [liveDesc, setLiveDesc] = useState("");
-  const [liveScheduledAt, setLiveScheduledAt] = useState("");
-  const [liveDuration, setLiveDuration] = useState("60");
 
   useEffect(() => {
     if (!id) return;
@@ -139,6 +155,9 @@ const CourseDetailContent = () => {
             .order("created_at", { ascending: false }),
         ]);
       if (!active) return;
+      for (const result of [courseRes, modulesRes, assignRes, liveRes, recRes])
+        if (result.error) throw result.error;
+      setLoadError(false);
       setCourse(courseRes.data);
       setAssignments(assignRes.data || []);
       setLiveClasses(liveRes.data || []);
@@ -151,25 +170,30 @@ const CourseDetailContent = () => {
       );
       setModules(mods);
 
+      const savedProgress: Record<string, boolean> = {};
       if (user) {
-        const { data: enrollment } = await supabase
+        const { data: enrollment, error: enrollmentError } = await supabase
           .from("enrollments")
           .select("id")
           .eq("user_id", user.id)
           .eq("course_id", id)
           .maybeSingle();
+        if (enrollmentError) throw enrollmentError;
+        if (!active) return;
         setEnrolled(!!enrollment);
 
         const allLessonIds = mods.flatMap(
           (m) => m.lessons?.map((l) => l.id) || [],
         );
         if (allLessonIds.length > 0) {
-          const { data: prog } = await supabase
+          const { data: prog, error: progressError } = await supabase
             .from("lesson_progress")
             .select("lesson_id, completed")
             .eq("user_id", user.id)
             .in("lesson_id", allLessonIds);
-          const map: Record<string, boolean> = {};
+          if (progressError) throw progressError;
+          if (!active) return;
+          const map = savedProgress;
           prog?.forEach((p) => {
             if (p.completed) map[p.lesson_id] = true;
           });
@@ -177,13 +201,22 @@ const CourseDetailContent = () => {
         }
       }
 
-      // Auto-select first lesson
-      if (mods.length > 0 && mods[0].lessons?.length > 0) {
-        setActiveLesson(mods[0].lessons[0]);
-      }
+      if (!active) return;
+      setActiveLesson(
+        nextLearningLesson(
+          mods.flatMap((m) => m.lessons || []),
+          savedProgress,
+          requestedLessonRef.current,
+        ),
+      );
       setLoading(false);
     };
-    fetch();
+    void fetch().catch(() => {
+      if (active) {
+        setLoadError(true);
+        setLoading(false);
+      }
+    });
     return () => {
       active = false;
     };
@@ -205,8 +238,17 @@ const CourseDetailContent = () => {
     };
   }, [activeLesson?.video_url]);
 
+  const selectLesson = (lesson: Lesson) => {
+    if (!lesson) return;
+    setActiveLesson(lesson);
+    const params = new URLSearchParams(searchParams);
+    params.set("lesson", lesson.id);
+    setSearchParams(params);
+    document.getElementById("lesson-content")?.focus();
+  };
+
   const handleEnroll = async () => {
-    if (!user) return navigate("/auth");
+    if (!user) return navigate("/auth", { state: { from: `/courses/${id}` } });
     if (course?.price_bdt > 0) {
       toast.info("Paid enrollment is not available yet");
       return;
@@ -231,17 +273,47 @@ const CourseDetailContent = () => {
     setSavingProgress(true);
     try {
       const result = progress[lessonId]
-        ? await supabase.from("lesson_progress").delete().eq("user_id", user.id).eq("lesson_id", lessonId).select("lesson_id")
-        : await supabase.from("lesson_progress").upsert({
-            user_id: user.id, lesson_id: lessonId, completed: true,
-            completed_at: new Date().toISOString(),
-          }, { onConflict: "user_id,lesson_id" }).select("lesson_id");
-      if (result.error || result.data?.length !== 1) throw new Error("Progress write rejected");
-      const { data, error } = await supabase.from("lesson_progress")
-        .select("lesson_id, completed").eq("user_id", user.id)
-        .in("lesson_id", modules.flatMap(m => m.lessons?.map(l => l.id) || []));
+        ? await supabase
+            .from("lesson_progress")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("lesson_id", lessonId)
+            .select("lesson_id")
+        : await supabase
+            .from("lesson_progress")
+            .upsert(
+              {
+                user_id: user.id,
+                lesson_id: lessonId,
+                completed: true,
+                completed_at: new Date().toISOString(),
+              },
+              { onConflict: "user_id,lesson_id" },
+            )
+            .select("lesson_id");
+      if (result.error || result.data?.length !== 1)
+        throw new Error("Progress write rejected");
+      const { data, error } = await supabase
+        .from("lesson_progress")
+        .select("lesson_id, completed")
+        .eq("user_id", user.id)
+        .in(
+          "lesson_id",
+          modules.flatMap((m) => m.lessons?.map((l) => l.id) || []),
+        );
       if (error) throw error;
-      setProgress(Object.fromEntries((data || []).filter(p => p.completed).map(p => [p.lesson_id, true])));
+      setProgress(
+        Object.fromEntries(
+          (data || [])
+            .filter((p) => p.completed)
+            .map((p) => [p.lesson_id, true]),
+        ),
+      );
+      toast.success(
+        progress[lessonId]
+          ? "Lesson marked incomplete"
+          : "Lesson progress saved",
+      );
       void checkAndAwardBadges(user.id);
     } catch {
       toast.error(t("completion.progressError"));
@@ -280,41 +352,9 @@ const CourseDetailContent = () => {
     setCreatingAssign(false);
   };
 
-  const handleCreateLiveClass = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !id) return;
-    setCreatingLive(true);
-    const roomName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-    const { data, error } = await supabase
-      .from("live_classes")
-      .insert({
-        course_id: id,
-        teacher_id: user.id,
-        title: liveTitle,
-        description: liveDesc || null,
-        room_name: roomName,
-        scheduled_at: new Date(liveScheduledAt).toISOString(),
-        duration_minutes: parseInt(liveDuration),
-      })
-      .select()
-      .single();
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Live class scheduled!");
-      setLiveClasses((prev) => [data, ...prev]);
-      setCreateLiveOpen(false);
-      setLiveTitle("");
-      setLiveDesc("");
-      setLiveScheduledAt("");
-      setLiveDuration("60");
-    }
-    setCreatingLive(false);
-  };
-
-  const totalLessons = modules.reduce(
-    (acc, m) => acc + (m.lessons?.length || 0),
-    0,
-  );
+  const lessons = modules.flatMap((m) => m.lessons || []);
+  const totalLessons = lessons.length;
+  const lessonIndex = lessons.findIndex((l) => l.id === activeLesson?.id);
   const completedCount = Object.keys(progress).length;
   const progressPercent =
     totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
@@ -329,12 +369,47 @@ const CourseDetailContent = () => {
       </div>
     );
 
+  if (loadError)
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="container mx-auto flex-1 px-4 py-12"
+        >
+          <h1 className="text-2xl font-semibold">Course unavailable</h1>
+          <p role="alert" className="my-4">
+            We couldn't load this course. Check your connection and access, then
+            try again.
+          </p>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => {
+                setLoading(true);
+                setRevision((r) => r + 1);
+              }}
+            >
+              Retry course
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/courses">Back to courses</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+
   if (!course)
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex flex-1 items-center justify-center">
-          <p>Course not found</p>
+          <div>
+            <h1>Course not found</h1>
+            <Link to="/courses">Back to courses</Link>
+          </div>
         </div>
       </div>
     );
@@ -355,9 +430,15 @@ const CourseDetailContent = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1">
         <div className="border-b border-border bg-gradient-hero py-10">
           <div className="container mx-auto px-4">
+            <Link
+              to="/courses"
+              className="mb-4 inline-block py-2 text-sm text-primary underline underline-offset-4"
+            >
+              ← Back to courses
+            </Link>
             <div className="flex flex-wrap items-center gap-2 mb-3">
               {course.category && (
                 <Badge
@@ -438,7 +519,7 @@ const CourseDetailContent = () => {
             )}
 
             <div className="mt-6 flex flex-wrap items-center gap-4">
-              {!enrolled ? (
+              {!enrolled && course.teacher_id !== user?.id ? (
                 <Button
                   onClick={handleEnroll}
                   className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
@@ -453,11 +534,13 @@ const CourseDetailContent = () => {
               ) : (
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge className="bg-success/10 text-success border-success/20">
-                    Enrolled
+                    {enrolled ? "Enrolled" : "Course owner"}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {progressPercent}% complete
-                  </span>
+                  {enrolled && (
+                    <span className="text-sm text-muted-foreground">
+                      {progressPercent}% of lessons complete
+                    </span>
+                  )}
                 </div>
               )}
               <span className="text-sm text-muted-foreground">
@@ -468,54 +551,105 @@ const CourseDetailContent = () => {
         </div>
 
         <div className="container mx-auto px-4 py-8">
-          {enrolled && <div className="mb-6"><CertificateCard courseId={id!} completedLessons={completedCount} totalLessons={totalLessons} assessmentRevision={completionRevision} /></div>}
+          <nav
+            aria-label="Course sections"
+            className="mb-6 flex flex-wrap gap-3 text-sm"
+          >
+            <a
+              href={
+                enrolled && progressPercent === 100
+                  ? "#course-completion"
+                  : "#lesson-content"
+              }
+              className="rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground"
+            >
+              {enrolled
+                ? progressPercent === 100
+                  ? "Review course requirements"
+                  : "Continue Learning"
+                : "View curriculum"}
+            </a>
+            <a href="#course-live" className="rounded-lg border px-4 py-3">
+              Live Classes
+            </a>
+            <a href="#course-quizzes" className="rounded-lg border px-4 py-3">
+              Assessments
+            </a>
+          </nav>
+          {enrolled && (
+            <div id="course-completion" className="mb-6 scroll-mt-24">
+              <CertificateCard
+                courseId={id!}
+                completedLessons={completedCount}
+                totalLessons={totalLessons}
+                assessmentRevision={completionRevision}
+              />
+            </div>
+          )}
           <div className="grid min-w-0 gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
             {/* Sidebar - Module list */}
-            <aside className="lg:sticky lg:top-20 lg:self-start">
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Course Content
-              </h3>
-              <Accordion
-                type="multiple"
-                defaultValue={modules.map((m) => m.id)}
+            <aside className="order-2 lg:order-1 lg:sticky lg:top-24 lg:self-start">
+              <details
+                open
+                className="rounded-xl border border-border bg-card p-4"
               >
-                {modules.map((mod) => (
-                  <AccordionItem
-                    key={mod.id}
-                    value={mod.id}
-                    className="border-border"
-                  >
-                    <AccordionTrigger className="text-sm font-medium hover:no-underline">
-                      {mod.title}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="space-y-1">
-                        {mod.lessons?.map((lesson) => (
-                          <li key={lesson.id}>
-                            <button
-                              onClick={() => setActiveLesson(lesson)}
-                              className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${activeLesson?.id === lesson.id ? "bg-primary/10 text-primary" : ""}`}
-                            >
-                              {enrolled && progress[lesson.id] ? (
-                                <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                              ) : (
-                                lessonIcon(lesson.type)
-                              )}
-                              <span className="truncate">{lesson.title}</span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+                <summary className="cursor-pointer py-2 font-semibold">
+                  Curriculum · {totalLessons} lessons
+                </summary>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Course Content
+                </h3>
+                <Accordion
+                  type="multiple"
+                  defaultValue={modules.map((m) => m.id)}
+                >
+                  {modules.map((mod) => (
+                    <AccordionItem
+                      key={mod.id}
+                      value={mod.id}
+                      className="border-border"
+                    >
+                      <AccordionTrigger className="text-sm font-medium hover:no-underline">
+                        {mod.title}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <ul className="space-y-1">
+                          {mod.lessons?.map((lesson) => (
+                            <li key={lesson.id}>
+                              <button
+                                onClick={() => selectLesson(lesson)}
+                                aria-current={
+                                  activeLesson?.id === lesson.id
+                                    ? "step"
+                                    : undefined
+                                }
+                                className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${activeLesson?.id === lesson.id ? "bg-primary/10 text-primary" : ""}`}
+                              >
+                                {enrolled && progress[lesson.id] ? (
+                                  <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                                ) : (
+                                  lessonIcon(lesson.type)
+                                )}
+                                <span className="truncate">{lesson.title}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </details>
             </aside>
 
             {/* Main content area */}
-            <div>
+            <div className="order-1 min-w-0 lg:order-2">
               {activeLesson ? (
-                <div className="rounded-xl border border-border bg-card p-6">
+                <div
+                  id="lesson-content"
+                  tabIndex={-1}
+                  className="scroll-mt-24 rounded-xl border border-border bg-card p-4 sm:p-6"
+                >
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-xl font-bold">{activeLesson.title}</h2>
                     {enrolled && <LessonBookmark lessonId={activeLesson.id} />}
@@ -527,7 +661,11 @@ const CourseDetailContent = () => {
                         }
                         disabled={savingProgress}
                         aria-pressed={!!progress[activeLesson.id]}
-                        title={progress[activeLesson.id] ? t("completion.undo") : undefined}
+                        title={
+                          progress[activeLesson.id]
+                            ? t("completion.undo")
+                            : undefined
+                        }
                         onClick={() => toggleComplete(activeLesson.id)}
                         className={
                           progress[activeLesson.id]
@@ -543,6 +681,28 @@ const CourseDetailContent = () => {
                     )}
                   </div>
 
+                  <nav
+                    aria-label="Lesson navigation"
+                    className="mb-6 flex flex-wrap items-center justify-between gap-2 border-y py-3"
+                  >
+                    <Button
+                      variant="outline"
+                      disabled={lessonIndex <= 0}
+                      onClick={() => selectLesson(lessons[lessonIndex - 1])}
+                    >
+                      Previous Lesson
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Lesson {lessonIndex + 1} of {totalLessons}
+                    </span>
+                    <Button
+                      variant="outline"
+                      disabled={lessonIndex >= totalLessons - 1}
+                      onClick={() => selectLesson(lessons[lessonIndex + 1])}
+                    >
+                      Next Lesson
+                    </Button>
+                  </nav>
                   {activeLesson.type === "video" && activeLesson.video_url && (
                     <div className="mb-6 aspect-video overflow-hidden rounded-lg bg-muted">
                       <video
@@ -555,7 +715,9 @@ const CourseDetailContent = () => {
 
                   {activeLesson.type === "article" && activeLesson.content && (
                     <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <ReactMarkdown>{activeLesson.content}</ReactMarkdown>
+                      <Suspense fallback={<p role="status">Loading lesson…</p>}>
+                        <LessonArticle content={activeLesson.content} />
+                      </Suspense>
                     </div>
                   )}
 
@@ -593,8 +755,8 @@ const CourseDetailContent = () => {
           )}
 
           {/* Live Classes Section */}
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-4">
+          <div id="course-live" className="mt-8 scroll-mt-24">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h3 className="text-xl font-semibold flex items-center gap-2">
                 <Video className="h-5 w-5 text-primary" /> Live Classes (
                 {
@@ -605,87 +767,12 @@ const CourseDetailContent = () => {
                 )
               </h3>
               {course.teacher_id === user?.id && (
-                <Dialog open={createLiveOpen} onOpenChange={setCreateLiveOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2"
-                    >
-                      <Plus className="h-4 w-4" /> Schedule Meeting
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-primary" /> Schedule
-                        Live Class
-                      </DialogTitle>
-                    </DialogHeader>
-                    <form
-                      onSubmit={handleCreateLiveClass}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <Label htmlFor="coursedetail-field-1">Title</Label>
-                        <Input
-                          id="coursedetail-field-1"
-                          value={liveTitle}
-                          onChange={(e) => setLiveTitle(e.target.value)}
-                          placeholder="e.g. Week 3: React Hooks Deep Dive"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="coursedetail-field-2">
-                          Description (optional)
-                        </Label>
-                        <Textarea
-                          id="coursedetail-field-2"
-                          value={liveDesc}
-                          onChange={(e) => setLiveDesc(e.target.value)}
-                          rows={2}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="coursedetail-field-3">
-                            Date & Time
-                          </Label>
-                          <Input
-                            id="coursedetail-field-3"
-                            type="datetime-local"
-                            value={liveScheduledAt}
-                            onChange={(e) => setLiveScheduledAt(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="coursedetail-field-4">
-                            Duration (min)
-                          </Label>
-                          <Input
-                            id="coursedetail-field-4"
-                            type="number"
-                            value={liveDuration}
-                            onChange={(e) => setLiveDuration(e.target.value)}
-                            min={15}
-                            step={15}
-                          />
-                        </div>
-                      </div>
-                      <Button
-                        type="submit"
-                        className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90"
-                        disabled={creatingLive}
-                      >
-                        {creatingLive && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}{" "}
-                        Schedule Class
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                <LiveClassScheduler
+                  courses={[{ id: course.id, title: course.title }]}
+                  onCreated={(session) =>
+                    setLiveClasses((prev) => [...prev, session])
+                  }
+                />
               )}
             </div>
 
@@ -698,55 +785,13 @@ const CourseDetailContent = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {liveClasses.map((lc) => {
-                  const isLive = lc.status === "live";
-                  const isEnded = ["completed", "expired"].includes(lc.status);
-                  const scheduledTime = new Date(lc.scheduled_at);
-                  return (
-                    <div
-                      key={lc.id}
-                      className={`flex items-center justify-between rounded-xl border border-border bg-card p-4 ${isEnded ? "opacity-60" : ""}`}
-                    >
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div
-                          className={`rounded-lg p-2.5 ${isLive ? "bg-success/10" : isEnded ? "bg-muted" : "bg-primary/10"}`}
-                        >
-                          <Video
-                            className={`h-5 w-5 ${isLive ? "text-success" : isEnded ? "text-muted-foreground" : "text-primary"}`}
-                          />
-                        </div>
-                        <div>
-                          <p className="font-medium">{lc.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {format(scheduledTime, "MMM d, yyyy 'at' h:mm a")}
-                            {lc.duration_minutes &&
-                              ` • ${lc.duration_minutes} min`}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isLive && (
-                          <Badge className="bg-success text-success-foreground animate-pulse">
-                            ● Live
-                          </Badge>
-                        )}
-                        {isEnded ? (
-                          <Badge variant="secondary" className="text-xs">
-                            Expired
-                          </Badge>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                            onClick={() => setSelectedLiveClass(lc)}
-                          >
-                            <Video className="h-3.5 w-3.5" /> Join Now
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {liveClasses.map((session) => (
+                  <LiveSessionCard
+                    key={session.id}
+                    session={session}
+                    onOpen={setSelectedLiveClass}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -766,12 +811,7 @@ const CourseDetailContent = () => {
                       key={rec.id}
                       className="rounded-xl border border-border bg-card p-4"
                     >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() =>
-                          setExpandedRecording(isExpanded ? null : rec.id)
-                        }
-                      >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex flex-wrap items-center gap-3">
                           <div className="rounded-lg bg-primary/10 p-2.5">
                             <Film className="h-5 w-5 text-primary" />
@@ -801,6 +841,11 @@ const CourseDetailContent = () => {
                             size="sm"
                             variant="outline"
                             className="gap-1.5"
+                            aria-expanded={isExpanded}
+                            aria-controls={`recording-${rec.id}`}
+                            onClick={() =>
+                              setExpandedRecording(isExpanded ? null : rec.id)
+                            }
                           >
                             <PlayCircle className="h-3.5 w-3.5" />{" "}
                             {isExpanded ? "Collapse" : "Watch"}
@@ -808,7 +853,10 @@ const CourseDetailContent = () => {
                         </div>
                       </div>
                       {isExpanded && (
-                        <div className="mt-3 aspect-video rounded-lg overflow-hidden bg-black">
+                        <div
+                          id={`recording-${rec.id}`}
+                          className="mt-3 aspect-video rounded-lg overflow-hidden bg-black"
+                        >
                           <PrivateVideo
                             bucket="class-recordings"
                             path={rec.file_url}
@@ -826,7 +874,7 @@ const CourseDetailContent = () => {
 
           {/* Assignments Section */}
           <div className="mt-8">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h3 className="text-xl font-semibold flex items-center gap-2">
                 <ClipboardList className="h-5 w-5 text-primary" /> Assignments (
                 {assignments.length})
@@ -951,12 +999,14 @@ const CourseDetailContent = () => {
           </div>
 
           {/* Quizzes */}
-          <div id="course-quizzes" className="scroll-mt-24"><QuizManager
-            courseId={id!}
-            isTeacher={course.teacher_id === user?.id}
-            enrolled={enrolled}
-            onAttemptSaved={() => setCompletionRevision(r => r + 1)}
-          /></div>
+          <div id="course-quizzes" className="scroll-mt-24">
+            <QuizManager
+              courseId={id!}
+              isTeacher={course.teacher_id === user?.id}
+              enrolled={enrolled}
+              onAttemptSaved={() => setCompletionRevision((r) => r + 1)}
+            />
+          </div>
 
           {/* Prerequisites (teacher management + student view) */}
           <CoursePrerequisites
@@ -965,10 +1015,11 @@ const CourseDetailContent = () => {
           />
 
           {/* Content Editor (teachers only) */}
-          <CourseContentEditor
-            courseId={id!}
-            isTeacher={course.teacher_id === user?.id}
-          />
+          {course.teacher_id === user?.id && (
+            <Suspense fallback={<p role="status">Loading lesson editor…</p>}>
+              <CourseContentEditor courseId={id!} isTeacher={true} />
+            </Suspense>
+          )}
 
           {/* Student Progress (teachers only) */}
           <StudentProgressTracker

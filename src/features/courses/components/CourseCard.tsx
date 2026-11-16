@@ -14,6 +14,8 @@ interface CourseCardProps {
   difficulty?: string | null;
   teacher_name?: string | null;
   progressPercent?: number;
+  actionLabel?: string;
+  enrolled?: boolean;
 }
 
 const difficultyColors: Record<string, string> = {
@@ -22,7 +24,7 @@ const difficultyColors: Record<string, string> = {
   advanced: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
-const CourseCard = ({ id, title, description, thumbnail_url, category, difficulty, teacher_name, progressPercent }: CourseCardProps) => {
+const CourseCard = ({ id, title, description, thumbnail_url, category, difficulty, teacher_name, progressPercent, actionLabel, enrolled }: CourseCardProps) => {
   const [failedThumbnail, setFailedThumbnail] = useState<string | null>(null);
   const artwork = /data|ai|machine/i.test(category || "") ? "data" : /design/i.test(category || "") ? "design" : "code";
   const fallback = `/artwork/course-${artwork}.svg`;
@@ -30,7 +32,7 @@ const CourseCard = ({ id, title, description, thumbnail_url, category, difficult
   return (
     <div className="relative group">
       <Link to={`/courses/${id}`} className="block">
-        <div className="overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:border-primary/30 hover:shadow-glow hover:-translate-y-1">
+        <div className="overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:border-primary/30 hover:shadow-glow">
           {/* Thumbnail */}
           <div className="relative aspect-video overflow-hidden bg-muted">
             <img
@@ -38,7 +40,7 @@ const CourseCard = ({ id, title, description, thumbnail_url, category, difficult
               alt={title}
               width={800}
               height={450}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500"
               loading="lazy"
               decoding="async"
               onError={() => { if (image !== fallback) setFailedThumbnail(image); }}
@@ -76,11 +78,13 @@ const CourseCard = ({ id, title, description, thumbnail_url, category, difficult
               </div>
             )}
 
+            {enrolled && <Badge variant="secondary" className="mb-3">Enrolled</Badge>}
+            <p className="mb-3 text-sm font-semibold text-primary">{actionLabel || (progressPercent !== undefined ? progressPercent < 100 ? "Continue Learning →" : "Review requirements →" : enrolled ? "Continue Learning →" : "Explore Course →")}</p>
             {/* Progress bar */}
             {progressPercent !== undefined && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Progress</span>
+                  <span className="text-muted-foreground">Lesson progress</span>
                   <span className="font-medium text-primary">{progressPercent}%</span>
                 </div>
                 <Progress value={progressPercent} className="h-1.5" />

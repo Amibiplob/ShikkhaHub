@@ -57,7 +57,7 @@ const ClassRecording = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
+      <main id="main-content" tabIndex={-1} className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 gap-2">
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
@@ -87,6 +87,10 @@ const ClassRecording = () => {
               <Card
                 key={rec.id}
                 className={`cursor-pointer transition-all hover:border-primary/50 ${playingUrl === rec.file_url ? "border-primary" : ""}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Play recording: ${rec.title}`}
+                onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setPlayingUrl(rec.file_url); } }}
                 onClick={() => setPlayingUrl(rec.file_url)}
               >
                 <CardContent className="flex items-center gap-4 p-4">

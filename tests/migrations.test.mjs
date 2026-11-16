@@ -149,3 +149,22 @@ test('Phase 3 certificate-number collision aborts the new migration without dele
   assert.match(fk,/CASCADE/);
  }finally{await db.close();}
 });
+
+test('43-migration backend rejects recording notice; additive meeting migration enables host only', async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(databaseBootstrapSQL);
+    for (const file of (await readdir('supabase/migrations')).filter(f => f.endsWith('.sql')).sort()) {
+      if (file.startsWith('20260308214544') || file.startsWith('20261028')) continue;
+      await db.exec(await readFile(`supabase/migrations/${file}`, 'utf8'));
+    }
+    await seed(db);
+    await asUser(db, ids.teacher, "INSERT INTO live_classes(course_id,teacher_id,title,room_name,scheduled_at) VALUES($1,$2,'Compatibility','compat-room',now())", [ids.course,ids.teacher]);
+    const notice = "SELECT send_live_signal('compat-room','meeting-state','{\"recording\":true}'::jsonb)";
+    await assert.rejects(() => asUser(db,ids.teacher,notice), /Invalid signal event/);
+    await db.exec(await readFile('supabase/migrations/202610280001_live_meeting_state.sql','utf8'));
+    await asUser(db,ids.teacher,notice);
+    await assert.rejects(() => asUser(db,ids.student,notice), /Only the teacher/);
+    await assert.rejects(() => asUser(db,ids.other,notice), /Course access required/);
+  } finally { await db.close(); }
+});

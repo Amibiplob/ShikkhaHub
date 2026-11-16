@@ -221,7 +221,7 @@ const AssignmentDetail = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main id="main-content" tabIndex={-1} className="flex-1 container mx-auto px-4 py-8">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 gap-2">
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>

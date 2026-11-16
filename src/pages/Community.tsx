@@ -264,7 +264,7 @@ const Community = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1">
         <div className="border-b border-border bg-gradient-hero py-10">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between gap-3 flex-wrap">

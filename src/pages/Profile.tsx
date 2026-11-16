@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import ThemeToggle from "@/components/shared/ThemeToggle";
+import LanguageToggle from "@/components/shared/LanguageToggle";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProfileEditor from "@/features/auth/ProfileEditor";
@@ -60,10 +62,10 @@ const Profile = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main id="main-content" tabIndex={-1} className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           {/* Profile Card */}
-          <div className="rounded-xl border border-border bg-card p-8 text-center mb-8">
+          <div className="rounded-xl border border-border bg-card p-4 sm:p-8 text-center mb-8">
             <Avatar className="h-24 w-24 mx-auto mb-4">
               <AvatarImage src={profile?.avatar_url || undefined} />
               <AvatarFallback className="text-2xl bg-primary/10 text-primary">
@@ -71,7 +73,7 @@ const Profile = () => {
               </AvatarFallback>
             </Avatar>
             <h1 className="text-2xl font-bold mb-1">{profile?.full_name || "Unnamed User"}</h1>
-            <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-2">
+            <p className="text-sm text-muted-foreground flex flex-wrap break-all items-center justify-center gap-1.5 mb-2">
               <Mail className="h-3.5 w-3.5" /> {user?.email}
             </p>
             {profile?.bio && (
@@ -92,8 +94,9 @@ const Profile = () => {
             </div>
           </div>
 
+          <section className="mb-8 rounded-xl border bg-card p-5"><h2 className="mb-2 text-lg font-semibold">Display preferences</h2><p className="mb-3 text-sm text-muted-foreground">Choose your language and appearance. Changes are saved on this browser.</p><div className="flex gap-3"><LanguageToggle /><ThemeToggle /></div></section>
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 min-[375px]:grid-cols-3 gap-3">
             <div className="rounded-xl border border-border bg-card p-5 text-center">
               <BookOpen className="mx-auto mb-2 h-5 w-5 text-primary" />
               <p className="text-2xl font-bold">{stats.enrolled}</p>

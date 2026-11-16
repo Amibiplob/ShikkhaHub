@@ -15,6 +15,7 @@ export default function LiveClass() {
   const [result, setResult] = useState<{
     room: string;
     session: LiveSession;
+    teacherName?: string;
   } | null>(null);
   useEffect(() => {
     let active = true;
@@ -23,8 +24,10 @@ export default function LiveClass() {
       .select("*, courses(title)")
       .eq("room_name", roomName)
       .single()
-      .then(({ data }) => {
-        if (active) setResult({ room: roomName, session: data });
+      .then(async ({ data }) => {
+        if (!active) return;
+        const teacher = data ? await supabase.from("profiles").select("full_name").eq("user_id", data.teacher_id).maybeSingle() : null;
+        if (active) setResult({ room: roomName, session: data, teacherName: teacher?.data?.full_name || undefined });
       });
     return () => {
       active = false;
@@ -60,6 +63,7 @@ export default function LiveClass() {
     <LiveClassroom
       key={`${roomName}:${user.id}`}
       session={result.session}
+      teacherName={result.teacherName}
       userId={user.id}
       name={name}
     />

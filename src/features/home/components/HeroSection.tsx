@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, Code2, Play, Users, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, Code2, Users, Zap } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 
 const HeroSection = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [counts, setCounts] = useState<{ courses: number; students: number; live: number } | null>(null);
 
   useEffect(() => {
@@ -39,11 +39,11 @@ const HeroSection = () => {
         <div className="grid items-center gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
           <div>
           <div className="mb-6 inline-flex items-center gap-2 border border-primary/25 bg-primary/5 px-3 py-1.5 font-mono text-xs font-semibold uppercase text-primary">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+            <span className="h-2 w-2 rounded-full bg-primary" />
             {t("hero.badge")}
           </div>
 
-          <h1 className="mb-6 max-w-3xl font-heading text-5xl font-bold leading-[1.02] text-foreground md:text-7xl">
+          <h1 className="mb-6 max-w-3xl font-heading text-4xl font-bold leading-[1.02] text-foreground md:text-7xl">
             {t("hero.title1")}{" "}
             {t("hero.titleWith")} <span className="text-gradient-primary">{t("hero.titleExperts")}</span>
           </h1>
@@ -53,11 +53,11 @@ const HeroSection = () => {
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow gap-2 px-8 h-12 text-base"><Link to="/auth?tab=signup">
-                {t("hero.ctaPrimary")} <ArrowRight className="h-5 w-5" />
+            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow gap-2 px-8 h-12 text-base"><Link to="/courses">
+                {lang === "bn" ? "কোর্স দেখুন" : "Explore Courses"} <ArrowRight className="h-5 w-5" />
               </Link></Button>
-            <Button asChild size="lg" variant="outline" className="gap-2 border-border/50 bg-card/5 backdrop-blur-sm h-12 text-base"><Link to="/courses">
-                <Play className="h-5 w-5" /> {t("hero.ctaSecondary")}
+            <Button asChild size="lg" variant="outline" className="gap-2 border-border/50 bg-card/5 backdrop-blur-sm h-12 text-base"><Link to="/#how-it-works">
+                {lang === "bn" ? "যেভাবে কাজ করে" : "How it works"}
               </Link></Button>
           </div>
 
@@ -66,7 +66,7 @@ const HeroSection = () => {
           <div className="space-y-4">
             <img src="/artwork/learning-workspace.svg" alt={t("hero.artworkAlt")} width={800} height={450} fetchPriority="high" className="w-full rounded-xl border border-border shadow-lg" />
           <div className="grid grid-cols-2 gap-4">
-            {stats.map((stat) => (
+            {counts && stats.map((stat) => (
               <div key={stat.label} className="group rounded-lg border border-border bg-card/80 p-4 shadow-xs backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md">
                 <div className="mb-3 flex h-9 w-11 items-center justify-center bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <stat.icon className="h-5 w-5" />

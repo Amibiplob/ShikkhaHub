@@ -123,7 +123,7 @@ for (const width of [1440, 375]) {
       status: 400,
     });
     await page
-      .getByRole("button", { name: "Finish Course" })
+      .getByRole("button", { name: "Check eligibility" })
       .click();
     await expect(
       page.getByRole("alert").filter({ hasText: "Course completion was not verified" }),
@@ -179,7 +179,17 @@ for (const width of [1440, 375]) {
       await page.getByRole("button", { name: "Finish Course", exact: true }).click();
       await expect(page.getByText("Course completed · Certificate ready", { exact: true })).toBeVisible();
       const certificateId = backend.rows.certificates[0].id;
-      await page.getByRole("button", { name: "Finish Course", exact: true }).click();
+      await expect(page.getByRole("button", { name: "Finish Course", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "View Certificate", exact: true })).toBeVisible();
+      // Repeated server issuance must remain idempotent after the UI changes to certificate access.
+      const repeated = await page.evaluate(async ({token, course}) => {
+        const response = await fetch("http://127.0.0.1:54321/rest/v1/rpc/issue_course_certificate", {
+          method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: "isolated-e2e-public-key" }, body: JSON.stringify({target_course:course}),
+        });
+        return { status:response.status, data:await response.json() };
+      }, { token:backend.session("student").access_token, course:C });
+      expect(repeated.status).toBe(200);
+      expect(repeated.data.id).toBe(certificateId);
       expect(backend.rows.certificates).toHaveLength(1);
       expect(backend.rows.certificates[0].id).toBe(certificateId);
       await page.reload();

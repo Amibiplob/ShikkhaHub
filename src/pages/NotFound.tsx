@@ -1,17 +1,6 @@
 import { Link } from "react-router-dom";
-
-const NotFound = () => {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <Link to="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </Link>
-      </div>
-    </main>
-  );
-};
-
-export default NotFound;
+import PageShell from "@/components/layout/PageShell";
+import { Button } from "@/components/ui/button";
+export default function NotFound() {
+  return <PageShell title="404" description="We couldn't find this page. The link may have changed."><div className="flex flex-wrap gap-3"><Button asChild><Link to="/courses">Explore Courses</Link></Button><Button asChild variant="outline"><Link to="/">Return to Home</Link></Button><Button asChild variant="ghost"><Link to="/contact">Get help</Link></Button></div></PageShell>;
+}

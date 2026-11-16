@@ -1,3 +1,4 @@
+import { MemoryRouter } from "react-router-dom";
 import { render, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import NotificationBell from './NotificationBell';
@@ -23,11 +24,11 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: {
 } }));
 
 it('uses a private recipient topic and replaces it when the signed-in account changes', async () => {
-  const view = render(<NotificationBell />);
+  const view = render(<MemoryRouter><NotificationBell /></MemoryRouter>);
   await waitFor(() => expect(fake.channel).toHaveBeenCalledWith('notifications-student-a', { config: { private: true } }));
   const previous = fake.channel.mock.results[0].value;
   fake.user = { id: 'student-b' };
-  view.rerender(<NotificationBell />);
+  view.rerender(<MemoryRouter><NotificationBell /></MemoryRouter>);
   await waitFor(() => expect(fake.channel).toHaveBeenCalledWith('notifications-student-b', { config: { private: true } }));
   expect(fake.removeChannel).toHaveBeenCalledWith(previous);
   view.unmount();

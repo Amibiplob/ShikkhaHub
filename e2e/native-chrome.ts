@@ -9,7 +9,7 @@ import { join } from "node:path";
 export async function nativeChrome(
   headless: boolean,
   fakeDevices = true,
-  allowAutoplay = true,
+  allowAutoplay = false,
 ): Promise<{ context: BrowserContext; close: () => Promise<void> }> {
   const directory = await mkdtemp(join(tmpdir(), "shikkha-native-chrome-"));
   const child = spawn(

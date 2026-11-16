@@ -9,10 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GraduationCap, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { signInDestination } from "@/features/auth/workspaces";
 import Header from "@/components/layout/Header";
 
 const Auth = () => {
-  const { user } = useAuth();
+  const { user, roles, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -29,21 +30,21 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [wantsTeacher, setWantsTeacher] = useState(searchParams.get("role") === "teacher");
-  const destination = typeof location.state?.from === "string" ? location.state.from : "/dashboard";
+  const destination = signInDestination(location.state?.from, roles);
 
   // Forgot password
   const [resetEmail, setResetEmail] = useState("");
 
   useEffect(() => {
-    if (user) navigate(destination);
-  }, [user, navigate, destination]);
+    if (user && !authLoading) navigate(destination, { replace: true });
+  }, [user, authLoading, navigate, destination]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) toast.error(error.message);
-    else navigate(destination);
+    // AuthContext resolves roles before the effect chooses the workspace.
     setLoading(false);
   };
 
@@ -99,7 +100,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex flex-1 items-center justify-center px-4 py-12">
+      <main id="main-content" tabIndex={-1} className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-primary">

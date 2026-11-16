@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import PageShell from "@/components/layout/PageShell";
@@ -11,19 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-Dialog,
-DialogContent,
-DialogHeader,
-DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import {
-Table,
-TableBody,
-TableCell,
-TableHead,
-TableHeader,
-TableRow,
-} from "@/components/ui/table";
+import AdminRecords from "@/features/administration/AdminRecords";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/useAuth";
 type RecordRow = Record<string, Json | undefined>;
@@ -57,8 +50,10 @@ const labels: Record<string, string> = {
 };
 export default function Admin() {
   const { user } = useAuth();
-  const [kind, setKind] = useState("users"),
-    [search, setSearch] = useState(""),
+  const [params, setParams] = useSearchParams();
+  const requestedTab = params.get("tab");
+  const kind = tabs.find((tab) => tab === requestedTab) || "users";
+  const [search, setSearch] = useState(""),
     [query, setQuery] = useState(""),
     [state, setState] = useState(""),
     [page, setPage] = useState(0),
@@ -81,16 +76,26 @@ export default function Admin() {
     >([]);
   useEffect(() => {
     if (search === query) return;
-    const timer = setTimeout(() => { setQuery(search); setPage(0); setLoading(true); }, 200);
+    const timer = setTimeout(() => {
+      setQuery(search);
+      setPage(0);
+      setLoading(true);
+    }, 200);
     return () => clearTimeout(timer);
   }, [search, query]);
-  const refresh = useCallback(() => { setLoading(true); setRevision((r) => r + 1); }, []);
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setRevision((r) => r + 1);
+  }, []);
   useEffect(() => {
     let active = true;
     supabase.rpc("admin_overview", {}).then(({ data, error }) => {
       if (active) {
         if (error) setStatsError("Could not load platform statistics.");
-        else { setStatsError(""); setOverview(data as unknown as Overview); }
+        else {
+          setStatsError("");
+          setOverview(data as unknown as Overview);
+        }
       }
     });
     return () => {
@@ -103,20 +108,26 @@ export default function Admin() {
       .rpc("admin_records", {
         kind,
         search: query,
-        state,
+        state:
+          kind === "users" && params.get("role") === "teacher" && !state
+            ? "teacher"
+            : state,
         page_offset: page * 10,
         page_size: 10,
       })
       .then(({ data, error }) => {
         if (!active) return;
         if (error) setError("Could not load records. Please try again.");
-        else { setError(""); setData(data as unknown as PageData); }
+        else {
+          setError("");
+          setData(data as unknown as PageData);
+        }
         setLoading(false);
       });
     return () => {
       active = false;
     };
-  }, [kind, query, state, page, revision]);
+  }, [kind, query, state, page, revision, params]);
   const choose = async (
     row: RecordRow,
     action: string,
@@ -253,11 +264,155 @@ export default function Admin() {
               : kind === "audit"
                 ? ["action", "actor_id", "target_id", "created_at"]
                 : ["title", "is_reported", "is_pinned"];
+  const recordValue = (row: RecordRow, f: string) =>
+    f === "roles" && Array.isArray(row.roles) ? (
+      <div className="flex flex-wrap gap-1">
+        {row.roles.map((r) => (
+          <Badge key={String(r)} variant="secondary">
+            {String(r)}
+          </Badge>
+        ))}
+      </div>
+    ) : f === "status" ? (
+      <Badge variant="outline">
+        {text(row, f) === "approved" && kind === "tutoring"
+          ? "confirmed"
+          : text(row, f).replace("_", " ")}
+      </Badge>
+    ) : f.endsWith("_at") ? (
+      new Date(text(row, f)).toLocaleString()
+    ) : typeof row[f] === "boolean" ? (
+      row[f] ? (
+        "Yes"
+      ) : (
+        "No"
+      )
+    ) : (
+      text(row, f) || "-"
+    );
+  const recordActions = (row: RecordRow) => (
+    <div className="flex min-w-[150px] flex-wrap gap-2">
+      {kind === "users" && roleActions(row)}
+      {kind === "courses" && (
+        <>
+          <Button asChild size="sm" variant="outline">
+            <Link to={`/courses/${text(row, "id")}`}>View course</Link>
+          </Button>
+          {row.status === "pending" && (
+            <>
+              <Button size="sm" onClick={() => choose(row, "approve")}>
+                Approve course
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => choose(row, "reject")}
+              >
+                Reject course
+              </Button>
+            </>
+          )}
+          {row.is_published && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => choose(row, "unpublish")}
+            >
+              Unpublish
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => choose(row, "delete_course")}
+          >
+            Delete course
+          </Button>
+        </>
+      )}
+      {kind === "tutoring" && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => choose(row, "inspect")}
+          >
+            View booking
+          </Button>
+          {["pending", "approved"].includes(text(row, "status")) && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => choose(row, "cancel_booking")}
+            >
+              Cancel booking
+            </Button>
+          )}
+        </>
+      )}
+      {kind === "certificates" && (
+        <>
+          <Button asChild size="sm" variant="outline">
+            <Link
+              to={`/certificates/verify/${text(row, "verification_token")}`}
+            >
+              Verify
+            </Link>
+          </Button>
+          {row.status !== "revoked" && (
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => choose(row, "revoke_certificate")}
+            >
+              Revoke certificate
+            </Button>
+          )}
+        </>
+      )}
+      {kind === "support" && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => choose(row, "support")}
+        >
+          Open ticket
+        </Button>
+      )}
+      {kind === "community" && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => choose(row, "pin_post")}
+          >
+            {row.is_pinned ? "Unpin" : "Pin"}
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => choose(row, "delete_post")}
+          >
+            Delete post
+          </Button>
+        </>
+      )}
+      {kind === "audit" && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => choose(row, "inspect")}
+        >
+          View event
+        </Button>
+      )}
+    </div>
+  );
   const activity = Array.isArray(overview?.activity) ? overview.activity : [];
   return (
     <PageShell
       title="Admin Panel"
-      description="Review platform activity, manage access and respond to learners. Sensitive changes require confirmation and are checked by the backend."
+      description="Manage people, review courses and help learners. Choose an area below to get started."
     >
       {statsError ? (
         <p role="alert">
@@ -267,16 +422,55 @@ export default function Admin() {
         <p role="status">Loading platform statistics…</p>
       ) : (
         <>
-          <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-            {Object.entries(labels).map(([key, label]) => (
-              <article key={key} className="rounded-xl border bg-card p-4">
+          <section
+            aria-label="Management overview"
+            className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4"
+          >
+            {[
+              ["users", "users"],
+              ["pending_courses", "courses"],
+              ["teachers", "users"],
+              ["open_support", "support"],
+            ].map(([key, destination]) => (
+              <Link
+                key={key}
+                to={`/admin?tab=${destination}${key === "teachers" ? "&role=teacher" : ""}`}
+                className="rounded-xl border bg-card p-4 hover:border-primary focus-visible:ring-2"
+              >
                 <p className="text-2xl font-bold text-primary">
-                  {typeof overview[key] === "number" ? overview[key] : 0}
+                  {typeof overview[key] === "number" ? overview[key] : "—"}
                 </p>
-                <p className="mt-2 text-sm text-muted-foreground">{label}</p>
-              </article>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {labels[key]}
+                </p>
+              </Link>
             ))}
-          </div>
+          </section>
+          <details className="mb-6 rounded-xl border bg-card p-5">
+            <summary className="cursor-pointer font-semibold">
+              More platform statistics
+            </summary>
+            <dl className="mt-4 grid gap-4 sm:grid-cols-3">
+              {Object.entries(labels)
+                .filter(
+                  ([key]) =>
+                    ![
+                      "users",
+                      "pending_courses",
+                      "teachers",
+                      "open_support",
+                    ].includes(key),
+                )
+                .map(([key, label]) => (
+                  <div key={key}>
+                    <dt className="text-sm text-muted-foreground">{label}</dt>
+                    <dd className="text-xl font-semibold">
+                      {typeof overview[key] === "number" ? overview[key] : "—"}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
+          </details>
           <details className="mb-8 rounded-xl border bg-card p-5">
             <summary className="cursor-pointer font-semibold">
               Administrative activity · last seven days
@@ -315,7 +509,7 @@ export default function Admin() {
         value={kind}
         onValueChange={(value) => {
           setLoading(true);
-          setKind(value);
+          setParams({ tab: value });
           setSearch("");
           setQuery("");
           setState("");
@@ -355,7 +549,11 @@ export default function Admin() {
                     id="admin-filter"
                     className="block h-10 w-full rounded-md border bg-background px-3 sm:w-auto"
                     value={state}
-                    onChange={(e) => { setState(e.target.value); setPage(0); setLoading(true); }}
+                    onChange={(e) => {
+                      setState(e.target.value);
+                      setPage(0);
+                      setLoading(true);
+                    }}
                   >
                     <option value="">All</option>
                     {filters.map((s) => (
@@ -383,186 +581,12 @@ export default function Admin() {
                 No matching records.
               </div>
             ) : (
-              <div className="rounded-xl border bg-card">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {fields.map((f) => (
-                        <TableHead key={f}>{f.replace(/_/g, " ")}</TableHead>
-                      ))}
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.rows.map((row) => (
-                      <TableRow key={text(row, "id")}>
-                        {fields.map((f) => (
-                          <TableCell
-                            key={f}
-                            className="max-w-[250px] break-words"
-                          >
-                            {f === "roles" && Array.isArray(row.roles) ? (
-                              <div className="flex flex-wrap gap-1">
-                                {row.roles.map((r) => (
-                                  <Badge key={String(r)} variant="secondary">
-                                    {String(r)}
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : f === "status" ? (
-                              <Badge variant="outline">
-                                {text(row, f) === "approved" &&
-                                kind === "tutoring"
-                                  ? "confirmed"
-                                  : text(row, f).replace("_", " ")}
-                              </Badge>
-                            ) : f.endsWith("_at") ? (
-                              new Date(text(row, f)).toLocaleString()
-                            ) : typeof row[f] === "boolean" ? (
-                              row[f] ? (
-                                "Yes"
-                              ) : (
-                                "No"
-                              )
-                            ) : (
-                              text(row, f) || "-"
-                            )}
-                          </TableCell>
-                        ))}
-                        <TableCell>
-                          <div className="flex min-w-[150px] flex-wrap gap-2">
-                            {kind === "users" && roleActions(row)}
-                            {kind === "courses" && (
-                              <>
-                                <Button asChild size="sm" variant="outline">
-                                  <Link to={`/courses/${text(row, "id")}`}>
-                                    View course
-                                  </Link>
-                                </Button>
-                                {row.status === "pending" && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      onClick={() => choose(row, "approve")}
-                                    >
-                                      Approve course
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => choose(row, "reject")}
-                                    >
-                                      Reject course
-                                    </Button>
-                                  </>
-                                )}
-                                {row.is_published && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => choose(row, "unpublish")}
-                                  >
-                                    Unpublish
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => choose(row, "delete_course")}
-                                >
-                                  Delete course
-                                </Button>
-                              </>
-                            )}
-                            {kind === "tutoring" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => choose(row, "inspect")}
-                                >
-                                  View booking
-                                </Button>
-                                {["pending", "approved"].includes(
-                                  text(row, "status"),
-                                ) && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      choose(row, "cancel_booking")
-                                    }
-                                  >
-                                    Cancel booking
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                            {kind === "certificates" && (
-                              <>
-                                <Button asChild size="sm" variant="outline">
-                                  <Link
-                                    to={`/certificates/verify/${text(row, "verification_token")}`}
-                                  >
-                                    Verify
-                                  </Link>
-                                </Button>
-                                {row.status !== "revoked" && (
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() =>
-                                      choose(row, "revoke_certificate")
-                                    }
-                                  >
-                                    Revoke certificate
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                            {kind === "support" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => choose(row, "support")}
-                              >
-                                Open ticket
-                              </Button>
-                            )}
-                            {kind === "community" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => choose(row, "pin_post")}
-                                >
-                                  {row.is_pinned ? "Unpin" : "Pin"}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => choose(row, "delete_post")}
-                                >
-                                  Delete post
-                                </Button>
-                              </>
-                            )}
-                            {kind === "audit" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => choose(row, "inspect")}
-                              >
-                                View event
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <AdminRecords
+                rows={data.rows}
+                fields={fields}
+                value={recordValue}
+                actions={recordActions}
+              />
             )}
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
@@ -573,14 +597,20 @@ export default function Admin() {
                 <Button
                   variant="outline"
                   disabled={loading || page === 0}
-                  onClick={() => { setLoading(true); setPage((p) => p - 1); }}
+                  onClick={() => {
+                    setLoading(true);
+                    setPage((p) => p - 1);
+                  }}
                 >
                   Previous
                 </Button>
                 <Button
                   variant="outline"
                   disabled={loading || (page + 1) * 10 >= data.total}
-                  onClick={() => { setLoading(true); setPage((p) => p + 1); }}
+                  onClick={() => {
+                    setLoading(true);
+                    setPage((p) => p + 1);
+                  }}
                 >
                   Next
                 </Button>

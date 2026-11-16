@@ -323,7 +323,7 @@ const CommunityPost = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-3xl">
+      <main id="main-content" tabIndex={-1} className="flex-1 container mx-auto px-4 py-8 max-w-3xl">
         <Link to="/community" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back to Community
         </Link>

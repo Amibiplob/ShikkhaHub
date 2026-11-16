@@ -1,3 +1,4 @@
+import { RecordingHealth, recordingDeadline } from "./recording-health";
 import { createRecordingEncoder, encoderDeadline, verifyRecordingVideo } from "./recording-encoder";
 import {
   saveChunk,
@@ -40,6 +41,8 @@ export class MeetingRecorder {
   private timer?: ReturnType<typeof setInterval>;
   private started = 0;
   private stopped = 0;
+  private lastChunk = 0;
+  private health = new RecordingHealth();
   private silence?: ConstantSourceNode;
   private bytes = 0;
   private index = 0;
@@ -64,6 +67,7 @@ export class MeetingRecorder {
       seconds: number,
       error?: string,
     ) => void,
+    private warning: () => void = () => undefined,
   ) {
     this.draft = {
       ...draft,
@@ -99,7 +103,7 @@ export class MeetingRecorder {
         throw new Error(
           "Meeting recording is unsupported in this browser. Use desktop Chrome.",
         );
-      await encoderDeadline(saveDraft(this.draft), "Local recording storage");
+      await recordingDeadline(saveDraft(this.draft), "Local recording storage");
       if (this.cancelled) throw new Error("Recording cancelled.");
       this.canvas = document.createElement("canvas");
       this.canvas.width = 1280;
@@ -115,7 +119,7 @@ export class MeetingRecorder {
       this.silence.offset.value = 0;
       this.silence.connect(this.mix);
       this.silence.start();
-      await encoderDeadline(this.context.resume(), "Recording audio startup");
+      await recordingDeadline(this.context.resume(), "Recording audio startup");
       if (this.context.state !== "running")
         throw new Error(`Recording audio initialization failed: AudioContext is ${this.context.state}. Keep the classroom visible and retry.`);
       if (this.cancelled) throw new Error("Recording cancelled.");
@@ -132,6 +136,10 @@ export class MeetingRecorder {
           if (this.state !== "recording") return;
           if (this.output!.getTracks().some(t => t.readyState !== "live"))
             throw new Error("Recording media ended unexpectedly. Saved chunks remain on this device.");
+          if (this.health.observe(Date.now(), this.context!.currentTime, this.lastChunk)) {
+            this.draft.captureInterrupted = true;
+            this.warning();
+          }
           if (Date.now() - this.started > 30 * 60 * 1000)
             void this.stop().catch(() => undefined);
           else this.transition("recording");
@@ -144,7 +152,7 @@ export class MeetingRecorder {
       if (this.cancelled || this.failure) throw this.failure || new Error("Recording cancelled.");
       this.recorder = createRecordingEncoder(this.output);
       this.draft.mime = this.recorder.mimeType;
-      await encoderDeadline(saveDraft(this.draft), "Local recording storage");
+      await recordingDeadline(saveDraft(this.draft), "Local recording storage");
       if (this.cancelled || this.failure) throw this.failure || new Error("Recording cancelled.");
       this.completion = new Promise<Blob>((resolve, reject) => {
         this.resolve = resolve;
@@ -154,6 +162,7 @@ export class MeetingRecorder {
       void this.completion.catch(() => undefined);
       this.recorder.ondataavailable = ({ data }) => {
         if (!data.size) return;
+        this.lastChunk = Date.now();
         this.bytes += data.size;
         const index = this.index++;
         this.pending = this.pending
@@ -190,6 +199,8 @@ export class MeetingRecorder {
       this.rejectStartup = undefined;
       if (this.cancelled || this.failure) throw this.failure || new Error("Recording cancelled.");
       this.started = Date.now();
+      this.lastChunk = this.started;
+      this.health.observe(this.started, this.context.currentTime, this.lastChunk);
       this.transition("recording");
     } catch (error) {
       this.fail(error instanceof DOMException
@@ -203,7 +214,7 @@ export class MeetingRecorder {
   private visibility = () => {
     // Background video may freeze; audio and stable output tracks are retained.
     if (!document.hidden && this.state === "recording") {
-      if (this.context) void encoderDeadline(this.context.resume(), "Recording audio recovery").catch((error) => this.fail(error));
+      if (this.context) void recordingDeadline(this.context.resume(), "Recording audio recovery").catch((error) => this.fail(error));
       try {
         this.update();
         this.transition("recording");

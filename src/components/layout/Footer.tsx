@@ -1,9 +1,12 @@
+import { useAuth } from "@/features/auth/useAuth";
+import { primaryWorkspace } from "@/features/auth/workspaces";
 import { GraduationCap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const Footer = () => {
   const { t } = useLanguage();
+  const { roles } = useAuth();
 
   return (
     <footer className="border-t border-border bg-card">
@@ -45,7 +48,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/#project-team"
+                  to="/about"
                   className="hover:text-primary transition-colors"
                 >
                   {t("footer.about")}
@@ -92,10 +95,10 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/dashboard"
+                  to={primaryWorkspace(roles)}
                   className="hover:text-primary transition-colors"
                 >
-                  {t("nav.dashboard")}
+                  {roles.includes("admin") ? t("nav.adminShort") : t("nav.dashboard")}
                 </Link>
               </li>
             </ul>
@@ -141,7 +144,7 @@ const Footer = () => {
                   to="/achievements"
                   className="hover:text-primary transition-colors"
                 >
-                  {t("nav.certificates")}
+                  {t("nav.achievements")}
                 </Link>
               </li>
             </ul>

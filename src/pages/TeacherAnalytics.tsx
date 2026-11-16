@@ -206,7 +206,7 @@ const TeacherAnalytics = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main id="main-content" tabIndex={-1} className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">

@@ -1,11 +1,15 @@
 import { lazy, Suspense } from "react";
-import type { Course, LiveSession } from "@/types/models";
+import type { LiveSession } from "@/types/models";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/features/auth/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import CourseCard from "@/features/courses/components/CourseCard";
+import { useDashboardData } from "@/features/learning/useDashboardData";
+import LiveSessionCard from "@/features/live-classes/LiveSessionCard";
+import { useLanguage } from "@/hooks/useLanguage";
+import AssessmentTasks from "@/features/learning/AssessmentTasks";
 import ProfileEditor from "@/features/auth/ProfileEditor";
 import LiveClassScheduler from "@/features/live-classes/LiveClassScheduler";
 import LiveClassModal from "@/features/live-classes/LiveClassModal";
@@ -14,51 +18,75 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-Select,
-SelectContent,
-SelectItem,
-SelectTrigger,
-SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-Dialog,
-DialogContent,
-DialogHeader,
-DialogTitle,
-DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import {
-BarChart3,
-Bookmark,
-BookOpen,
-Calendar,
-GraduationCap,
-Loader2,
-Plus, Users,
-Video
+  BarChart3,
+  Bookmark,
+  BookOpen,
+  GraduationCap,
+  Loader2,
+  Plus,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-const TutoringWorkspace = lazy(() => import("@/features/tutoring/TutoringWorkspace"));
-const StudentAnalytics = lazy(() => import("@/features/learning/StudentAnalytics"));
+const TutoringWorkspace = lazy(
+  () => import("@/features/tutoring/TutoringWorkspace"),
+);
+const StudentAnalytics = lazy(
+  () => import("@/features/learning/StudentAnalytics"),
+);
 
-const Dashboard = () => {
+const DashboardContent = () => {
   const { user, loading: authLoading, hasRole, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
-  const [courseProgress, setCourseProgress] = useState<Record<string, number>>(
-    {},
-  );
-  const [teacherCourses, setTeacherCourses] = useState<Course[]>([]);
-  const [liveClasses, setLiveClasses] = useState<LiveSession[]>([]);
-  const [studentLiveClasses, setStudentLiveClasses] = useState<LiveSession[]>(
-    [],
-  );
-  const [bookmarkedCourses, setBookmarkedCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { lang } = useLanguage();
+  const bn = lang === "bn";
+  const isTeacher = hasRole("teacher");
+  const requestedTab = searchParams.get("tab");
+  const allowedTabs = [
+    "learning",
+    "live",
+    "bookmarks",
+    "analytics",
+    "tutoring",
+    ...(isTeacher ? ["teaching"] : []),
+  ];
+  const tab = allowedTabs.includes(requestedTab || "")
+    ? requestedTab!
+    : isTeacher
+      ? "teaching"
+      : "learning";
+  const teaching = isTeacher && tab !== "learning" && tab !== "bookmarks";
+  const {
+    enrolledCourses,
+    courseProgress,
+    teacherCourses,
+    liveClasses,
+    studentLiveClasses,
+    bookmarkedCourses,
+    certifiedCourses,
+    loading,
+    error,
+    refresh,
+  } = useDashboardData(user?.id, isTeacher);
+  const nextCourse =
+    enrolledCourses.find(
+      (c) => !certifiedCourses.includes(c.id) && courseProgress[c.id] < 100,
+    ) || enrolledCourses.find((c) => !certifiedCourses.includes(c.id));
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [selectedLiveClass, setSelectedLiveClass] = useState<LiveSession>(null);
@@ -73,104 +101,11 @@ const Dashboard = () => {
     if (!authLoading && !user) navigate("/auth");
   }, [authLoading, user, navigate]);
 
-  useEffect(() => {
-    if (!user) return;
-    const fetchData = async () => {
-      // Enrolled courses
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select(
-          "course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))",
-        )
-        .eq("user_id", user.id);
-      const courses = enrollments?.map((e) => e.courses).filter(Boolean) || [];
-      setEnrolledCourses(courses);
-
-      // Fetch progress for enrolled courses
-      if (courses.length > 0) {
-        const courseIds = courses.map((c) => c.id);
-        const { data: allModules } = await supabase
-          .from("modules")
-          .select("id, course_id, lessons(id)")
-          .in("course_id", courseIds);
-        const { data: completedLessons } = await supabase
-          .from("lesson_progress")
-          .select("lesson_id")
-          .eq("user_id", user.id)
-          .eq("completed", true);
-        const completedSet = new Set(
-          completedLessons?.map((l) => l.lesson_id) || [],
-        );
-        const progressMap: Record<string, number> = {};
-        courseIds.forEach((cid: string) => {
-          const mods = allModules?.filter((m) => m.course_id === cid) || [];
-          const totalLessons = mods.reduce(
-            (acc, m) => acc + (m.lessons?.length || 0),
-            0,
-          );
-          const completed = mods.reduce(
-            (acc, m) =>
-              acc +
-              (m.lessons?.filter((l) => completedSet.has(l.id)).length || 0),
-            0,
-          );
-          progressMap[cid] =
-            totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
-        });
-        setCourseProgress(progressMap);
-      }
-
-      // Teacher courses
-      if (hasRole("teacher") || hasRole("admin")) {
-        const [coursesRes, liveRes] = await Promise.all([
-          supabase
-            .from("courses")
-            .select("*")
-            .eq("teacher_id", user.id)
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("live_classes")
-            .select("*, courses(title)")
-            .eq("teacher_id", user.id)
-            .order("scheduled_at", { ascending: true }),
-        ]);
-        setTeacherCourses(coursesRes.data || []);
-        setLiveClasses(liveRes.data || []);
-      }
-
-      // Student live classes (from enrolled courses)
-      if (enrollments && enrollments.length > 0) {
-        const courseIds = enrollments.map((e) => e.course_id);
-        const { data: studentLive } = await supabase
-          .from("live_classes")
-          .select("*, courses(title)")
-          .in("course_id", courseIds)
-          .not("status", "in", '("completed","expired")')
-          .order("scheduled_at", { ascending: true });
-        setStudentLiveClasses(studentLive || []);
-      }
-
-      // Bookmarked courses
-      const { data: bookmarks } = await supabase
-        .from("course_bookmarks")
-        .select(
-          "course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))",
-        )
-        .eq("user_id", user.id);
-      setBookmarkedCourses(
-        bookmarks?.map((b) => b.courses).filter(Boolean) || [],
-      );
-
-      setLoading(false);
-    };
-    fetchData();
-  }, [user, hasRole]);
-
   const handleCreateCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setCreating(true);
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("courses")
       .insert({
         teacher_id: user.id,
@@ -186,7 +121,7 @@ const Dashboard = () => {
     if (error) toast.error(error.message);
     else {
       toast.success("Course created!");
-      setTeacherCourses((prev) => [data, ...prev]);
+      refresh();
       setCreateOpen(false);
       setTitle("");
       setDescription("");
@@ -196,23 +131,30 @@ const Dashboard = () => {
     setCreating(false);
   };
 
+  if (!authLoading && hasRole("admin") && !searchParams.has("tab"))
+    return <Navigate to="/admin" replace />;
+
   if (authLoading || loading)
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p role="status">
+            {bn ? "কর্মক্ষেত্র লোড হচ্ছে…" : "Loading your workspace…"}
+          </p>
         </div>
       </div>
     );
 
-  const isTeacher = hasRole("teacher") || hasRole("admin");
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-start justify-between">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex-1 container mx-auto px-4 py-8"
+      >
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">
               Welcome back, {profile?.full_name || "there"}!
@@ -226,355 +168,395 @@ const Dashboard = () => {
           <ProfileEditor onUpdated={() => window.location.reload()} />
         </div>
 
-        {/* Stats */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-border bg-card p-5">
-            <BookOpen className="mb-2 h-5 w-5 text-primary" />
-            <p className="text-2xl font-bold">{enrolledCourses.length}</p>
-            <p className="text-sm text-muted-foreground">Enrolled Courses</p>
+        {error && (
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border border-destructive/40 p-5"
+          >
+            <p>
+              {bn
+                ? "আপনার তথ্য লোড করা যায়নি। আবার চেষ্টা করুন।"
+                : "Could not load your workspace. Your saved work is unchanged."}
+            </p>
+            <Button className="mt-3" onClick={refresh}>
+              {bn ? "আবার চেষ্টা করুন" : "Retry workspace"}
+            </Button>
           </div>
-          {isTeacher && (
-            <>
-              <div className="rounded-xl border border-border bg-card p-5">
-                <GraduationCap className="mb-2 h-5 w-5 text-accent" />
-                <p className="text-2xl font-bold">{teacherCourses.length}</p>
-                <p className="text-sm text-muted-foreground">Your Courses</p>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-5">
-                <Users className="mb-2 h-5 w-5 text-success" />
-                <p className="text-2xl font-bold">-</p>
-                <p className="text-sm text-muted-foreground">Total Students</p>
-              </div>
-            </>
-          )}
-        </div>
-
-        <Tabs
-          value={
-            searchParams.get("tab") || (isTeacher ? "teaching" : "learning")
-          }
-          onValueChange={(value) => {
-            const params = new URLSearchParams(searchParams);
-            params.set("tab", value);
-            setSearchParams(params, { replace: true });
-          }}
+        )}
+        <nav
+          aria-label="Workspace shortcuts"
+          className="mb-8 flex flex-wrap gap-3"
         >
-          <TabsList>
-            {isTeacher && (
-              <TabsTrigger value="teaching">My Courses</TabsTrigger>
-            )}
-            <TabsTrigger value="learning">Enrolled</TabsTrigger>
-            <TabsTrigger value="live">
-              <Video className="mr-1.5 h-3.5 w-3.5" /> Live Classes
-            </TabsTrigger>
-            <TabsTrigger value="bookmarks">
-              <Bookmark className="mr-1.5 h-3.5 w-3.5" /> Saved
-            </TabsTrigger>
-            <TabsTrigger value="analytics">
-              <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Analytics
-            </TabsTrigger>
-            <TabsTrigger value="tutoring">
-              {hasRole("teacher")
-                ? "Tutoring Management"
-                : "My Tutoring Sessions"}
-            </TabsTrigger>
-          </TabsList>
-
           {isTeacher && (
-            <TabsContent value="teaching">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Your Courses</h2>
-                <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
-                      <Plus className="h-4 w-4" /> New Course
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New Course</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateCourse} className="space-y-4">
-                      <div>
-                        <Label htmlFor="dashboard-field-1">Title</Label>
-                        <Input
-                          id="dashboard-field-1"
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="dashboard-field-2">Description</Label>
-                        <Textarea
-                          id="dashboard-field-2"
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          rows={3}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
+            <Button asChild variant="outline">
+              <Link to="/analytics">Student Progress</Link>
+            </Button>
+          )}
+          <Button asChild variant="outline">
+            <Link to="/certificates">Certificates</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/dashboard?tab=tutoring">Tutoring appointments</Link>
+          </Button>
+        </nav>
+        {!error && tab === "learning" && enrolledCourses.length > 0 && (
+          <section
+            className="mb-8 rounded-xl border border-primary/30 bg-card p-6"
+            aria-label="Continue Learning"
+          >
+            <p className="text-sm text-muted-foreground">
+              {bn ? "আপনার পরবর্তী ধাপ" : "Your next step"}
+            </p>
+            <h2 className="my-2 text-xl font-semibold">
+              {nextCourse
+                ? nextCourse.title
+                : bn
+                  ? "আপনার সনদ প্রস্তুত"
+                  : "Your certificates are ready"}
+            </h2>
+            <Button asChild>
+              <Link
+                to={
+                  nextCourse
+                    ? `/courses/${nextCourse.id}${courseProgress[nextCourse.id] === 100 ? "#course-completion" : ""}`
+                    : "/certificates"
+                }
+              >
+                {nextCourse
+                  ? courseProgress[nextCourse.id] < 100
+                    ? bn
+                      ? "শেখা চালিয়ে যান"
+                      : "Continue Learning"
+                    : bn
+                      ? "বাকি শর্ত দেখুন"
+                      : "Complete Requirements"
+                  : bn
+                    ? "সনদ দেখুন"
+                    : "View Certificates"}
+              </Link>
+            </Button>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {bn
+                ? "পাঠের অগ্রগতি সংরক্ষিত আছে। কোর্স শেষ করতে মূল্যায়নও সম্পন্ন করুন।"
+                : "Lesson progress is saved. Complete the assessments to finish your course."}
+            </p>
+          </section>
+        )}
+        {!error && ["learning", "teaching"].includes(tab) && (
+          <>
+            {(teaching ? liveClasses : studentLiveClasses).some((c) =>
+              ["scheduled", "live"].includes(c.status),
+            ) && (
+              <section
+                aria-label="Upcoming Live Classes"
+                className="mb-8 space-y-3"
+              >
+                <h2 className="text-xl font-semibold">
+                  {bn ? "লাইভ ও আসন্ন ক্লাস" : "Live & upcoming classes"}
+                </h2>
+                {(teaching ? liveClasses : studentLiveClasses)
+                  .filter((c) => ["scheduled", "live"].includes(c.status))
+                  .sort(
+                    (a, b) =>
+                      Number(b.status === "live") - Number(a.status === "live"),
+                  )
+                  .slice(0, 3)
+                  .map((session) => (
+                    <LiveSessionCard
+                      key={session.id}
+                      session={session}
+                      onOpen={setSelectedLiveClass}
+                    />
+                  ))}
+              </section>
+            )}
+            <AssessmentTasks
+              key={`${user?.id}:${teaching}`}
+              courseIds={(teaching ? teacherCourses : enrolledCourses).map(
+                (c) => c.id,
+              )}
+              teaching={teaching}
+            />
+          </>
+        )}
+        {!error && (
+          <Tabs
+            value={tab}
+            onValueChange={(value) => {
+              const params = new URLSearchParams(searchParams);
+              params.set("tab", value);
+              setSearchParams(params, { replace: true });
+            }}
+          >
+            <TabsList>
+              {isTeacher && (
+                <TabsTrigger value="teaching">My Courses</TabsTrigger>
+              )}
+              <TabsTrigger value="learning">
+                {bn ? "আমার শেখা" : "My learning"}
+              </TabsTrigger>
+              <TabsTrigger value="live">
+                <Video className="mr-1.5 h-3.5 w-3.5" /> Live Classes
+              </TabsTrigger>
+              <TabsTrigger value="bookmarks">
+                <Bookmark className="mr-1.5 h-3.5 w-3.5" /> Saved
+              </TabsTrigger>
+              <TabsTrigger value="analytics">
+                <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Analytics
+              </TabsTrigger>
+              <TabsTrigger value="tutoring">
+                {hasRole("teacher")
+                  ? "Tutoring Management"
+                  : "My Tutoring Sessions"}
+              </TabsTrigger>
+            </TabsList>
+
+            {isTeacher && (
+              <TabsContent value="teaching">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Your Courses</h2>
+                  <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
+                        <Plus className="h-4 w-4" /> New Course
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create New Course</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleCreateCourse} className="space-y-4">
                         <div>
-                          <Label htmlFor="dashboard-field-3">Category</Label>
+                          <Label htmlFor="dashboard-field-1">Title</Label>
                           <Input
-                            id="dashboard-field-3"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            placeholder="e.g. Web Development"
+                            id="dashboard-field-1"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            required
                           />
                         </div>
                         <div>
-                          <Label htmlFor="dashboard-select-4">Difficulty</Label>
-                          <Select
-                            value={difficulty}
-                            onValueChange={setDifficulty}
-                          >
-                            <SelectTrigger id="dashboard-select-4">
-                              <SelectValue placeholder="Select" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="beginner">Beginner</SelectItem>
-                              <SelectItem value="intermediate">
-                                Intermediate
-                              </SelectItem>
-                              <SelectItem value="advanced">Advanced</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Label htmlFor="dashboard-field-2">Description</Label>
+                          <Textarea
+                            id="dashboard-field-2"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={3}
+                          />
                         </div>
-                      </div>
-                      <Button
-                        type="submit"
-                        className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90"
-                        disabled={creating}
-                      >
-                        {creating && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}{" "}
-                        Create Course
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="dashboard-field-3">Category</Label>
+                            <Input
+                              id="dashboard-field-3"
+                              value={category}
+                              onChange={(e) => setCategory(e.target.value)}
+                              placeholder="e.g. Web Development"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="dashboard-select-4">
+                              Difficulty
+                            </Label>
+                            <Select
+                              value={difficulty}
+                              onValueChange={setDifficulty}
+                            >
+                              <SelectTrigger id="dashboard-select-4">
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="beginner">
+                                  Beginner
+                                </SelectItem>
+                                <SelectItem value="intermediate">
+                                  Intermediate
+                                </SelectItem>
+                                <SelectItem value="advanced">
+                                  Advanced
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <Button
+                          type="submit"
+                          className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90"
+                          disabled={creating}
+                        >
+                          {creating && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}{" "}
+                          Create Course
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
 
-              {teacherCourses.length === 0 ? (
+                {teacherCourses.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                    <GraduationCap className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      You haven't created any courses yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {teacherCourses.map((course) => (
+                      <CourseCard
+                        key={course.id}
+                        {...course}
+                        actionLabel="Manage lessons & assessments →"
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            )}
+
+            <TabsContent value="learning">
+              {enrolledCourses.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border py-16 text-center">
-                  <GraduationCap className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    You haven't created any courses yet
+                  <BookOpen className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                  <p className="text-muted-foreground mb-3">
+                    You're not enrolled in any courses yet
                   </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/courses")}
+                  >
+                    Browse Courses
+                  </Button>
                 </div>
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {teacherCourses.map((course) => (
-                    <CourseCard key={course.id} {...course} />
+                  {enrolledCourses.map((course) => (
+                    <CourseCard
+                      key={course.id}
+                      id={course.id}
+                      title={course.title}
+                      description={course.description}
+                      thumbnail_url={course.thumbnail_url}
+                      category={course.category}
+                      difficulty={course.difficulty}
+                      teacher_name={course.profiles?.full_name}
+                      progressPercent={courseProgress[course.id]}
+                      actionLabel={
+                        certifiedCourses.includes(course.id)
+                          ? "Review course · Certificate issued →"
+                          : undefined
+                      }
+                    />
                   ))}
                 </div>
               )}
             </TabsContent>
-          )}
 
-          <TabsContent value="learning">
-            {enrolledCourses.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border py-16 text-center">
-                <BookOpen className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground mb-3">
-                  You're not enrolled in any courses yet
-                </p>
-                <Button variant="outline" onClick={() => navigate("/courses")}>
-                  Browse Courses
-                </Button>
-              </div>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {enrolledCourses.map((course) => (
-                  <CourseCard
-                    key={course.id}
-                    id={course.id}
-                    title={course.title}
-                    description={course.description}
-                    thumbnail_url={course.thumbnail_url}
-                    category={course.category}
-                    difficulty={course.difficulty}
-                    teacher_name={course.profiles?.full_name}
-                    progressPercent={courseProgress[course.id]}
+            <TabsContent value="live">
+              {isTeacher && (
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Your Live Classes</h2>
+                  <LiveClassScheduler
+                    courses={teacherCourses.map((c) => ({
+                      id: c.id,
+                      title: c.title,
+                    }))}
+                    onCreated={refresh}
                   />
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                </div>
+              )}
 
-          <TabsContent value="live">
-            {isTeacher && (
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Your Live Classes</h2>
-                <LiveClassScheduler
-                  courses={teacherCourses.map((c) => ({
-                    id: c.id,
-                    title: c.title,
-                  }))}
-                  onCreated={(lc) => setLiveClasses((prev) => [...prev, lc])}
-                />
-              </div>
-            )}
-
-            {/* Teacher's scheduled classes */}
-            {isTeacher && liveClasses.length > 0 && (
               <div className="space-y-3 mb-6">
-                {liveClasses.map((lc) => {
-                  const isExpired =
-                    lc.status === "expired" || lc.status === "completed";
-                  return (
-                    <div
-                      key={lc.id}
-                      className="flex items-center justify-between rounded-xl border border-border bg-card p-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-primary/10 p-2.5">
-                          <Video className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{lc.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {lc.courses?.title} •{" "}
-                            {format(
-                              new Date(lc.scheduled_at),
-                              "MMM d, yyyy 'at' h:mm a",
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            isExpired
-                              ? "destructive"
-                              : lc.status === "scheduled"
-                                ? "secondary"
-                                : "default"
-                          }
-                        >
-                          {isExpired ? "expired" : lc.status}
-                        </Badge>
-                        {!isExpired && (
-                          <Button
-                            size="sm"
-                            className="gap-1.5"
-                            onClick={() => setSelectedLiveClass(lc)}
-                          >
-                            <Video className="h-3.5 w-3.5" /> Join
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {(isTeacher ? liveClasses : studentLiveClasses).map(
+                  (session) => (
+                    <LiveSessionCard
+                      key={session.id}
+                      session={session}
+                      onOpen={setSelectedLiveClass}
+                    />
+                  ),
+                )}
               </div>
-            )}
 
-            {/* Student live classes */}
-            {!isTeacher && studentLiveClasses.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="text-xl font-semibold mb-3">Live Classes</h2>
-                {studentLiveClasses.map((lc) => {
-                  const isExpired =
-                    lc.status === "expired" || lc.status === "completed";
-                  return (
-                    <div
-                      key={lc.id}
-                      className="flex items-center justify-between rounded-xl border border-border bg-card p-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-primary/10 p-2.5">
-                          <Calendar className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{lc.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {lc.courses?.title} •{" "}
-                            {format(
-                              new Date(lc.scheduled_at),
-                              "MMM d, yyyy 'at' h:mm a",
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      {isExpired ? (
-                        <Badge variant="destructive">Expired</Badge>
-                      ) : (
-                        <Button
-                          size="sm"
-                          className="gap-1.5 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                          onClick={() => setSelectedLiveClass(lc)}
-                        >
-                          <Video className="h-3.5 w-3.5" /> Join
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+              {/* Empty states */}
+              {isTeacher && liveClasses.length === 0 && (
+                <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                  <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    No live classes scheduled yet
+                  </p>
+                </div>
+              )}
+              {!isTeacher && studentLiveClasses.length === 0 && (
+                <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                  <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    No live classes available for your enrolled courses
+                  </p>
+                </div>
+              )}
+            </TabsContent>
 
-            {/* Empty states */}
-            {isTeacher && liveClasses.length === 0 && (
-              <div className="rounded-xl border border-dashed border-border py-16 text-center">
-                <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  No live classes scheduled yet
-                </p>
-              </div>
-            )}
-            {!isTeacher && studentLiveClasses.length === 0 && (
-              <div className="rounded-xl border border-dashed border-border py-16 text-center">
-                <Video className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  No live classes available for your enrolled courses
-                </p>
-              </div>
-            )}
-          </TabsContent>
+            <TabsContent value="bookmarks">
+              {bookmarkedCourses.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-border py-16 text-center">
+                  <Bookmark className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                  <p className="text-muted-foreground mb-3">
+                    No bookmarked courses yet
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/courses")}
+                  >
+                    Browse Courses
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {bookmarkedCourses.map((course) => (
+                    <CourseCard
+                      key={course.id}
+                      id={course.id}
+                      title={course.title}
+                      description={course.description}
+                      thumbnail_url={course.thumbnail_url}
+                      category={course.category}
+                      difficulty={course.difficulty}
+                      teacher_name={course.profiles?.full_name}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-          <TabsContent value="bookmarks">
-            {bookmarkedCourses.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border py-16 text-center">
-                <Bookmark className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                <p className="text-muted-foreground mb-3">
-                  No bookmarked courses yet
-                </p>
-                <Button variant="outline" onClick={() => navigate("/courses")}>
-                  Browse Courses
-                </Button>
-              </div>
-            ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {bookmarkedCourses.map((course) => (
-                  <CourseCard
-                    key={course.id}
-                    id={course.id}
-                    title={course.title}
-                    description={course.description}
-                    thumbnail_url={course.thumbnail_url}
-                    category={course.category}
-                    difficulty={course.difficulty}
-                    teacher_name={course.profiles?.full_name}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <Suspense fallback={<p role="status">Loading analytics…</p>}>
-              <StudentAnalytics />
-            </Suspense>
-          </TabsContent>
-          <TabsContent value="tutoring">
-            <Suspense fallback={<p role="status">Loading tutoring…</p>}>
-              <TutoringWorkspace />
-            </Suspense>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="analytics">
+              <Suspense fallback={<p role="status">Loading analytics…</p>}>
+                {isTeacher ? (
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      Student progress and grading
+                    </h2>
+                    <p className="my-3">
+                      Review your students and open a course to manage lessons,
+                      quizzes and assignments.
+                    </p>
+                    <Button asChild>
+                      <Link to="/analytics">View teaching analytics</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <StudentAnalytics />
+                )}
+              </Suspense>
+            </TabsContent>
+            <TabsContent value="tutoring">
+              <Suspense fallback={<p role="status">Loading tutoring…</p>}>
+                <TutoringWorkspace />
+              </Suspense>
+            </TabsContent>
+          </Tabs>
+        )}
 
         <LiveClassModal
           liveClass={selectedLiveClass}
@@ -582,16 +564,14 @@ const Dashboard = () => {
           onOpenChange={(open) => {
             if (!open) setSelectedLiveClass(null);
           }}
-          onStatusChange={(id, status) => {
-            setLiveClasses((prev) =>
-              prev.map((lc) => (lc.id === id ? { ...lc, status } : lc)),
-            );
-            setStudentLiveClasses((prev) => prev.filter((lc) => lc.id !== id));
-          }}
+          onStatusChange={refresh}
         />
       </main>
     </div>
   );
 };
 
-export default Dashboard;
+export default function Dashboard() {
+  const { user, roles } = useAuth();
+  return <DashboardContent key={`${user?.id}:${roles.join(",")}`} />;
+}

@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Auth from "./Auth";
 
-vi.mock("@/features/auth/useAuth", () => ({ useAuth: () => ({ user: null }) }));
+vi.mock("@/features/auth/useAuth", () => ({ useAuth: () => ({ user: null, roles: [], loading: false }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: {}, from: () => ({}) } }));
 vi.mock("@/components/layout/Header", () => ({ default: () => null }));
 

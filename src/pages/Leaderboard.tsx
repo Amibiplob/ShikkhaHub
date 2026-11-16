@@ -44,7 +44,7 @@ const Leaderboard = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main id="main-content" tabIndex={-1} className="flex-1 container mx-auto px-4 py-8">
         {error && <p role="alert" className="mb-4 text-destructive">Could not load the leaderboard. Please try again later.</p>}
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">

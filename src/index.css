@@ -24,14 +24,14 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 10%;
 
-    --primary: 173 77% 41%;
-    --primary-foreground: 194 38% 6%;
+    --primary: 173 70% 27%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 92%;
     --secondary-foreground: 220 20% 10%;
 
     --muted: 220 14% 95%;
-    --muted-foreground: 220 10% 46%;
+    --muted-foreground: 220 10% 40%;
 
     --accent: 187 62% 62%;
     --accent-foreground: 194 38% 6%;
@@ -55,14 +55,14 @@
     --sidebar-ring: 173 77% 41%;
 
     /* Custom tokens */
-    --success: 173 77% 41%;
+    --success: 173 70% 27%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 32 85% 30%;
     --warning-foreground: 0 0% 100%;
     --info: 210 100% 52%;
     --info-foreground: 0 0% 100%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(173 77% 41%), hsl(187 62% 62%));
+    --gradient-primary: linear-gradient(135deg, hsl(173 70% 27%), hsl(183 65% 29%));
     --gradient-accent: linear-gradient(135deg, hsl(187 62% 62%), hsl(173 77% 41%));
     --gradient-hero: linear-gradient(135deg, hsl(194 38% 97%), hsl(173 34% 94%));
     --gradient-card-hover: linear-gradient(135deg, hsl(173 77% 41% / 0.06), hsl(187 62% 62% / 0.05));
@@ -162,12 +162,6 @@
     background-clip: text;
   }
 
-  .text-gradient-accent {
-    background: var(--gradient-accent);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
 
   .bg-gradient-hero {
     background: var(--gradient-hero);
@@ -177,9 +171,6 @@
     background: var(--gradient-primary);
   }
 
-  .bg-gradient-accent {
-    background: var(--gradient-accent);
-  }
 
   .shadow-glow {
     box-shadow: var(--shadow-glow);
@@ -191,15 +182,18 @@
     background-size: 60px 60px;
   }
 
-  .glass {
-    backdrop-filter: blur-sm(12px);
-    background: hsl(var(--card) / 0.8);
-    border: 1px solid hsl(var(--border) / 0.5);
-  }
 
-  .code-block {
-    @apply font-mono text-sm rounded-lg p-4;
-    background: hsl(var(--muted));
-    border: 1px solid hsl(var(--border));
+}
+
+/* Shared interaction rules: visible keyboard focus and comfortable touch controls. */
+@layer base {
+  html { scroll-padding-top: 6rem; }
+  main { min-width: 0; }
+  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+  button, [role="tab"], summary, input:not([type="checkbox"]):not([type="radio"]), select { min-height: 2.75rem; }
+  h1, h2, h3, p { overflow-wrap: break-word; }
+  html[lang="bn"] { line-height: 1.75; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
   }
 }

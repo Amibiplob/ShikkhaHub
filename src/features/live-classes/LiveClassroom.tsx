@@ -46,10 +46,12 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 
 export default function LiveClassroom({
   session,
+  teacherName,
   userId,
   name,
 }: {
   session: NonNullable<LiveSession>;
+  teacherName?: string;
   userId: string;
   name: string;
 }) {
@@ -179,13 +181,13 @@ export default function LiveClassroom({
     meeting.ended || ["expired", "completed"].includes(classStatus);
   const hostName =
     meeting.participants.find((p) => p.id === session.teacher_id)?.name ||
-    l("Class teacher", "শিক্ষক");
+    teacherName || l("Class teacher", "শিক্ষক");
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background text-foreground">
       <header className="flex min-w-0 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b px-3 py-3 sm:px-6">
         <Link
-          to="/dashboard"
-          aria-label={l("Back to dashboard", "ড্যাশবোর্ডে ফিরুন")}
+          to={`/courses/${session.course_id}`}
+          aria-label={l("Back to course", "কোর্সে ফিরুন")}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
         >
           <GraduationCap className="h-6 w-6" />
@@ -237,12 +239,20 @@ export default function LiveClassroom({
               className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-red-600 dark:text-red-400"
             >
               <span className="h-2 w-2 rounded-full bg-red-500" />
-              {l("Recording", "রেকর্ড হচ্ছে")}
+              {host && meeting.recordingState === "starting" ? l("Starting recording…", "রেকর্ডিং শুরু হচ্ছে…") : host && ["stopping", "processing"].includes(meeting.recordingState) ? l("Saving on this device…", "ডিভাইসে সংরক্ষণ হচ্ছে…") : l("Recording", "রেকর্ড হচ্ছে")}
               {host && ` · ${time(meeting.recordingDuration)}`}
             </span>
           )}
         </div>
       </header>
+      {host && meeting.recordingState !== "idle" && <p role="status" data-testid="recording-status" className="border-b bg-muted/50 px-4 py-2 text-sm">
+        {meeting.recordingState === "starting" ? l("Starting recording — notifying participants and preparing local storage…", "রেকর্ডিং শুরু হচ্ছে — অংশগ্রহণকারীদের জানানো ও স্থানীয় সংরক্ষণ প্রস্তুত করা হচ্ছে…")
+          : meeting.recordingState === "recording" ? l("Recording in progress. Stop recording to save a local draft.", "রেকর্ডিং চলছে। স্থানীয় খসড়া সংরক্ষণ করতে রেকর্ডিং বন্ধ করুন।")
+          : ["stopping", "processing"].includes(meeting.recordingState) ? l("Processing recording. Keep this page open while it is saved on this device.", "রেকর্ডিং প্রক্রিয়াকরণ চলছে। এই ডিভাইসে সংরক্ষণ শেষ হওয়া পর্যন্ত পৃষ্ঠা খোলা রাখুন।")
+          : meeting.recordingState === "completed" ? l("Recording saved on this device. Open Recordings to download or upload it.", "রেকর্ডিং এই ডিভাইসে সংরক্ষিত। ডাউনলোড বা আপলোড করতে রেকর্ডিং খুলুন।")
+          : l("Recording failed. Review the message below, then retry. Any saved chunks remain in Recordings.", "রেকর্ডিং ব্যর্থ। নিচের বার্তা দেখে আবার চেষ্টা করুন। সংরক্ষিত অংশ রেকর্ডিং প্যানেলে রয়েছে।")}
+      </p>}
+      {meeting.recordingWarning && <p role="status" className="bg-amber-500/10 px-4 py-2 text-sm">{l("Recording capture was delayed. Keep this tab visible and review the saved playback for gaps.", "রেকর্ডিং ক্যাপচারে বিলম্ব হয়েছে। এই ট্যাব খোলা রাখুন এবং সংরক্ষিত রেকর্ডিংয়ে বিরতি আছে কিনা দেখুন।")}</p>}
       {actionError && (
         <div role="alert" className="bg-destructive/10 px-4 py-2 text-sm">
           {actionError}
@@ -279,6 +289,8 @@ export default function LiveClassroom({
             <Button asChild variant="outline" className="mt-5"><Link to="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />{l("Back", "ফিরুন")}</Link></Button>
           </div> : <PreJoinLobby
             title={session.title}
+            courseId={session.course_id}
+            teacherName={hostName}
             participant={{ id: userId, name, slot: -1, connected: false, ...meeting.localMedia }}
             host={host} consent={consent} setConsent={setConsent} joining={meeting.joining}
             devices={inventory.devices} known={inventory.known} missing={inventory.missing}
@@ -590,7 +602,7 @@ export default function LiveClassroom({
             </DialogTitle>
             <DialogDescription>
               {l(
-                "Your microphone, camera, presentation and consenting participant media will be recorded. Everyone sees a recording indicator. Listeners without media consent are excluded. Shared presentation audio is included only when the browser supplies it and you enable it in the sharing prompt.",
+                "No camera or microphone is required. Your available microphone, camera, presentation and consenting participant media will be recorded. Everyone sees a recording indicator. Listeners without media consent are excluded. Shared presentation audio is included only when the browser supplies it and you enable it in the sharing prompt.",
                 "আপনার মাইক্রোফোন, ক্যামেরা, উপস্থাপনা এবং সম্মত অংশগ্রহণকারীদের মিডিয়া রেকর্ড হবে। সবাই রেকর্ডিং নির্দেশক দেখবেন। সম্মতি না দেওয়া শ্রোতারা বাদ থাকবেন। ব্রাউজারে অনুমোদিত শেয়ার করা অডিও থাকলেই তা অন্তর্ভুক্ত হবে।",
               )}
             </DialogDescription>

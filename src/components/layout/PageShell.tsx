@@ -13,7 +13,7 @@ export default function PageShell({
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="container mx-auto flex-1 px-4 py-8 md:py-12">
+      <main id="main-content" tabIndex={-1} className="container mx-auto flex-1 px-4 py-8 md:py-12">
         <div className="mb-8 max-w-3xl">
           <p className="mb-2 text-xs font-medium uppercase tracking-widest text-primary">
             ShikkhaHub
