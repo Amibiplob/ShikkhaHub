@@ -2,6 +2,26 @@
 
 This is a local implementation and verification pass. No hosted migration, function deployment, push, production data change, relay provisioning or actual environment-file change is authorized or performed by this work. Older reports describe their own historical snapshots.
 
+## Current local readiness and verification
+
+The completed cleanup is preserved from baseline `96c199f`; this continuation remains uncommitted. Browser verification now serves an isolated production bundle under `artifacts/e2e-app`, with zero retries and the existing assertions/deadlines. A new regression reproduces document-refresh state loss against the old development server and passes against preview. The teacher-authoring case also raced its asynchronous save: it now waits for successful dialog closure before asserting the unchanged persisted payloads, with deterministic 250 ms mutation latency retained. The three previously intermittent scenarios and the new isolation regression pass **4/4**, with no retries or deadline changes. The preliminary continuation run was stopped at that confirmed race (exit 130; 25 passes, 1 failure, 1 interrupted, 121 not run), then fixed; it is not counted as a complete run. The final complete `npm run verify` now finishes with **exit 0 in 877.58 seconds**: **148/148 browser cases**, **183 unit tests**, **56 SQL tests**, **6 security tests**, **3 environment tests**, strict TypeScript, lint and build all pass, with **zero browser retries/skips/flaky results**. All 378 pre-run candidate hashes matched after completion. Only final result records are edited afterward. See [the review](RELIABILITY_REVIEW.md) for logs, failed-before evidence and exact boundaries. Local verification is complete; hosted-release acceptance remains gated below.
+
+Local prerequisites that were previously unavailable have been satisfied without installing services or changing actual environment files:
+
+- PostgreSQL **16.15** binaries extracted under `/tmp`: the native independent-connection test passes **1/1 with 0 skips**, covering four booking/participant/last-admin races. It creates and destroys its own temporary Unix-socket cluster; no TCP listener or provider connection is used.
+- Deno **2.9.6** under `/tmp`: all four frozen-lock entry checks and Deno-platform bundles pass. A local smoke probe registers each packaged handler with synthetic settings, checks preflight responses and reads the two copied font assets, without network/environment/write permission. The standalone bundler is experimental and reports an upstream fontkit duplicate-key warning. This is not Supabase ESZIP/container packaging or hosted invocation; Docker/Edge Runtime is absent.
+- Compatible **typescript-eslint 8.73.0** resolves the seven moderate development lint/parser findings using patched minimatch **11.0.9**. Full and production audits both report **zero findings**. No forced upgrade, dependency override or production package upgrade was used. The previous issue concerned resource exhaustion from pathological tooling glob patterns; it was not in the browser runtime graph.
+
+Reproduce optional checks with the real tool paths, without reading `.env`:
+
+```sh
+LOCAL_POSTGRES_BIN=/path/to/extracted/postgresql/16/bin npm run test:concurrency
+deno check --frozen --config supabase/functions/deno.json supabase/functions/{certificate-pdf,course-assistant,support-contact,live-ice}/index.ts
+deno bundle --frozen-lockfile --config supabase/functions/deno.json --platform deno --output /tmp/live-ice.js supabase/functions/live-ice/index.ts
+```
+
+For a standalone packaged certificate entry, preserve its function-directory layout and include `../_shared/fonts/` plus `OFL.txt`; a flat JavaScript file alone is not the complete certificate package. Supabase's existing `static_files` declaration includes those assets, but actual provider packaging/deployment must still be accepted separately. Current local logs are under ignored `artifacts/reliability/`; these artifacts and temporary tools are not release uploads.
+
 ## Database and matching application
 
 Two additive migrations follow the existing 44 files:
@@ -34,7 +54,7 @@ Account identity changes remount descendant application state, clearing searches
 
 ## Limits and release gates
 
-- Community-feed and quota migrations and updated/new Edge Functions have local test evidence only in this pass. Hosted Auth/PostgREST/Storage/Realtime and provider packaging/configuration require separate authorized acceptance.
+- Community-feed and quota migrations and updated/new Edge Functions have local test evidence only in this pass. Hosted Auth/PostgREST/Storage/Realtime and Supabase ESZIP/container packaging/configuration require separate authorized acceptance. Native Deno checks/bundles/local startup are already verified, as scoped above.
 - Physical devices, native screen/system-audio capture, Safari/Firefox/iOS, seven-party sustained load, long recordings, OS/browser termination and continuous background recording are not established by Chrome fixtures.
 - Dashboard, student/teacher analytics, achievements, completion guidance and student-progress summary reads page by exact authorized totals with deterministic ID ordering. Smaller provider caps do not truncate summaries. Missing/changing totals, stalled pages, more than 50,000 rows, 200 pages or 30 seconds produce a recoverable error. Very large nested relations and IN-filter request lengths still require hosted scale acceptance; dedicated database aggregates should precede high-volume operation.
 - Accessibility evidence covers existing keyboard, focus and viewport regressions plus reviewed screenshots. It is not a complete assistive-technology or contrast certification. Existing English/Bangla content and terminology are retained; full translation of every older English-only screen is outside the verified result.

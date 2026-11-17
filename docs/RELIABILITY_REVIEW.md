@@ -2,6 +2,44 @@
 
 Starting revision: `edcaad2`; the working tree was clean. This report covers implemented local changes. The final verification record below distinguishes complete runs from retained intermediate attempts. No push, commit, deployment, hosted migration or production mutation is part of this work.
 
+## Current local verification continuation
+
+Baseline for this continuation: clean `96c199f` (the completed cleanup was already committed before this request). Preserve that implementation; leave this continuation uncommitted. No hosted operation or actual environment-file change is performed.
+
+- [x] Investigate the three intermittent failures. Two traces show document reloads while review Markdown was being saved; the other shows cold Vite module requests near ten seconds during navigation. The new isolation regression **fails against the old development-server setup** with a destroyed execution context, then passes against the release bundle. The first continuation full run also exposed an immediate fixture-row assertion racing the asynchronous lesson save; this is independently reproduced with 250 ms request latency.
+- [x] Serve a dedicated production build from `artifacts/e2e-app` through Vite preview for browser tests. This removes development HMR and per-request source transforms from these journeys. Keep all original assertions/deadlines and explicitly set **zero retries**. Production `dist/` remains a separate build artifact.
+- [x] Add a browser regression that preserves the login draft and document identity across a Markdown timestamp change, restoring the original timestamps afterward. This changes no document content. Fix the authoring scenario to wait for each successful dialog closure before asserting the persisted article/PDF/video payloads. Retain all original persistence assertions, add those UI-success assertions and keep deterministic 250 ms mutation latency. The three affected cases plus the isolation regression pass **4/4**, without retries, in 25.8 seconds.
+- [x] Resolve all seven inherited moderate development audit findings with a normal **typescript-eslint 8.72.1 → 8.73.0** minor update and lockfile refresh. It officially requires minimatch `^11.0.1`; the resolved graph uses **11.0.9**. No overrides, forced upgrades or production dependency changes. Full and production audits both report **0 findings**; lint passes.
+- [x] Acquire disposable PostgreSQL **16.15** server binaries under `/tmp` without installing a service. Run the existing independent-connection test: **1/1 passes, 0 skips**, covering four booking/participant/administrator races on a private Unix socket with no TCP listener. The temporary cluster is stopped and deleted by the test.
+- [x] Acquire Deno **2.9.6** under `/tmp`. Frozen-lock native checks pass for all four Edge Function entries. Deno-platform bundles pass **4/4**; a permission-restricted smoke probe loads each bundle, captures handler registration, checks fixture preflight responses and reads both packaged font assets. The probe grants no network, environment or write permission and uses synthetic settings. It does not exercise hosted Auth/RPC/provider behavior.
+- [x] Complete the final sequential `npm run verify` after all implementation and documentation edits: **exit 0**, **877.58 seconds**, with all **148 browser cases passing** and zero retries/skips/flaky results. All **378 candidate file hashes** match the pre-run snapshot; only this result record is updated afterward.
+
+| Current check | Observed result |
+| --- | --- |
+| Focused browser isolation / formerly intermittent cases | **4/4 pass**, zero retries, including deterministic 250 ms lesson-save latency |
+| Old-development-server isolation regression | **Fails as expected**; preserved under `artifacts/reliability/isolation-before*` |
+| Dependency audit (all / production) | **0 / 0 findings** |
+| PostgreSQL native concurrency | **1/1 pass, 0 skipped**; four independent-connection races |
+| Deno frozen checks / bundles / local packaged startup and fonts | **4 / 4 / 4 pass**, plus two font assets |
+| Final complete `npm run verify` | **Exit 0**, **877.58 seconds** |
+| Final security / build-environment tests | **6/6 / 3/3 pass** |
+| Final strict app/node/browser/functions TypeScript, lint, production build | Pass |
+| Final unit/component/shared-handler tests | **183/183 pass in 37 files** |
+| Final PGlite SQL/migration/security tests | **56/56 pass** |
+| Final complete Chrome suite | **148/148 pass**, **0 failures / 0 skips / 0 flaky / 0 retries** |
+| Frozen candidate source/content check | **378 files unchanged during verification** |
+| Final working-tree candidate secret scan / whitespace | Pass; **378 files** scanned using a disposable index; actual index untouched |
+
+A preliminary continuation `verify` attempt was intentionally stopped after exposing the authoring race: **exit 130**, 261.32 seconds, **25 browser passes / 1 failure / 1 interrupted / 121 not run**. It is not a complete run or a pass. Its static stages passed. Evidence: `verify-before-async-fix.log`, `verify-before-async-fix-status.json`, and `before-async-fix-browser/`. A separate old-assertion run with controlled latency also failed before the synchronization fix (`authoring-latency-before.log` and its browser evidence). The final complete run below follows both test-isolation fixes and all documentation edits.
+
+The previous seven findings were one minimatch advisory propagated through the development lint/parser graph, not seven independent application bugs. Before the update, attacker-controlled pathological glob patterns could exhaust CPU/memory in development or CI tooling; the browser/production dependency audit was already clean. The compatible upstream fix now removes that known chain. See [the advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249). An audit is a known-advisory snapshot, not a guarantee against all defects.
+
+Deno's standalone bundler is experimental and emits an existing **fontkit 2.0.4 duplicate `axisIndex` key warning** (both declarations use the same `uint16` value). Checks, bundles and local startup succeed; the dependency was not patched or force-upgraded. Supabase's own ESZIP/container packaging, deployment and hosted function invocation remain unverified: Docker/Edge Runtime tooling is not present. Native Deno success is not provider acceptance.
+
+Current acceptance evidence: `artifacts/reliability/verify-acceptance.log`, `verify-acceptance-status.json`, `acceptance-source-sha256.json`, `acceptance-source-check.json`, `candidate-secret-scan-acceptance.log`, `acceptance-browser/` and the default browser reports. Supporting evidence: `artifacts/reliability/preview-isolation-final-focused.log`, `isolation-before.log`, `audit-continuation-before.json`, `audit-continuation-after.json`, `audit-continuation-production.json`, `concurrency-native.log`, `deno-check.log`, `deno-bundle-status.json`, `deno-bundle.log` and `deno-packaging-smoke.log`. Downloaded tools and local probe artifacts are not tracked or deployed.
+
+**Readiness:** local verification is complete and passing, suitable for review and a local commit. This is not hosted-release clearance: pending hosted migrations/functions, Supabase container packaging, TURN relay operation and physical-device acceptance remain unverified. No code, configuration, package or test changes follow the passing run; only the final result fields in the two review documents are updated afterward. All continuation changes remain uncommitted.
+
 ## Checklist and implementation
 
 - [x] Read AGENTS, current routes/features/hooks/server adapters/migrations and earlier project guidance; preserve the React/Vite/Supabase architecture, branding, bilingual content, responsive UI and authorization boundaries.
@@ -28,7 +66,7 @@ Inspected public discovery/catalog/community, auth/account routing and isolation
 
 The changes retain readable route composition and existing feature boundaries. Large files remain where further splitting would merely move presentation without clarifying ownership. Dormant authoring capabilities and historical applied migrations are preserved.
 
-## Verification
+## Previous verification attempt (development server)
 
 Final application/test-source hashes match `artifacts/reliability/tested-source-sha256-final.json`; **no application, test, migration or configuration source changed during the final full run or affected-case repetitions**. Documentation edits during that full run did cause development-server refreshes, as diagnosed below. No live backend credentials are used by unit/browser fixtures.
 
@@ -72,10 +110,10 @@ The checked foreground/background, muted/card, primary, info and destructive tok
 
 ## Known issues and external requirements
 
-The whole-suite invocation remains a recorded failure, despite all affected cases passing twice afterward. Keep project files frozen during browser verification. No new uninterrupted full-suite pass is claimed.
+The previous development-server whole-suite invocation remains a recorded failure. The new release-bundle run and its actual status are recorded in the current continuation section; passing focused runs do not replace that required full result.
 
 See [rollout instructions and acceptance boundaries](RELIABILITY_ROLLOUT.md). The two new migrations and updated/new Edge adapters require separate authorized hosted rollout. TURN needs relay provisioning, protected server configuration and real multi-network/device tests. One-hour credentials require rejoin for renewal; existing buffered/downloaded media and already-issued relay credentials are not instantly revocable.
 
-A current audit initially reported **9 moderate development findings**, all from one minimatch advisory chain; production dependencies had **0 findings**. ESLint was updated from 10.13.0 to the compatible 10.15.0 release, removing its affected branches. The remaining typescript-eslint 8.72.1 graph requires minimatch 10.x (its latest 8.72.2 metadata still does); [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) is patched in minimatch 11.0.1+. No forced downgrade or incompatible override was applied. Final audit: **7 moderate development findings**, **0 production findings**, no high/critical findings. Reports: `artifacts/reliability/audit-all-final.json` and `audit-production-final.json`.
+The earlier audit went from nine to seven moderate development findings after the ESLint patch. This continuation resolves the remaining seven through the compatible typescript-eslint minor release; current full and production audits are clean. Historical audit files retain their dated counts, while `audit-continuation-after.json` and `audit-continuation-production.json` are current.
 
-Independent native PostgreSQL concurrency has **0 passes / 1 configured skip**: this environment has `psql` but no `initdb`, `pg_ctl` or server binary. PGlite SQL/migration tests are separate evidence. Deno packaging/deployment, actual provider quotas/service delivery, sustained nested-relation scale, native/physical media, cross-browser/accessibility, long recordings and production operations remain unverified. This is no zero-bug or exhaustive behavior claim.
+The earlier native PostgreSQL skip is resolved locally as described above; PGlite SQL and native multi-connection evidence remain separate. Deno checks, bundles and permission-restricted local startup are verified; Supabase packaging/deployment and hosted provider quotas/service delivery are not. Sustained nested-relation scale, native/physical media, cross-browser/accessibility, long recordings and production operations remain unverified. This is no zero-bug or exhaustive behavior claim.

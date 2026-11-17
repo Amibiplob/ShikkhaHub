@@ -107,6 +107,13 @@ test("teacher edits article, attaches PDF and adds video metadata", async ({
   page,
   backend,
 }) => {
+  // Exercise real asynchronous completion rather than relying on an immediate
+  // fixture response arriving before Playwright's click promise resolves.
+  await page.route(/\/rest\/v1\/lessons(?:\?|$)/, async route => {
+    if (["POST", "PATCH"].includes(route.request().method()))
+      await new Promise(resolve => setTimeout(resolve, 250));
+    await route.fallback();
+  });
   await login(page, backend, "teacher");
   await page.goto(`/courses/${C}`);
   await page
@@ -118,6 +125,7 @@ test("teacher edits article, attaches PDF and adds video metadata", async ({
     .getByLabel("Content", { exact: true })
     .fill("# Edited article");
   await page.getByRole("button", { name: "Save Changes", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(backend.rows.lessons.find((l) => l.id === L)?.content).toBe(
     "# Edited article",
   );
@@ -143,6 +151,7 @@ test("teacher edits article, attaches PDF and adds video metadata", async ({
     .getByRole("dialog")
     .getByRole("button", { name: "Add Lesson", exact: true })
     .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(
     backend.rows.lessons.find((l) => l.title === "PDF resource")?.file_url,
   ).toMatch(new RegExp(`^${C}/`));
@@ -162,6 +171,7 @@ test("teacher edits article, attaches PDF and adds video metadata", async ({
     .getByRole("dialog")
     .getByRole("button", { name: "Add Lesson", exact: true })
     .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(
     backend.rows.lessons.find((l) => l.title === "Video metadata")?.video_url,
   ).toBe("https://example.test/lesson.mp4");

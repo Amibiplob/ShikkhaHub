@@ -8,6 +8,7 @@ export default defineConfig({
   testIgnore: '**/staging/**',
   fullyParallel: false,
   workers: 1,
+  retries: 0,
   timeout: 30_000,
   reporter: [['list'], ['html', { open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]],
   use: {
@@ -18,7 +19,9 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: `npm run dev -- --host 127.0.0.1 --port ${mockPort} --strictPort --mode e2e`,
+    // Serve an isolated release bundle: development HMR (including Markdown
+    // updates) must not reset forms or live meetings during a browser journey.
+    command: `npm run build -- --mode e2e --outDir artifacts/e2e-app && npm run preview -- --host 127.0.0.1 --port ${mockPort} --strictPort --mode e2e --outDir artifacts/e2e-app`,
     url: mockOrigin,
     reuseExistingServer: false,
     env: {
