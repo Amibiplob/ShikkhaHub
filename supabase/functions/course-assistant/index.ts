@@ -11,6 +11,11 @@ Deno.serve(assistantHandler({
   endpoint: Deno.env.get("AI_CHAT_COMPLETIONS_URL"),
   apiKey: Deno.env.get("AI_API_KEY"),
   model: Deno.env.get("AI_MODEL"),
+  consumeQuota: async authorization => {
+    const { data, error } = await clientFor(authorization).rpc('consume_endpoint_quota', { endpoint_name: 'assistant' });
+    if (error) throw error;
+    return data === true;
+  },
   authorize: async authorization => {
     const { data, error } = await clientFor(authorization).auth.getUser();
     return !error && !!data.user;

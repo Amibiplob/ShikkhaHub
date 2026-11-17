@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/read-all-rows';
 import { courseQuizPassRates, scopeTeacherActivity } from "@/features/learning/teacherActivity";
 import type { Tables } from "@/integrations/supabase/types";
 import type { Course, Module, Lesson, Submission, Attempt } from "@/types/models";
@@ -27,6 +28,8 @@ const TeacherAnalytics = () => {
   const { user, loading: authLoading, hasRole } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [revision, setRevision] = useState(0);
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrollments, setEnrollments] = useState<Tables<'enrollments'>[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -45,9 +48,13 @@ const TeacherAnalytics = () => {
 
   useEffect(() => {
     if (!user || !(hasRole("teacher") || hasRole("admin"))) return;
+    let active = true;
+    const controller = new AbortController();
     const fetchData = async () => {
-      const { data: coursesData } = await supabase
-        .from("courses").select("*").eq("teacher_id", user.id);
+      const { data: coursesData, error: coursesError } = await readAllRows(supabase
+        .from("courses").select("*", { count: 'exact' }).eq("teacher_id", user.id), controller.signal);
+      if (coursesError) throw coursesError;
+      if (!active) return;
       const courseList = coursesData || [];
       setCourses(courseList);
 
@@ -56,13 +63,15 @@ const TeacherAnalytics = () => {
       const courseIds = courseList.map((c) => c.id);
 
       const [enrollRes, modulesRes, reviewsRes, assignRes, quizRes] = await Promise.all([
-        supabase.from("enrollments").select("*").in("course_id", courseIds),
-        supabase.from("modules").select("id, course_id, lessons(id)").in("course_id", courseIds),
-        supabase.from("course_reviews").select("*").in("course_id", courseIds),
-        supabase.from("assignments").select("id, course_id").in("course_id", courseIds),
-        supabase.from("quizzes").select("id, course_id").in("course_id", courseIds),
+        readAllRows(supabase.from("enrollments").select("*", { count: 'exact' }).in("course_id", courseIds), controller.signal),
+        readAllRows(supabase.from("modules").select("id, course_id, lessons(id)", { count: 'exact' }).in("course_id", courseIds), controller.signal),
+        readAllRows(supabase.from("course_reviews").select("*", { count: 'exact' }).in("course_id", courseIds), controller.signal),
+        readAllRows(supabase.from("assignments").select("id, course_id", { count: 'exact' }).in("course_id", courseIds), controller.signal),
+        readAllRows(supabase.from("quizzes").select("id, course_id", { count: 'exact' }).in("course_id", courseIds), controller.signal),
       ]);
 
+      for (const result of [enrollRes, modulesRes, reviewsRes, assignRes, quizRes]) if (result.error) throw result.error;
+      if (!active) return;
       setAssignmentCourses(Object.fromEntries((assignRes.data || []).map(a=>[a.id,a.course_id])));
       setQuizCourses(Object.fromEntries((quizRes.data || []).map(q=>[q.id,q.course_id])));
       setEnrollments(enrollRes.data || []);
@@ -72,39 +81,50 @@ const TeacherAnalytics = () => {
       // Lesson progress
       const allLessonIds = (modulesRes.data || []).flatMap((m) => m.lessons?.map((l) => l.id) || []);
       if (allLessonIds.length > 0) {
-        const { data: progressData } = await supabase
-          .from("lesson_progress").select("*").in("lesson_id", allLessonIds).eq("completed", true);
+        const { data: progressData, error } = await readAllRows(supabase
+          .from("lesson_progress").select("*", { count: 'exact' }).in("lesson_id", allLessonIds).eq("completed", true), controller.signal);
+        if (error) throw error;
+        if (!active) return;
         setLessonProgress(progressData || []);
       }
 
       // Submissions
       if (assignRes.data && assignRes.data.length > 0) {
         const assignIds = assignRes.data.map((a) => a.id);
-        const { data: subData } = await supabase
-          .from("submissions").select("*").in("assignment_id", assignIds);
+        const { data: subData, error } = await readAllRows(supabase
+          .from("submissions").select("*", { count: 'exact' }).in("assignment_id", assignIds), controller.signal);
+        if (error) throw error;
+        if (!active) return;
         setSubmissions(subData || []);
       }
 
       // Quiz attempts
       if (quizRes.data && quizRes.data.length > 0) {
         const quizIds = quizRes.data.map((q) => q.id);
-        const { data: attempts } = await supabase
-          .from("quiz_attempts").select("*").in("quiz_id", quizIds);
+        const { data: attempts, error } = await readAllRows(supabase
+          .from("quiz_attempts").select("*", { count: 'exact' }).in("quiz_id", quizIds), controller.signal);
+        if (error) throw error;
+        if (!active) return;
         setQuizAttempts(attempts || []);
       }
 
       // Student profiles
       const studentIds = [...new Set((enrollRes.data || []).map((e) => e.user_id))];
       if (studentIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles").select("user_id, full_name, avatar_url").in("user_id", studentIds);
+        const { data: profiles, error } = await readAllRows(supabase
+          .from("profiles").select("user_id, full_name, avatar_url", { count: 'exact' }).in("user_id", studentIds), controller.signal);
+        if (error) throw error;
+        if (!active) return;
         setStudentProfiles(profiles || []);
       }
 
+      if (!active) return;
+      setLoadError(false);
       setLoading(false);
     };
-    fetchData();
-  }, [user, hasRole]);
+    void fetchData().catch(() => { if (active) { setLoadError(true); setLoading(false); } });
+    return () => { active = false; controller.abort(); };
+  }, [user, hasRole, revision]);
 
   if (authLoading || loading) {
     return (
@@ -202,6 +222,8 @@ const TeacherAnalytics = () => {
     { name: "Submitted", value: submissions.filter(s => s.status === "submitted").length },
     { name: "Graded", value: submissions.filter(s => s.status === "graded" || s.status === "reviewed").length },
   ].filter(d => d.value > 0);
+
+  if (loadError) return <div className="min-h-screen"><Header /><main className="container mx-auto p-8" role="alert">Could not load your data. <button className="underline" onClick={() => setRevision(r => r + 1)}>Retry loading</button></main></div>;
 
   return (
     <div className="min-h-screen flex flex-col">

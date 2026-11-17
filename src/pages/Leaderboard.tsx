@@ -18,15 +18,19 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const [revision, setRevision] = useState(0);
   useEffect(() => {
+    let active = true;
     const fetchLeaderboard = async () => {
       const { data, error } = await supabase.rpc("get_leaderboard");
+      if (!active) return;
       if (error) { setError(true); setEntries([]); }
       else { setError(false); setEntries(data || []); }
       setLoading(false);
     };
-    fetchLeaderboard();
-  }, []);
+    void fetchLeaderboard().catch(() => { if (active) { setError(true); setLoading(false); } });
+    return () => { active = false; };
+  }, [revision]);
 
   const medalColor = (index: number) => {
     if (index === 0) return "text-yellow-500";
@@ -45,7 +49,7 @@ const Leaderboard = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main id="main-content" tabIndex={-1} className="flex-1 container mx-auto px-4 py-8">
-        {error && <p role="alert" className="mb-4 text-destructive">Could not load the leaderboard. Please try again later.</p>}
+        {error && <p role="alert" className="mb-4 text-destructive">Could not load the leaderboard. <button className="underline" onClick={() => setRevision(r => r + 1)}>Retry leaderboard</button></p>}
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Trophy className="h-7 w-7 text-primary" /> Leaderboard
@@ -53,7 +57,7 @@ const Leaderboard = () => {
           <p className="text-muted-foreground mt-1">Top learners ranked by course completions and lessons</p>
         </div>
 
-        {entries.length === 0 ? (
+        {error ? null : entries.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-20 text-center">
             <Trophy className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <p className="text-muted-foreground">No activity yet. Start learning to appear on the leaderboard!</p>

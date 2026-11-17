@@ -363,6 +363,22 @@ export class Backend {
             phase3.error ? { message: phase3.error } : phase3.data,
             phase3.error ? 400 : 200,
           );
+        if (fn === "community_feed") {
+          const search = String(body.search_text ?? '').trim().toLowerCase();
+          const ordering = body.ordering ?? 'newest';
+          const posts = this.rows.community_posts.filter(p =>
+            (body.topic === 'all' || p.category === body.topic) &&
+            (!search || String(p.title).toLowerCase().includes(search) || String(p.content).toLowerCase().includes(search))
+          ).map((p): Row & { upvote_count: number; comment_count: number; viewer_upvoted: boolean } => ({ ...this.join('community_posts', p, 'profiles'),
+            upvote_count: this.rows.community_upvotes.filter(u => u.post_id === p.id).length,
+            comment_count: this.rows.community_comments.filter(c => c.post_id === p.id).length,
+            viewer_upvoted: this.rows.community_upvotes.some(u => u.post_id === p.id && u.user_id === uid),
+          })).sort((a, b) => Number(!!b.is_pinned) - Number(!!a.is_pinned) ||
+            (ordering === 'popular' ? b.upvote_count - a.upvote_count : 0) ||
+            (ordering === 'oldest' ? 1 : -1) * String(a.created_at).localeCompare(String(b.created_at)) || String(a.id).localeCompare(String(b.id)));
+          const start = Number(body.page_number ?? 0) * Number(body.page_size ?? 10);
+          return respond({ rows: posts.slice(start, start + Number(body.page_size ?? 10)), total: posts.length });
+        }
         if (fn === "send_live_signal") {
           const payload = {
             ...(body.signal_payload as Row),
@@ -485,6 +501,7 @@ export class Backend {
             ].includes(key)
           )
             return true;
+          if (key === 'live_classes.course_id') return this.rows.live_classes.some(l => l.id === r.live_class_id && String(l.course_id) === value.slice(3));
           if (value === "is.null") return r[key] == null;
           if (value.startsWith("gt.")) return String(r[key]) > value.slice(3);
           if (value.startsWith("eq.")) return String(r[key]) === value.slice(3);
@@ -570,8 +587,8 @@ export class Backend {
       const select = url.searchParams.get("select") || "*";
       let result = filtered.map((r) => this.join(table, r, select));
       const total = result.length;
-      if (url.searchParams.has("limit"))
-        result = result.slice(0, Number(url.searchParams.get("limit")));
+      const offset = Number(url.searchParams.get('offset') ?? 0);
+      result = result.slice(offset, url.searchParams.has('limit') ? offset + Number(url.searchParams.get('limit')) : undefined);
       const single = request
         .headers()
         .accept?.includes("vnd.pgrst.object+json");
@@ -598,7 +615,16 @@ export const test = base.extend<{ backend: Backend; browserErrors: string[] }>({
       page.on("console", (m) => {
         if (m.type() === "error") {
           events.push({ kind: "console-error", detail: m.text() });
-          if (!m.text().includes("status of 4")) errors.push(m.text());
+          // Chrome also emits a console entry for HTTP failures. Accept only
+          // the exact endpoint/status deliberately declared by this fixture.
+          const httpFailure = /^Failed to load resource: the server responded with a status of (\d{3}) \([^)]+\)$/.exec(m.text());
+          const expectedFailure = httpFailure && backend.expectedHttp.some(({ path, status }) => {
+            try {
+              return new URL(m.location().url).pathname.endsWith(path) &&
+                Number(httpFailure[1]) === status;
+            } catch { return false; }
+          });
+          if (!m.text().includes("status of 4") && !expectedFailure) errors.push(m.text());
         }
       });
       page.on("response", (r) => {

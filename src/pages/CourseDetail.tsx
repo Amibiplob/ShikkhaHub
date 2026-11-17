@@ -1,3 +1,4 @@
+import CourseRecordings from "@/features/live-classes/CourseRecordings";
 import { nextLearningLesson } from "@/features/learning/lesson-navigation";
 import LessonBookmark from "@/features/courses/components/LessonBookmark";
 import CourseSettings from "@/features/courses/components/CourseSettings";
@@ -8,10 +9,8 @@ import type {
   Lesson,
   LiveSession,
   Assignment,
-  Recording,
 } from "@/types/models";
 const LessonArticle = lazy(() => import("@/features/learning/LessonArticle"));
-import { privateFileUrl } from "@/lib/storage";
 import PrivateFileLink from "@/components/shared/PrivateFileLink";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -70,7 +69,6 @@ import {
   Plus,
   Video,
   Download,
-  Film,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -86,7 +84,7 @@ const CourseDetailContent = () => {
   useEffect(() => {
     requestedLessonRef.current = requestedLesson;
   }, [requestedLesson]);
-  const [course, setCourse] = useState<Course>(null);
+  const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [enrolled, setEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -96,24 +94,17 @@ const CourseDetailContent = () => {
   const [enrolling, setEnrolling] = useState(false);
   const [savingProgress, setSavingProgress] = useState(false);
   const progressLocked = useRef(false);
-  const [video, setVideo] = useState<{ path: string; url: string } | null>(
-    null,
-  );
-  const [resumeLesson, setActiveLesson] = useState<Lesson>(null);
+  const enrollmentLock = useRef(false);
+  const assignmentLock = useRef(false);
+  const [resumeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const activeLesson =
     modules
       .flatMap((m) => m.lessons || [])
       .find((l) => l.id === requestedLesson) || resumeLesson;
-  const videoUrl =
-    video && video.path === activeLesson?.video_url ? video.url : null;
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [liveClasses, setLiveClasses] = useState<LiveSession[]>([]);
-  const [recordings, setRecordings] = useState<Recording[]>([]);
-  const [expandedRecording, setExpandedRecording] = useState<string | null>(
-    null,
-  );
-  const [selectedLiveClass, setSelectedLiveClass] = useState<LiveSession>(null);
+  const [selectedLiveClass, setSelectedLiveClass] = useState<LiveSession | null>(null);
   const [createAssignOpen, setCreateAssignOpen] = useState(false);
   const [creatingAssign, setCreatingAssign] = useState(false);
   const [assignTitle, setAssignTitle] = useState("");
@@ -125,7 +116,7 @@ const CourseDetailContent = () => {
     if (!id) return;
     let active = true;
     const fetch = async () => {
-      const [courseRes, modulesRes, assignRes, liveRes, recRes] =
+      const [courseRes, modulesRes, assignRes, liveRes] =
         await Promise.all([
           supabase
             .from("courses")
@@ -147,23 +138,14 @@ const CourseDetailContent = () => {
             .select("*")
             .eq("course_id", id)
             .order("scheduled_at", { ascending: false }),
-          supabase
-            .from("class_recordings")
-            .select(
-              "*, live_classes!class_recordings_live_class_id_fkey(course_id)",
-            )
-            .order("created_at", { ascending: false }),
         ]);
       if (!active) return;
-      for (const result of [courseRes, modulesRes, assignRes, liveRes, recRes])
+      for (const result of [courseRes, modulesRes, assignRes, liveRes])
         if (result.error) throw result.error;
       setLoadError(false);
       setCourse(courseRes.data);
       setAssignments(assignRes.data || []);
       setLiveClasses(liveRes.data || []);
-      // Filter recordings for this course
-      const allRecs = recRes.data || [];
-      setRecordings(allRecs.filter((r) => r.live_classes?.course_id === id));
       const mods = modulesRes.data || [];
       mods.forEach((m) =>
         m.lessons?.sort((a, b) => a.sort_order - b.sort_order),
@@ -222,22 +204,6 @@ const CourseDetailContent = () => {
     };
   }, [id, user, revision]);
 
-  useEffect(() => {
-    let active = true;
-    const path = activeLesson?.video_url;
-    if (path)
-      privateFileUrl("lesson-files", path)
-        .then((url) => {
-          if (active) setVideo({ path, url });
-        })
-        .catch(() => {
-          if (active) toast.error("Could not load this video");
-        });
-    return () => {
-      active = false;
-    };
-  }, [activeLesson?.video_url]);
-
   const selectLesson = (lesson: Lesson) => {
     if (!lesson) return;
     setActiveLesson(lesson);
@@ -249,11 +215,14 @@ const CourseDetailContent = () => {
 
   const handleEnroll = async () => {
     if (!user) return navigate("/auth", { state: { from: `/courses/${id}` } });
-    if (course?.price_bdt > 0) {
+    if (!course || enrollmentLock.current) return;
+    if (course.price_bdt > 0) {
       toast.info("Paid enrollment is not available yet");
       return;
     }
+    enrollmentLock.current = true;
     setEnrolling(true);
+    try {
     const { error } = await supabase
       .from("enrollments")
       .insert({ user_id: user.id, course_id: id! });
@@ -264,7 +233,8 @@ const CourseDetailContent = () => {
       toast.success("Enrolled successfully!");
       checkAndAwardBadges(user.id);
     }
-    setEnrolling(false);
+    } catch { toast.error("Could not enroll. Check your connection and retry."); }
+    finally { enrollmentLock.current = false; setEnrolling(false); }
   };
 
   const toggleComplete = async (lessonId: string) => {
@@ -325,17 +295,21 @@ const CourseDetailContent = () => {
 
   const handleCreateAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !id) return;
+    if (!user || !id || assignmentLock.current) return;
+    const marks = Number(assignMarks);
+    if (!assignTitle.trim() || !Number.isInteger(marks) || marks <= 0) { toast.error("Enter a title and positive whole-number maximum marks"); return; }
+    assignmentLock.current = true;
     setCreatingAssign(true);
+    try {
     const { data, error } = await supabase
       .from("assignments")
       .insert({
         course_id: id,
         teacher_id: user.id,
-        title: assignTitle,
+        title: assignTitle.trim(),
         description: assignDesc || null,
         due_date: assignDue ? new Date(assignDue).toISOString() : null,
-        max_marks: parseInt(assignMarks) || 100,
+        max_marks: marks,
       })
       .select()
       .single();
@@ -349,7 +323,8 @@ const CourseDetailContent = () => {
       setAssignDue("");
       setAssignMarks("100");
     }
-    setCreatingAssign(false);
+    } catch { toast.error("Could not create the assignment. Please retry."); }
+    finally { assignmentLock.current = false; setCreatingAssign(false); }
   };
 
   const lessons = modules.flatMap((m) => m.lessons || []);
@@ -487,7 +462,7 @@ const CourseDetailContent = () => {
                     : await supabase
                         .from("courses")
                         .update({ is_published: false })
-                        .eq("id", id);
+                        .eq("id", course.id);
                   if (error) toast.error(error.message);
                   else {
                     setCourse({
@@ -705,9 +680,9 @@ const CourseDetailContent = () => {
                   </nav>
                   {activeLesson.type === "video" && activeLesson.video_url && (
                     <div className="mb-6 aspect-video overflow-hidden rounded-lg bg-muted">
-                      <video
-                        src={videoUrl || undefined}
-                        controls
+                      <PrivateVideo
+                        bucket="lesson-files"
+                        path={activeLesson.video_url ?? ''}
                         className="h-full w-full"
                       />
                     </div>
@@ -796,81 +771,7 @@ const CourseDetailContent = () => {
             )}
           </div>
 
-          {/* Class Recordings Section */}
-          {recordings.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold flex items-center gap-2 mb-4">
-                <Film className="h-5 w-5 text-primary" /> Class Recordings (
-                {recordings.length})
-              </h3>
-              <div className="space-y-3">
-                {recordings.map((rec) => {
-                  const isExpanded = expandedRecording === rec.id;
-                  return (
-                    <div
-                      key={rec.id}
-                      className="rounded-xl border border-border bg-card p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <div className="rounded-lg bg-primary/10 p-2.5">
-                            <Film className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{rec.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {format(
-                                new Date(rec.created_at),
-                                "MMM d, yyyy 'at' h:mm a",
-                              )}
-                              {rec.duration_seconds &&
-                                ` • ${Math.floor(rec.duration_seconds / 60)} min`}
-                              {rec.file_size &&
-                                ` • ${(rec.file_size / (1024 * 1024)).toFixed(1)} MB`}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <PrivateFileLink
-                            bucket="class-recordings"
-                            path={rec.file_url}
-                          >
-                            Download recording
-                          </PrivateFileLink>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1.5"
-                            aria-expanded={isExpanded}
-                            aria-controls={`recording-${rec.id}`}
-                            onClick={() =>
-                              setExpandedRecording(isExpanded ? null : rec.id)
-                            }
-                          >
-                            <PlayCircle className="h-3.5 w-3.5" />{" "}
-                            {isExpanded ? "Collapse" : "Watch"}
-                          </Button>
-                        </div>
-                      </div>
-                      {isExpanded && (
-                        <div
-                          id={`recording-${rec.id}`}
-                          className="mt-3 aspect-video rounded-lg overflow-hidden bg-black"
-                        >
-                          <PrivateVideo
-                            bucket="class-recordings"
-                            path={rec.file_url}
-                            autoPlay
-                            className="h-full w-full"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <CourseRecordings courseId={course.id} />
 
           {/* Assignments Section */}
           <div className="mt-8">

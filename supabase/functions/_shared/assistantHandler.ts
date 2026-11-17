@@ -9,6 +9,7 @@ type AssistantDependencies = {
   authorize: (authorization: string) => Promise<boolean>;
   courseContext: (authorization: string, courseId: string) => Promise<string | null>;
   fetch?: typeof fetch;
+  consumeQuota?: (authorization: string) => Promise<boolean>;
 };
 
 /** Provider configuration is server-owned; context reads must use the caller's JWT. */
@@ -43,6 +44,7 @@ export function assistantHandler(deps: AssistantDependencies) {
       } catch { return fail(503, "AI assistant is not configured"); }
       const context = await deps.courseContext(authorization, courseId);
       if (context === null) return fail(403, "Course unavailable");
+      if (deps.consumeQuota && !await deps.consumeQuota(authorization)) return fail(429, "Request limit reached. Try again next minute.");
       const response = await (deps.fetch || fetch)(endpoint, {
         method: "POST",
         redirect: "error",

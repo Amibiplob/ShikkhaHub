@@ -20,7 +20,8 @@
     "supabase/functions/_shared/*.ts",
     "supabase/functions/certificate-pdf/*.ts",
     "supabase/functions/support-contact/*.ts",
-    "supabase/functions/course-assistant/*.ts"
+    "supabase/functions/course-assistant/*.ts",
+    "supabase/functions/live-ice/*.ts"
   ],
   "exclude": [
     "**/*.test.ts"

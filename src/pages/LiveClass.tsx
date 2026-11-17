@@ -14,26 +14,27 @@ export default function LiveClass() {
   const { lang } = useLanguage();
   const [result, setResult] = useState<{
     room: string;
-    session: LiveSession;
+    session: LiveSession | null;
     teacherName?: string;
   } | null>(null);
   useEffect(() => {
+    if (!roomName) return;
     let active = true;
-    void supabase
+    void Promise.resolve(supabase
       .from("live_classes")
       .select("*, courses(title)")
       .eq("room_name", roomName)
-      .single()
+      .single())
       .then(async ({ data }) => {
         if (!active) return;
         const teacher = data ? await supabase.from("profiles").select("full_name").eq("user_id", data.teacher_id).maybeSingle() : null;
         if (active) setResult({ room: roomName, session: data, teacherName: teacher?.data?.full_name || undefined });
-      });
+      }).catch(() => { if (active) setResult({ room: roomName, session: null }); });
     return () => {
       active = false;
     };
   }, [roomName]);
-  if (result?.room !== roomName)
+  if (!roomName || !result || result.room !== roomName)
     return (
       <div className="flex min-h-dvh items-center justify-center">
         <Loader2

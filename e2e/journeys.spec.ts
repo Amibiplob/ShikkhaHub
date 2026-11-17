@@ -98,7 +98,8 @@ test("student enrolls, reads Markdown, persists progress, quiz and bookmarks, di
     page.getByRole("heading", { name: "Learn safely" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Mark Lesson Complete" }).click();
-  await expect(page.getByText("100% complete")).toBeVisible();
+  await expect(page.getByText("100% of lessons complete", { exact: true })).toBeVisible();
+  await expect(page.getByRole("progressbar", { name: "lessons completed" })).toHaveAttribute("aria-valuenow", "100");
   await page.reload();
   await expect(
     page.getByRole("button", { name: "Completed", exact: true }),
@@ -384,21 +385,21 @@ test("administrator searches users, changes role, reviews teacher request and mo
   ).toBeVisible();
   await page.getByRole("tab", { name: "Community", exact: true }).click();
   await expect(
-    page.getByText("Welcome discussion", { exact: true }),
+    page.getByRole("cell", { name: "Welcome discussion", exact: true }),
   ).toBeVisible();
 });
-for (const role of ["student", "teacher", "admin"] as const)
-  test(`${role} main routes at mobile and tablet widths`, async ({
-    page,
-    backend,
-  }, info) => {
-    backend.rows.enrollments.push({
-      id: "test-enroll",
-      user_id: users.student.id,
-      course_id: C,
-    });
-    await login(page, backend, role);
-    for (const width of [375, 768]) {
+for (const role of ["student", "teacher", "admin"] as const) {
+  for (const width of [375, 768]) {
+    test(`${role} main routes at ${width}px`, async ({
+      page,
+      backend,
+    }, info) => {
+      backend.rows.enrollments.push({
+        id: "test-enroll",
+        user_id: users.student.id,
+        course_id: C,
+      });
+      await login(page, backend, role);
       await page.setViewportSize({ width, height: 1000 });
       for (const path of [
         "/dashboard",
@@ -418,12 +419,13 @@ for (const role of ["student", "teacher", "admin"] as const)
           )
           .toBeLessThanOrEqual(1);
       }
-    }
-    await page.screenshot({
-      path: info.outputPath(`${role}-mobile.png`),
-      fullPage: true,
+      await page.screenshot({
+        path: info.outputPath(`${role}-${width}.png`),
+        fullPage: true,
+      });
     });
-  });
+  }
+}
 test("theme, Bangla team section and keyboard navigation", async ({
   page,
   backend,

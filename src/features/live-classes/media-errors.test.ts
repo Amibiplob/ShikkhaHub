@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mediaError } from "./useWebRTCBroadcast";
+import { mediaError } from "./media-errors";
 
 describe("media recovery messages", () => {
   it.each([

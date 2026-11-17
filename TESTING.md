@@ -1,6 +1,8 @@
 # ShikkhaHub testing
 
-Latest classroom verification: **29 October 2026, Asia/Dhaka**; see the classroom section below. The **27 October 2026** results in the following historical sections describe their own snapshots. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
+Current implementation review: [16–17 November reliability changes and verification](docs/RELIABILITY_REVIEW.md); [database / Edge / TURN rollout](docs/RELIABILITY_ROLLOUT.md). Earlier counts below describe their dated snapshots. Keep source, configuration and documentation files frozen while the development-server browser suite runs: Tailwind/Vite watches Markdown too and can reload a page, resetting forms or meetings. The reliability report retains the full-batch failures and unchanged focused repetitions separately.
+
+Historical classroom verification: **29 October 2026, Asia/Dhaka**; see the classroom section below. The **27 October 2026** results in the following historical sections describe their own snapshots. Current modernization results are recorded in [the verification report](docs/MODERNIZATION_VERIFICATION.md) and [`docs/modernization-verification.json`](docs/modernization-verification.json), with historical phases retained in `docs/verification.json`. Coverage percentages describe imported files only.
 
 ## Device-free joining and simpler controls — verified 29 October 2026
 
@@ -17,7 +19,7 @@ Baseline: clean `4bdb3be`. Device capture previously ran before admission and re
 | Complete installed Chrome suite | **102 passed, zero failed/skipped/flaky**, one worker |
 | Final Chrome regressions after cleanup refinement | **6/6 passed**, one new case and five repeats |
 | Earlier targeted recording/replacement recheck | **3/3 passed**, additional executions |
-| Current `npm audit` | **0 known vulnerabilities**, dependencies unchanged |
+| `npm audit` at this historical snapshot | **0 known vulnerabilities**, dependencies unchanged |
 | Git whitespace / final staged secret scan | Passed before local commit |
 
 There are 26 new browser cases: 25 included in the full 102-case run, plus a final admission-failure regression checked separately after that run. Eight cases check teacher/student at 320/375/768/1440px, with light at 375px and dark at other widths. They assert native denied permissions, zero application capture calls/tracks, friendly missing-device text, enabled Join, chat, normal exit, visible controls and no horizontal overflow. Chrome's separate zero-device factory launch and absent-input contract exercise the original regression. Actual RTP sender states cover audio-only/video-only/both, mute/off, late attachment/removal and source-isolated permission/busy/constraint failures. A pending preview can be abandoned by joining; declining consent requests no device. Existing Bangla, keyboard, relay, tab-return, recording recovery/upload/retry, private access, certificate and other learning journeys remain in the full run.

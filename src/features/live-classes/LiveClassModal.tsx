@@ -14,7 +14,7 @@ import { Video, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
 interface LiveClassModalProps {
-  liveClass: LiveSession;
+  liveClass: LiveSession | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusChange?: (id: string, status: string) => void;

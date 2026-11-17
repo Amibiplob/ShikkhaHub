@@ -4,6 +4,11 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  envDir: false,
+  define: {
+    "import.meta.env.VITE_SUPABASE_URL": JSON.stringify("http://127.0.0.1:54321"),
+    "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify("isolated-ci-public-key"),
+  },
   test: {
     environment: "jsdom",
     globals: true,

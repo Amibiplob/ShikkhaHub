@@ -109,12 +109,13 @@ const NotificationBell = () => {
   };
 
   const markRead = async (id: string) => {
+    if (!user) return false;
     setSaving(true);
     const { error } = await supabase
       .from("notifications")
       .update({ is_read: true })
       .eq("id", id)
-      .eq("user_id", user?.id);
+      .eq("user_id", user.id);
     setSaving(false);
     if (error) {
       setError("Could not mark this notification as read. Try again.");

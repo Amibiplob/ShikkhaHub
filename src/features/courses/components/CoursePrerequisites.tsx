@@ -1,6 +1,6 @@
 import type { Tables } from "@/integrations/supabase/types";
 import type { Course } from "@/types/models";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/useAuth";
@@ -23,38 +23,52 @@ const CoursePrerequisites = ({ courseId, isTeacher }: CoursePrerequisitesProps) 
   const [selectedCourse, setSelectedCourse] = useState("");
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const requestId = useRef(0);
 
   const fetchData = useCallback(async () => {
-    const { data: prereqs } = await supabase
+    const request = ++requestId.current;
+    const { data: prereqs, error: prerequisiteError } = await supabase
       .from("course_prerequisites")
       .select("*, courses!course_prerequisites_prerequisite_course_id_fkey(id, title)")
       .eq("course_id", courseId);
+    if (request !== requestId.current) return;
+    if (prerequisiteError) throw prerequisiteError;
     setPrerequisites(prereqs || []);
 
     if (isTeacher) {
-      const { data: courses } = await supabase.from("courses").select("id, title").eq("teacher_id", user?.id || "").neq("id", courseId);
+      const { data: courses, error } = await supabase.from("courses").select("id, title").eq("teacher_id", user?.id || "").neq("id", courseId);
+      if (request !== requestId.current) return;
+      if (error) throw error;
       setAllCourses(courses || []);
     }
 
     // Check which prerequisites user completed
     if (user && prereqs && prereqs.length > 0) {
       const prereqIds = prereqs.map((p) => p.prerequisite_course_id);
-      const { data: enrollments } = await supabase
-        .from("certificates").select("course_id").eq("user_id", user.id).in("course_id", prereqIds);
+      const { data: enrollments, error } = await supabase
+        .from("certificates").select("course_id").eq("user_id", user.id).in("course_id", prereqIds).not("validated_at", "is", null).is("revoked_at", null);
+      if (request !== requestId.current) return;
+      if (error) throw error;
       // A verified completion record is required; enrollment alone is not completion.
-      const completed = new Set(enrollments?.map((e) => e.course_id) || []);
+      const completed = new Set(enrollments?.flatMap((e) => e.course_id ? [e.course_id] : []) || []);
       setCompletedCourseIds(completed);
     }
+    if (request !== requestId.current) return;
+    setLoadError(false);
     setLoading(false);
   }, [courseId, user, isTeacher]);
 
   useEffect(() => {
-    void (async () => { await fetchData(); })();
+    const request = requestId;
+    void (async () => { try { await fetchData(); } catch { setLoadError(true); setLoading(false); } })();
+    return () => { request.current++; };
   }, [fetchData]);
 
   const handleAdd = async () => {
-    if (!selectedCourse) return;
+    if (!selectedCourse || adding) return;
     setAdding(true);
+    try {
     const { data, error } = await supabase.from("course_prerequisites").insert({
       course_id: courseId,
       prerequisite_course_id: selectedCourse,
@@ -65,15 +79,20 @@ const CoursePrerequisites = ({ courseId, isTeacher }: CoursePrerequisitesProps) 
       setSelectedCourse("");
       toast.success("Prerequisite added");
     }
-    setAdding(false);
+    } catch { toast.error("Could not add prerequisite. Please retry."); }
+    finally { setAdding(false); }
   };
 
   const handleRemove = async (id: string) => {
-    await supabase.from("course_prerequisites").delete().eq("id", id);
+    try {
+    const { error } = await supabase.from("course_prerequisites").delete().eq("id", id);
+    if (error) { toast.error("Could not remove prerequisite. Please retry."); return; }
     setPrerequisites((prev) => prev.filter((p) => p.id !== id));
     toast.success("Prerequisite removed");
+    } catch { toast.error("Could not remove prerequisite. Please retry."); }
   };
 
+  if (loadError) return <div role="alert">Could not load prerequisites. <Button variant="outline" onClick={() => void fetchData().catch(() => setLoadError(true))}>Retry prerequisites</Button></div>;
   if (loading) return null;
   if (prerequisites.length === 0 && !isTeacher) return null;
 
@@ -102,7 +121,7 @@ const CoursePrerequisites = ({ courseId, isTeacher }: CoursePrerequisitesProps) 
                     <Badge variant="outline" className="text-xs">Required</Badge>
                   )}
                   {isTeacher && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemove(p.id)}>
+                    <Button aria-label="Remove prerequisite" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemove(p.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   )}

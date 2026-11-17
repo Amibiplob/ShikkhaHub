@@ -106,3 +106,12 @@ describe("server certificate PDF", () => {
     expect(response.headers.get("Content-Type")).toBe("application/pdf");
   });
 });
+
+it('rejects exhausted PDF quotas before reading fonts or generating a PDF', async () => {
+  const handler = certificateHandler({ origins: [], publicOrigin: 'https://app.example.test',
+    readRecord: async () => record, consumeQuota: async () => false,
+    fonts: async () => { throw new Error('Must not load fonts after quota denial'); },
+  });
+  const response = await handler(new Request('https://edge.example.test', { method: 'POST', headers: { authorization: 'Bearer owner-session' }, body: JSON.stringify({ certificate_id: record.id }) }));
+  expect(response.status).toBe(429);
+});

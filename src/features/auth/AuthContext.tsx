@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { useCallback, useEffect, useState, ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext, type AppRole, type AuthContextType } from "./auth-context";
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ user, session, loading, roles, profile, signOut, hasRole }}>
-      {children}
+      <Fragment key={user?.id ?? "guest"}>{children}</Fragment>
     </AuthContext.Provider>
   );
 };

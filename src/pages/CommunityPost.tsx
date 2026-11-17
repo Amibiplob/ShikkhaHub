@@ -1,5 +1,6 @@
+import { readAllRows } from '@/lib/read-all-rows';
 import type { Post } from "@/types/models";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/useAuth";
@@ -55,13 +56,19 @@ const buildTree = (flat: Omit<Comment, 'replies'>[]): Comment[] => {
 const countComments = (nodes: Comment[]): number =>
   nodes.reduce((acc, n) => acc + 1 + countComments(n.replies), 0);
 
-const CommunityPost = () => {
+const CommunityPostContent = () => {
   const { id } = useParams<{ id: string }>();
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
-  const [post, setPost] = useState<Post>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const commentsRequest = useRef(0);
+  const submitLock = useRef(false);
+  const voteLocks = useRef(new Set<string>());
+  const [pendingVotes, setPendingVotes] = useState<Set<string>>(new Set());
   const [comment, setComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
@@ -72,34 +79,27 @@ const CommunityPost = () => {
   const [commentUpvoteCounts, setCommentUpvoteCounts] = useState<Record<string, number>>({});
 
   const isAdmin = hasRole("admin");
+  const viewerId = user?.id;
 
   const loadComments = useCallback(async (postId: string) => {
-    const { data } = await supabase
-      .from("community_comments")
-      .select("*, profiles!community_comments_user_id_profiles_fkey(full_name, avatar_url)")
-      .eq("post_id", postId)
-      .order("created_at");
-    const flat = data || [];
-    setComments(buildTree(flat));
-
-    const commentIds = flat.map((c) => c.id);
-    if (commentIds.length > 0) {
-      const { data: cUpvotes } = await supabase.from("community_upvotes").select("*").in("comment_id", commentIds);
-      const counts: Record<string, number> = {};
-      const userUpvoted = new Set<string>();
-      cUpvotes?.forEach((u) => {
-        if (u.comment_id) {
-          counts[u.comment_id] = (counts[u.comment_id] || 0) + 1;
-          if (user && u.user_id === user.id) userUpvoted.add(u.comment_id);
-        }
-      });
-      setCommentUpvoteCounts(counts);
-      setCommentUpvotes(userUpvoted);
-    } else {
-      setCommentUpvoteCounts({});
-      setCommentUpvotes(new Set());
+    const request = ++commentsRequest.current;
+    const { data: flat } = await readAllRows(supabase.from("community_comments")
+      .select("*, profiles!community_comments_user_id_profiles_fkey(full_name, avatar_url)", { count: "exact" })
+      .eq("post_id", postId).order("created_at"));
+    const ids = flat.map(c => c.id);
+    const { data: votes } = ids.length ? await readAllRows(supabase.from("community_upvotes")
+      .select("comment_id,user_id", { count: "exact" }).in("comment_id", ids)) : { data: [] };
+    if (request !== commentsRequest.current) return;
+    const counts: Record<string, number> = {};
+    const mine = new Set<string>();
+    for (const vote of votes) if (vote.comment_id) {
+      counts[vote.comment_id] = (counts[vote.comment_id] ?? 0) + 1;
+      if (vote.user_id === viewerId) mine.add(vote.comment_id);
     }
-  }, [user]);
+    setComments(buildTree(flat));
+    setCommentUpvoteCounts(counts);
+    setCommentUpvotes(mine);
+  }, [viewerId]);
 
   useEffect(() => {
     if (!id) return;
@@ -112,10 +112,11 @@ const CommunityPost = () => {
           .select("*, profiles!community_posts_user_id_profiles_fkey(full_name, avatar_url)")
           .eq("id", id)
           .maybeSingle(),
-        supabase.from("community_upvotes").select("*").eq("post_id", id),
+        readAllRows(supabase.from("community_upvotes").select("user_id", { count: "exact" }).eq("post_id", id)),
       ]);
       if (cancelled) return;
-
+      if (postRes.error) throw postRes.error;
+      setLoadError(false);
       setPost(postRes.data);
       setUpvoteCount(upvotesRes.data?.length || 0);
       setUpvoted(!!user && !!upvotesRes.data?.find((u) => u.user_id === user.id));
@@ -123,26 +124,32 @@ const CommunityPost = () => {
       await loadComments(id);
       if (!cancelled) setLoading(false);
     };
-    fetchAll();
-    return () => { cancelled = true; };
-  }, [id, user, loadComments]);
+    const request = commentsRequest;
+    void fetchAll().catch(() => { if (!cancelled) { setLoadError(true); setLoading(false); } });
+    return () => { cancelled = true; request.current++; };
+  }, [id, user, loadComments, revision]);
 
   const togglePostUpvote = async () => {
     if (!user) {
       toast.error("Please sign in to upvote");
       return navigate("/auth");
     }
+    if (voteLocks.current.has("post")) return;
+    voteLocks.current.add("post");
+    setPendingVotes(new Set(voteLocks.current));
     const was = upvoted;
     setUpvoted(!was);
     setUpvoteCount((c) => Math.max(0, c + (was ? -1 : 1)));
+    try {
     const { error } = was
       ? await supabase.from("community_upvotes").delete().eq("user_id", user.id).eq("post_id", id!)
       : await supabase.from("community_upvotes").insert({ user_id: user.id, post_id: id });
-    if (error) {
+    if (error) throw error;
+    } catch {
       setUpvoted(was);
       setUpvoteCount((c) => Math.max(0, c + (was ? 1 : -1)));
       toast.error("Could not update your vote");
-    }
+    } finally { voteLocks.current.delete("post"); setPendingVotes(new Set(voteLocks.current)); }
   };
 
   const toggleCommentUpvote = async (commentId: string) => {
@@ -150,6 +157,9 @@ const CommunityPost = () => {
       toast.error("Please sign in to upvote");
       return navigate("/auth");
     }
+    if (voteLocks.current.has(commentId)) return;
+    voteLocks.current.add(commentId);
+    setPendingVotes(new Set(voteLocks.current));
     const was = commentUpvotes.has(commentId);
     setCommentUpvotes((prev) => {
       const n = new Set(prev);
@@ -158,11 +168,13 @@ const CommunityPost = () => {
     });
     setCommentUpvoteCounts((prev) => ({ ...prev, [commentId]: Math.max(0, (prev[commentId] || 0) + (was ? -1 : 1)) }));
 
+    try {
     const { error } = was
       ? await supabase.from("community_upvotes").delete().eq("user_id", user.id).eq("comment_id", commentId)
       : await supabase.from("community_upvotes").insert({ user_id: user.id, comment_id: commentId });
 
-    if (error) {
+    if (error) throw error;
+    } catch {
       setCommentUpvotes((prev) => {
         const n = new Set(prev);
         if (was) n.add(commentId); else n.delete(commentId);
@@ -170,70 +182,51 @@ const CommunityPost = () => {
       });
       setCommentUpvoteCounts((prev) => ({ ...prev, [commentId]: Math.max(0, (prev[commentId] || 0) + (was ? 1 : -1)) }));
       toast.error("Could not update your vote");
-    }
+    } finally { voteLocks.current.delete(commentId); setPendingVotes(new Set(voteLocks.current)); }
   };
 
-  const handleComment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveComment = async (content: string, parentId?: string) => {
     if (!user) return navigate("/auth");
-    if (!comment.trim()) {
-      toast.error("Write something first");
-      return;
-    }
+    if (!content.trim()) { toast.error("Write something first"); return; }
+    if (submitLock.current) return;
+    submitLock.current = true;
     setSubmitting(true);
-    const { error } = await supabase.from("community_comments").insert({
-      post_id: id!,
-      user_id: user.id,
-      content: comment.trim(),
-    });
-    if (error) toast.error(error.message);
-    else {
-      setComment("");
-      await loadComments(id!);
-    }
-    setSubmitting(false);
+    try {
+      const { error } = await supabase.from("community_comments").insert({
+        post_id: id!, user_id: user.id, content: content.trim(), ...(parentId ? { parent_id: parentId } : {}),
+      });
+      if (error) throw error;
+      if (parentId) { setReplyTo(null); setReplyContent(""); } else setComment("");
+      try { await loadComments(id!); }
+      catch { setLoadError(true); toast.error("Comment saved, but the discussion could not refresh. Reload it before posting again."); }
+    } catch { toast.error("Could not save your comment. Check your connection."); }
+    finally { submitLock.current = false; setSubmitting(false); }
   };
-
-  const handleReply = async (parentId: string) => {
-    if (!user) return navigate("/auth");
-    if (!replyContent.trim()) {
-      toast.error("Write something first");
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await supabase.from("community_comments").insert({
-      post_id: id!,
-      user_id: user.id,
-      content: replyContent.trim(),
-      parent_id: parentId,
-    });
-    if (error) toast.error(error.message);
-    else {
-      setReplyTo(null);
-      setReplyContent("");
-      await loadComments(id!);
-    }
-    setSubmitting(false);
-  };
+  const handleComment = (event: React.FormEvent) => { event.preventDefault(); void saveComment(comment); };
+  const handleReply = (parentId: string) => saveComment(replyContent, parentId);
 
   const deleteComment = async (commentId: string) => {
     if (!confirm("Delete this comment?")) return;
+    try {
     const { error } = await supabase.from("community_comments").delete().eq("id", commentId);
     if (error) toast.error(error.message);
     else {
       toast.success("Comment deleted");
-      await loadComments(id!);
+      await loadComments(id!).catch(() => setLoadError(true));
     }
+    } catch { toast.error("Could not complete the deletion. Check your connection and retry."); }
   };
 
   const deletePost = async () => {
     if (!confirm("Delete this post? This cannot be undone.")) return;
+    try {
     const { error } = await supabase.from("community_posts").delete().eq("id", id!);
     if (error) toast.error(error.message);
     else {
       toast.success("Post deleted");
       navigate("/community");
     }
+    } catch { toast.error("Could not complete the deletion. Check your connection and retry."); }
   };
 
   const getInitials = (name: string | null) => name?.split(" ").map((n) => n[0]).join("").toUpperCase() || "U";
@@ -241,6 +234,8 @@ const CommunityPost = () => {
   if (loading) return (
     <div className="min-h-screen flex flex-col"><Header /><div className="flex flex-1 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></div>
   );
+
+  if (loadError) return <div className="min-h-screen"><Header /><main role="alert" className="p-8">Could not load the discussion. <Button variant="outline" onClick={() => setRevision(r => r + 1)}>Retry discussion</Button></main><Footer /></div>;
 
   if (!post) return (
     <div className="min-h-screen flex flex-col">
@@ -283,7 +278,7 @@ const CommunityPost = () => {
           <div className="mt-2 flex items-center gap-3">
             <button
               type="button"
-              onClick={() => toggleCommentUpvote(c.id)}
+              disabled={pendingVotes.has(c.id)} onClick={() => toggleCommentUpvote(c.id)}
               className={`flex items-center gap-1 text-xs transition-colors ${commentUpvotes.has(c.id) ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
             >
               <ArrowBigUp className={`h-4 w-4 ${commentUpvotes.has(c.id) ? "fill-primary" : ""}`} />
@@ -332,7 +327,7 @@ const CommunityPost = () => {
         <div className="rounded-xl border border-border bg-card p-6">
           <div className="flex gap-4">
             <div className="flex flex-col items-center gap-1">
-              <button type="button" aria-label="Upvote post" onClick={togglePostUpvote} className={`rounded-md p-1 transition-colors ${upvoted ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+              <button type="button" aria-label="Upvote post" disabled={pendingVotes.has("post")} onClick={togglePostUpvote} className={`rounded-md p-1 transition-colors ${upvoted ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
                 <ArrowBigUp className={`h-7 w-7 ${upvoted ? "fill-primary" : ""}`} />
               </button>
               <span className={`text-sm font-semibold ${upvoted ? "text-primary" : "text-muted-foreground"}`}>{upvoteCount}</span>
@@ -355,7 +350,7 @@ const CommunityPost = () => {
                 <Avatar className="h-6 w-6">
                   {post.profiles?.avatar_url && <AvatarImage src={post.profiles.avatar_url} alt={post.profiles.full_name || "User"} />}
                   <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                    {getInitials(post.profiles?.full_name)}
+                    {getInitials(post.profiles?.full_name ?? null)}
                   </AvatarFallback>
                 </Avatar>
                 <span>{post.profiles?.full_name || "Anonymous"}</span>
@@ -403,4 +398,7 @@ const CommunityPost = () => {
   );
 };
 
-export default CommunityPost;
+export default function CommunityPost() {
+  const { id } = useParams();
+  return <CommunityPostContent key={id} />;
+}

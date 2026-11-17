@@ -7,6 +7,7 @@ export function certificateHandler(deps: {
     authorization: string,
     id: string,
   ) => Promise<CertificateSnapshot | null>;
+  consumeQuota?: (authorization: string) => Promise<boolean>;
   fonts: () => Promise<{ latin: Uint8Array; bangla: Uint8Array }>;
 }) {
   return async (request: Request) => {
@@ -31,6 +32,8 @@ export function certificateHandler(deps: {
           status: 403,
           headers,
         });
+      if (deps.consumeQuota && !await deps.consumeQuota(authorization))
+        return new Response("Request limit reached. Try again next minute.", { status: 429, headers });
       const bytes = await certificatePdf(
         record,
         deps.publicOrigin,

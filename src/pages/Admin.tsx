@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
+import { useAdminData, type RecordRow } from "@/features/administration/useAdminData";
 import PageShell from "@/components/layout/PageShell";
 import TeacherRequests from "@/features/administration/TeacherRequests";
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,6 @@ import {
 import AdminRecords from "@/features/administration/AdminRecords";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/useAuth";
-type RecordRow = Record<string, Json | undefined>;
-type PageData = { rows: RecordRow[]; total: number };
-type Overview = Record<string, number | { date: string; changes: number }[]>;
 const tabs = [
   "users",
   "courses",
@@ -50,6 +47,8 @@ const labels: Record<string, string> = {
 };
 export default function Admin() {
   const { user } = useAuth();
+  const selectionId = useRef(0);
+  const mutationLock = useRef(false);
   const [params, setParams] = useSearchParams();
   const requestedTab = params.get("tab");
   const kind = tabs.find((tab) => tab === requestedTab) || "users";
@@ -58,11 +57,7 @@ export default function Admin() {
     [state, setState] = useState(""),
     [page, setPage] = useState(0),
     [revision, setRevision] = useState(0);
-  const [overview, setOverview] = useState<Overview | null>(null),
-    [statsError, setStatsError] = useState(""),
-    [data, setData] = useState<PageData>({ rows: [], total: 0 }),
-    [loading, setLoading] = useState(true),
-    [error, setError] = useState("");
+  const { overview, statsError, data, loading, error, setLoading } = useAdminData(kind, query, state, page, revision, params);
   const [selected, setSelected] = useState<{
       row: RecordRow;
       action: string;
@@ -82,73 +77,37 @@ export default function Admin() {
       setLoading(true);
     }, 200);
     return () => clearTimeout(timer);
-  }, [search, query]);
+  }, [search, query, setLoading]);
   const refresh = useCallback(() => {
     setLoading(true);
     setRevision((r) => r + 1);
-  }, []);
-  useEffect(() => {
-    let active = true;
-    supabase.rpc("admin_overview", {}).then(({ data, error }) => {
-      if (active) {
-        if (error) setStatsError("Could not load platform statistics.");
-        else {
-          setStatsError("");
-          setOverview(data as unknown as Overview);
-        }
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [revision]);
-  useEffect(() => {
-    let active = true;
-    supabase
-      .rpc("admin_records", {
-        kind,
-        search: query,
-        state:
-          kind === "users" && params.get("role") === "teacher" && !state
-            ? "teacher"
-            : state,
-        page_offset: page * 10,
-        page_size: 10,
-      })
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) setError("Could not load records. Please try again.");
-        else {
-          setError("");
-          setData(data as unknown as PageData);
-        }
-        setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [kind, query, state, page, revision, params]);
+  }, [setLoading]);
   const choose = async (
     row: RecordRow,
     action: string,
     role?: "admin" | "teacher" | "student",
   ) => {
+    const request = ++selectionId.current;
     setSelected({ row, action, role });
     setReason("");
     setNotes([]);
     setSupportStatus(text(row, "status") || "open");
     if (action === "support") {
+      try {
       const { data, error } = await supabase
         .from("support_notes")
         .select("id,body,created_at")
         .eq("ticket_id", text(row, "id"))
         .order("created_at");
+      if (request !== selectionId.current) return;
       if (error) toast.error("Could not load internal notes");
       else setNotes(data || []);
+      } catch { if (request === selectionId.current) toast.error("Could not load internal notes"); }
     }
   };
   const act = async () => {
-    if (!selected) return;
+    if (!selected || mutationLock.current) return;
+    mutationLock.current = true;
     setBusy(true);
     const { row, action, role } = selected;
     let error: { message: string } | null = null;
@@ -214,6 +173,7 @@ export default function Admin() {
           "Unable to save administrative change",
       );
     } finally {
+      mutationLock.current = false;
       setBusy(false);
     }
   };
@@ -622,7 +582,7 @@ export default function Admin() {
       <Dialog
         open={!!selected}
         onOpenChange={(open) => {
-          if (!open) setSelected(null);
+          if (!open) { selectionId.current++; setSelected(null); }
         }}
       >
         <DialogContent className="max-w-2xl">

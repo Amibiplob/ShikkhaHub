@@ -1,9 +1,9 @@
+import CreateCourseDialog from "@/features/courses/components/CreateCourseDialog";
 import { lazy, Suspense } from "react";
 import type { LiveSession } from "@/types/models";
 import { useEffect, useState } from "react";
 import { Navigate, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/features/auth/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import CourseCard from "@/features/courses/components/CourseCard";
 import { useDashboardData } from "@/features/learning/useDashboardData";
@@ -14,34 +14,16 @@ import ProfileEditor from "@/features/auth/ProfileEditor";
 import LiveClassScheduler from "@/features/live-classes/LiveClassScheduler";
 import LiveClassModal from "@/features/live-classes/LiveClassModal";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart3,
   Bookmark,
   BookOpen,
   GraduationCap,
-  Loader2,
-  Plus,
   Video,
 } from "lucide-react";
-import { toast } from "sonner";
 const TutoringWorkspace = lazy(
   () => import("@/features/tutoring/TutoringWorkspace"),
 );
@@ -87,49 +69,11 @@ const DashboardContent = () => {
     enrolledCourses.find(
       (c) => !certifiedCourses.includes(c.id) && courseProgress[c.id] < 100,
     ) || enrolledCourses.find((c) => !certifiedCourses.includes(c.id));
-  const [createOpen, setCreateOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [selectedLiveClass, setSelectedLiveClass] = useState<LiveSession>(null);
-
-  // Create course form
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [difficulty, setDifficulty] = useState("");
+  const [selectedLiveClass, setSelectedLiveClass] = useState<LiveSession | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [authLoading, user, navigate]);
-
-  const handleCreateCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setCreating(true);
-    const { error } = await supabase
-      .from("courses")
-      .insert({
-        teacher_id: user.id,
-        title,
-        description,
-        category: category || null,
-        difficulty: difficulty || null,
-        is_published: false,
-      })
-      .select()
-      .single();
-
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Course created!");
-      refresh();
-      setCreateOpen(false);
-      setTitle("");
-      setDescription("");
-      setCategory("");
-      setDifficulty("");
-    }
-    setCreating(false);
-  };
 
   if (!authLoading && hasRole("admin") && !searchParams.has("tab"))
     return <Navigate to="/admin" replace />;
@@ -315,83 +259,7 @@ const DashboardContent = () => {
               <TabsContent value="teaching">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-xl font-semibold">Your Courses</h2>
-                  <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
-                        <Plus className="h-4 w-4" /> New Course
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create New Course</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleCreateCourse} className="space-y-4">
-                        <div>
-                          <Label htmlFor="dashboard-field-1">Title</Label>
-                          <Input
-                            id="dashboard-field-1"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="dashboard-field-2">Description</Label>
-                          <Textarea
-                            id="dashboard-field-2"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            rows={3}
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="dashboard-field-3">Category</Label>
-                            <Input
-                              id="dashboard-field-3"
-                              value={category}
-                              onChange={(e) => setCategory(e.target.value)}
-                              placeholder="e.g. Web Development"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="dashboard-select-4">
-                              Difficulty
-                            </Label>
-                            <Select
-                              value={difficulty}
-                              onValueChange={setDifficulty}
-                            >
-                              <SelectTrigger id="dashboard-select-4">
-                                <SelectValue placeholder="Select" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="beginner">
-                                  Beginner
-                                </SelectItem>
-                                <SelectItem value="intermediate">
-                                  Intermediate
-                                </SelectItem>
-                                <SelectItem value="advanced">
-                                  Advanced
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <Button
-                          type="submit"
-                          className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90"
-                          disabled={creating}
-                        >
-                          {creating && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          )}{" "}
-                          Create Course
-                        </Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+                  <CreateCourseDialog onCreated={refresh} />
                 </div>
 
                 {teacherCourses.length === 0 ? (

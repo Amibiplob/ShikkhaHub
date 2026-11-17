@@ -40,7 +40,7 @@ const CourseContentEditor = ({ courseId, isTeacher }: CourseContentEditorProps) 
   const [creatingLesson, setCreatingLesson] = useState(false);
 
   // Edit lesson
-  const [editLesson, setEditLesson] = useState<Lesson>(null);
+  const [editLesson, setEditLesson] = useState<Lesson | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 

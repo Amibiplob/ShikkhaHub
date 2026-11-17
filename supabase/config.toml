@@ -12,3 +12,7 @@ static_files = ["./functions/_shared/fonts/*.ttf", "./functions/_shared/fonts/OF
 [functions.course-assistant]
 verify_jwt = false
 import_map = "./functions/deno.json"
+
+[functions.live-ice]
+verify_jwt = false
+import_map = "./functions/deno.json"

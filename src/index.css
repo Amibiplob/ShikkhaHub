@@ -36,7 +36,7 @@
     --accent: 187 62% 62%;
     --accent-foreground: 194 38% 6%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 72% 47%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 88%;
@@ -59,7 +59,7 @@
     --success-foreground: 0 0% 100%;
     --warning: 32 85% 30%;
     --warning-foreground: 0 0% 100%;
-    --info: 210 100% 52%;
+    --info: 210 100% 40%;
     --info-foreground: 0 0% 100%;
 
     --gradient-primary: linear-gradient(135deg, hsl(173 70% 27%), hsl(183 65% 29%));
@@ -99,8 +99,8 @@
     --accent: 187 62% 62%;
     --accent-foreground: 198 38% 6%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 72% 66%;
+    --destructive-foreground: 198 38% 6%;
 
     --border: 190 20% 20%;
     --input: 190 20% 20%;

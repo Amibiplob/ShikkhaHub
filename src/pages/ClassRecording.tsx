@@ -1,5 +1,6 @@
+import { useRecordingPage, RECORDINGS_PER_PAGE } from "@/features/live-classes/useRecordingPage";
 import PrivateVideo from "@/components/shared/PrivateVideo";
-import type { LiveSession, Recording } from "@/types/models";
+import type { LiveSession } from "@/types/models";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,27 +11,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Play, Loader2, VideoOff, Clock, Calendar, HardDrive } from "lucide-react";
 import { format } from "date-fns";
 
-const ClassRecording = () => {
-  const { classId } = useParams<{ classId: string }>();
+const ClassRecordingContent = ({ classId }: { classId: string }) => {
   const navigate = useNavigate();
-  const [recordings, setRecordings] = useState<Recording[]>([]);
-  const [liveClass, setLiveClass] = useState<LiveSession>(null);
+  const { recordings, total, page, setPage, loading: recordingsLoading, error: recordingsError, retry } = useRecordingPage({ classId });
+  const [loadError, setLoadError] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const [liveClass, setLiveClass] = useState<LiveSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!classId) return;
-    const fetch = async () => {
-      const [classRes, recRes] = await Promise.all([
-        supabase.from("live_classes").select("*, courses(title)").eq("id", classId).single(),
-        supabase.from("class_recordings").select("*").eq("live_class_id", classId).order("created_at", { ascending: false }),
-      ]);
-      setLiveClass(classRes.data);
-      setRecordings(recRes.data || []);
-      setLoading(false);
+    let active = true;
+    const load = async () => {
+      const { data, error } = await supabase.from('live_classes').select('*, courses(title)').eq('id', classId).single();
+      if (error) throw error;
+      if (active) { setLiveClass(data); setLoadError(false); setLoading(false); }
     };
-    fetch();
-  }, [classId]);
+    void load().catch(() => { if (active) { setLoadError(true); setLoading(false); } });
+    return () => { active = false; };
+  }, [classId, revision]);
 
   const formatDuration = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -43,7 +43,7 @@ const ClassRecording = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  if (loading) {
+  if (loading || recordingsLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -67,13 +67,14 @@ const ClassRecording = () => {
           <p className="text-muted-foreground text-sm mt-1">{liveClass?.courses?.title}</p>
         </div>
 
+        {(loadError || recordingsError) && <div role="alert">Could not load recording history. <Button variant="outline" onClick={() => { retry(); setRevision(r => r + 1); }}>Retry recordings</Button></div>}
         {playingUrl && (
           <div className="mb-8 rounded-xl overflow-hidden bg-black">
             <PrivateVideo bucket="class-recordings" path={playingUrl} autoPlay className="w-full max-h-[60vh]" />
           </div>
         )}
 
-        {recordings.length === 0 ? (
+        {loadError || recordingsError ? null : recordings.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 py-16">
             <div className="rounded-full bg-muted p-6">
               <VideoOff className="h-12 w-12 text-muted-foreground" />
@@ -126,9 +127,17 @@ const ClassRecording = () => {
             ))}
           </div>
         )}
+        {total > RECORDINGS_PER_PAGE && <div className="mt-4 flex gap-3 items-center">
+          <Button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous recordings</Button>
+          <span>Page {page + 1} of {Math.ceil(total / RECORDINGS_PER_PAGE)}</span>
+          <Button disabled={(page + 1) * RECORDINGS_PER_PAGE >= total} onClick={() => setPage(p => p + 1)}>Next recordings</Button>
+        </div>}
       </main>
     </div>
   );
 };
 
-export default ClassRecording;
+export default function ClassRecording() {
+  const { classId } = useParams();
+  return classId ? <ClassRecordingContent key={classId} classId={classId} /> : null;
+}

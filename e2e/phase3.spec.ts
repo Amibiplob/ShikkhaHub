@@ -336,7 +336,7 @@ for (const width of [1440, 375]) {
         .click();
       await expect(
         administrator
-          .getByRole("cell")
+          .getByRole(width < 768 ? "definition" : "cell")
           .getByText("in progress", { exact: true }),
       ).toBeVisible();
       await expect

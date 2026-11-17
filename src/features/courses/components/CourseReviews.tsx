@@ -1,5 +1,5 @@
 import type { Review } from "@/types/models";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/useAuth";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ const StarRating = ({
       <button
         key={star}
         type="button"
+        aria-label={`${star} star${star === 1 ? "" : "s"}`}
+        aria-pressed={star === value}
         disabled={readonly}
         onClick={() => onChange?.(star)}
         className={`transition-colors ${readonly ? "cursor-default" : "cursor-pointer hover:scale-110"}`}
@@ -47,19 +49,26 @@ const StarRating = ({
 const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadError, setLoadError] = useState(false);
+  const requestRef = useRef(0);
+  const mutationLock = useRef(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
-  const [myReview, setMyReview] = useState<Review>(null);
+  const [myReview, setMyReview] = useState<Review | null>(null);
   const [editing, setEditing] = useState(false);
 
   const fetchReviews = useCallback(async () => {
-    const { data } = await supabase
+    const request = ++requestRef.current;
+    const { data, error } = await supabase
       .from("course_reviews")
       .select("*, profiles!course_reviews_user_id_fkey(full_name, avatar_url)")
       .eq("course_id", courseId)
       .order("created_at", { ascending: false });
+    if (request !== requestRef.current) return;
+    if (error) { setLoadError(true); setLoading(false); return; }
+    setLoadError(false);
     setReviews(data || []);
     if (user) {
       const mine = data?.find((r) => r.user_id === user.id) || null;
@@ -73,13 +82,17 @@ const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
   }, [courseId, user]);
 
   useEffect(() => {
-    void (async () => { await fetchReviews(); })();
+    const request = requestRef;
+    void (async () => { try { await fetchReviews(); } catch { setLoadError(true); setLoading(false); } })();
+    return () => { request.current++; };
   }, [fetchReviews]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || mutationLock.current) return;
+    mutationLock.current = true;
     setSubmitting(true);
+    try {
 
     if (myReview) {
       const { error } = await supabase
@@ -105,7 +118,8 @@ const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
         fetchReviews();
       }
     }
-    setSubmitting(false);
+    } catch { toast.error("Could not save your review. Please retry."); }
+    finally { mutationLock.current = false; setSubmitting(false); }
   };
 
   const handleDelete = async () => {
@@ -123,6 +137,8 @@ const CourseReviews = ({ courseId, enrolled }: CourseReviewsProps) => {
       fetchReviews();
     }
   };
+
+  if (loadError) return <div role="alert">Could not load reviews. <Button variant="outline" onClick={() => void fetchReviews().catch(() => setLoadError(true))}>Retry reviews</Button></div>;
 
   const avgRating =
     reviews.length > 0

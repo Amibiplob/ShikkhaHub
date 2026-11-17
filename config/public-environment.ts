@@ -53,7 +53,11 @@ export function validatePublicEnvironment(env: Record<string, unknown>) {
       throw new Error(`${name} must be a public publishable/anon key; never use a secret, service-role or user-session key.`);
   }
 
+  const turn = stringSetting(env, "VITE_LIVE_TURN_ENABLED");
+  if (turn !== undefined && turn !== "true" && turn !== "false")
+    throw new Error("VITE_LIVE_TURN_ENABLED must be true or false.");
   return {
+    ...(turn !== undefined ? { VITE_LIVE_TURN_ENABLED: turn } : {}),
     VITE_SUPABASE_URL: rawUrl,
     VITE_SUPABASE_PUBLISHABLE_KEY: key,
   };

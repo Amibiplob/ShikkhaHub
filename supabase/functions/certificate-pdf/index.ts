@@ -19,6 +19,12 @@ Deno.serve(
       .filter(Boolean),
     publicOrigin: Deno.env.get("APP_PUBLIC_ORIGIN") || "",
     fonts: () => fonts,
+    consumeQuota: async authorization => {
+      const client = createClient(url, publicKey, { global: { headers: { Authorization: authorization } }, auth: { persistSession: false } });
+      const { data, error } = await client.rpc('consume_endpoint_quota', { endpoint_name: 'certificate' });
+      if (error) throw error;
+      return data === true;
+    },
     readRecord: async (authorization, id) => {
       const client = createClient(url, publicKey, {
         global: { headers: { Authorization: authorization } },

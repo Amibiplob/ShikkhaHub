@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArrowBigUp, ChevronLeft, ChevronRight, Loader2, MessageSquare, Pin, Plus, Search, SortAsc, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { sortPopular, paginate } from "@/features/community/communitySort";
+
 
 const CATEGORIES = [
   { value: "all", label: "All Topics" },
@@ -42,6 +42,10 @@ const Community = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [pendingVotes, setPendingVotes] = useState<Set<string>>(new Set());
+  const voteLocks = useRef(new Set<string>());
+  const createLock = useRef(false);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const category = searchParams.get("category") || "all";
@@ -64,9 +68,10 @@ const Community = () => {
 
   // Debounce the search box so we don't fire a query per keystroke
   useEffect(() => {
+    if (searchInput.trim() === search) return;
     const t = setTimeout(() => { setSearch(searchInput.trim()); setPage(0); }, 350);
     return () => clearTimeout(t);
-  }, [searchInput]);
+  }, [searchInput, search]);
 
 
   const updateListParam = (key: "category" | "sort", value: string) => {
@@ -77,110 +82,43 @@ const Community = () => {
     setSearchParams(params, { replace: true });
   };
 
-  const fetchCounts = async (postIds: string[]) => {
-    if (postIds.length === 0) {
-      setUpvoteCounts({});
-      setCommentCounts({});
-      return;
-    }
-
-    const [upvotes, comments] = await Promise.all([
-      supabase.from("community_upvotes").select("post_id").in("post_id", postIds),
-      supabase.from("community_comments").select("post_id").in("post_id", postIds),
-    ]);
-
-    const uCounts: Record<string, number> = {};
-    upvotes.data?.forEach((u) => { if (u.post_id) uCounts[u.post_id] = (uCounts[u.post_id] || 0) + 1; });
-    setUpvoteCounts(uCounts);
-
-    const cCounts: Record<string, number> = {};
-    comments.data?.forEach((c) => { if (c.post_id) cCounts[c.post_id] = (cCounts[c.post_id] || 0) + 1; });
-    setCommentCounts(cCounts);
-  };
-
   const requestId = useRef(0);
-
   const fetchPosts = useCallback(async () => {
-    const myId = ++requestId.current;
-    const isStale = () => myId !== requestId.current;
+    const request = ++requestId.current;
     setLoading(true);
-    const select = "*, profiles!community_posts_user_id_profiles_fkey(full_name, avatar_url)";
-
-    const applyFilters = (q) => {
-      if (category !== "all") q = q.eq("category", category);
-      if (search) q = q.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
-      return q;
-    };
-
-    if (sortBy === "popular") {
-      // Popular needs upvote counts across all matching posts, so sort in memory.
-      const { data, error } = await applyFilters(supabase.from("community_posts").select(select));
-      if (isStale()) return;
-      if (error) {
-        toast.error("Could not load posts");
-        setPosts([]);
-        setTotalCount(0);
-        setLoading(false);
-        return;
-      }
-      const all: Post[] = data || [];
-      const ids = all.map((p) => p.id);
-      const { data: ups } = ids.length
-        ? await supabase.from("community_upvotes").select("post_id").in("post_id", ids)
-        : { data: [] as { post_id: string }[] };
-      if (isStale()) return;
-      const counts: Record<string, number> = {};
-      ups?.forEach((u) => { if (u.post_id) counts[u.post_id] = (counts[u.post_id] || 0) + 1; });
-      const sorted = sortPopular(all, counts);
-      setTotalCount(sorted.length);
-      setPosts(paginate(sorted, page, POSTS_PER_PAGE));
-      setLoading(false);
-      return;
+    try {
+      const { data, error } = await supabase.rpc("community_feed", {
+        search_text: search, topic: category, ordering: sortBy,
+        page_number: page, page_size: POSTS_PER_PAGE,
+      });
+      if (error) throw error;
+      if (request !== requestId.current) return;
+      const feed = data as unknown as { rows: (Post & { upvote_count: number; comment_count: number; viewer_upvoted: boolean })[]; total: number };
+      if (!feed || !Array.isArray(feed.rows) || !Number.isFinite(feed.total)) throw new Error("Invalid feed");
+      const lastPage = Math.max(0, Math.ceil(feed.total / POSTS_PER_PAGE) - 1);
+      if (page > lastPage) { setPage(lastPage); return; }
+      setPosts(feed.rows);
+      setTotalCount(feed.total);
+      setUpvoteCounts(Object.fromEntries(feed.rows.map(p => [p.id, p.upvote_count])));
+      setCommentCounts(Object.fromEntries(feed.rows.map(p => [p.id, p.comment_count])));
+      setUpvotedPosts(new Set(feed.rows.filter(p => p.viewer_upvoted).map(p => p.id)));
+      setLoadError(false);
+    } catch {
+      if (request === requestId.current) setLoadError(true);
+    } finally {
+      if (request === requestId.current) setLoading(false);
     }
-
-    let query = applyFilters(
-      supabase.from("community_posts").select(select, { count: "exact" }).order("is_pinned", { ascending: false })
-    ).order("created_at", { ascending: sortBy === "oldest" });
-
-    query = query.range(page * POSTS_PER_PAGE, (page + 1) * POSTS_PER_PAGE - 1);
-
-    const { data, count, error } = await query;
-    if (isStale()) return;
-    if (error) toast.error("Could not load posts");
-    setPosts(data || []);
-    setTotalCount(count || 0);
-    setLoading(false);
-  }, [category, search, sortBy, page]);
+  }, [category, search, sortBy, page, setPage]);
 
   useEffect(() => {
+    const request = requestId;
     void (async () => { await fetchPosts(); })();
+    return () => { request.current++; };
   }, [fetchPosts]);
-
-  const fetchUpvotes = useCallback(async () => {
-    if (!user) {
-      setUpvotedPosts(new Set());
-      return;
-    }
-    const { data } = await supabase
-      .from("community_upvotes")
-      .select("post_id")
-      .eq("user_id", user.id)
-      .not("post_id", "is", null);
-    setUpvotedPosts(new Set(data?.map((u) => u.post_id!).filter(Boolean) || []));
-  }, [user]);
-
-  useEffect(() => {
-    void (async () => { await fetchUpvotes(); })();
-  }, [fetchUpvotes]);
-
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [page]);
-
-  useEffect(() => {
-    if (posts.length) void (async () => { await fetchCounts(posts.map((p) => p.id)); })();
-  }, [posts]);
 
   const openCreate = () => {
     if (!user) {
@@ -198,7 +136,10 @@ const Community = () => {
       toast.error("Title and content are required");
       return;
     }
+    if (createLock.current) return;
+    createLock.current = true;
     setCreating(true);
+    try {
     const { error } = await supabase.from("community_posts").insert({
       user_id: user.id,
       title: title.trim(),
@@ -215,7 +156,8 @@ const Community = () => {
       if (page !== 0) setPage(0);
       else fetchPosts();
     }
-    setCreating(false);
+    } catch { toast.error("Could not create the post. Please retry."); }
+    finally { createLock.current = false; setCreating(false); }
   };
 
   const toggleUpvote = async (postId: string) => {
@@ -223,29 +165,17 @@ const Community = () => {
       toast.error("Please sign in to upvote");
       return navigate("/auth");
     }
-    const wasUpvoted = upvotedPosts.has(postId);
-    // Optimistic update
-    setUpvotedPosts((prev) => {
-      const n = new Set(prev);
-      if (wasUpvoted) n.delete(postId); else n.add(postId);
-      return n;
-    });
-    setUpvoteCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] || 0) + (wasUpvoted ? -1 : 1)) }));
-
-    const { error } = wasUpvoted
-      ? await supabase.from("community_upvotes").delete().eq("user_id", user.id).eq("post_id", postId)
-      : await supabase.from("community_upvotes").insert({ user_id: user.id, post_id: postId });
-
-    if (error) {
-      // Revert
-      setUpvotedPosts((prev) => {
-        const n = new Set(prev);
-        if (wasUpvoted) n.add(postId); else n.delete(postId);
-        return n;
-      });
-      setUpvoteCounts((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] || 0) + (wasUpvoted ? 1 : -1)) }));
-      toast.error("Could not update your vote");
-    }
+    if (voteLocks.current.has(postId)) return;
+    voteLocks.current.add(postId);
+    setPendingVotes(new Set(voteLocks.current));
+    try {
+      const { error } = upvotedPosts.has(postId)
+        ? await supabase.from("community_upvotes").delete().eq("user_id", user.id).eq("post_id", postId)
+        : await supabase.from("community_upvotes").insert({ user_id: user.id, post_id: postId });
+      if (error) throw error;
+      await fetchPosts();
+    } catch { toast.error("Could not update your vote"); }
+    finally { voteLocks.current.delete(postId); setPendingVotes(new Set(voteLocks.current)); }
   };
 
   const deletePost = async (postId: string) => {
@@ -254,8 +184,7 @@ const Community = () => {
     if (error) toast.error(error.message);
     else {
       toast.success("Post deleted");
-      setPosts((prev) => prev.filter((p) => p.id !== postId));
-      setTotalCount((c) => Math.max(0, c - 1));
+      await fetchPosts();
     }
   };
 
@@ -311,10 +240,10 @@ const Community = () => {
             <div className="mt-6 flex items-center gap-3 flex-wrap">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search posts..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-10" />
+                <Input aria-label="Search posts" maxLength={200} placeholder="Search posts..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-10" />
               </div>
               <Select value={sortBy} onValueChange={(v: "newest" | "oldest" | "popular") => updateListParam("sort", v)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger aria-label="Sort posts" className="w-[140px]">
                   <SortAsc className="mr-2 h-3.5 w-3.5" />
                   <SelectValue />
                 </SelectTrigger>
@@ -347,6 +276,10 @@ const Community = () => {
             <div className="flex justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : loadError ? (
+            <div role="alert" className="py-12 text-center">Could not load posts. Check your connection.
+              <Button variant="outline" onClick={() => void fetchPosts()}>Retry posts</Button>
+            </div>
           ) : posts.length === 0 ? (
             <div className="py-20 text-center">
               <MessageSquare className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
@@ -365,6 +298,8 @@ const Community = () => {
                     <button
                       type="button"
                       aria-label="Upvote post"
+                      aria-pressed={upvotedPosts.has(post.id)}
+                      disabled={pendingVotes.has(post.id)}
                       onClick={() => toggleUpvote(post.id)}
                       className={`rounded-md p-1 transition-colors ${upvotedPosts.has(post.id) ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
                     >

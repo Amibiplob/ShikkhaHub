@@ -1,3 +1,4 @@
+import ClassroomChat from "./ClassroomChat";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -78,7 +79,6 @@ export default function LiveClassroom({
   const [actionError, setActionError] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const started = useRef(0);
-  const chatEnd = useRef<HTMLDivElement>(null);
   const recording = [
     "starting",
     "recording",
@@ -94,9 +94,6 @@ export default function LiveClassroom({
     );
     return () => clearInterval(timer);
   }, [meeting.active]);
-  useEffect(() => {
-    chatEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [meeting.messages]);
   const requestDevice = (kind: MediaKind, deviceId?: string) => {
     if (meeting.active && !host && !me?.consent) {
       setMediaConsent({ kind, deviceId });
@@ -374,29 +371,7 @@ export default function LiveClassroom({
                   </Button>
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                  {panel === "chat" && (
-                    <div className="space-y-4">
-                      {meeting.messages.length === 0 && (
-                        <p className="py-8 text-center text-sm text-muted-foreground">
-                          {l(
-                            "Start the conversation. Ask a question or say hello.",
-                            "কথা শুরু করুন। প্রশ্ন করুন বা শুভেচ্ছা জানান।",
-                          )}
-                        </p>
-                      )}
-                      {meeting.messages.map((m) => (
-                        <div key={m.id} className="min-w-0 text-sm">
-                          <p className="mb-1 text-xs font-semibold text-primary">
-                            {m.userName}
-                          </p>
-                          <p className="break-words rounded-xl bg-muted px-3 py-2 [overflow-wrap:anywhere]">
-                            {m.message}
-                          </p>
-                        </div>
-                      ))}
-                      <div ref={chatEnd} />
-                    </div>
-                  )}
+                  {panel === "chat" && <ClassroomChat messages={meeting.messages} />}
                   {panel === "people" && (
                     <ul className="space-y-3">
                       {meeting.participants.map((p) => (

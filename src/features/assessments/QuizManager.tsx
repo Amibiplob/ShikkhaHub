@@ -31,11 +31,11 @@ const QuizManager = ({ courseId, isTeacher, enrolled, onAttemptSaved }: QuizMana
   const [passPercentage, setPassPercentage] = useState("70");
 
   // Quiz taking state
-  const [activeQuiz, setActiveQuiz] = useState<Quiz>(null);
+  const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ score: number; totalPoints: number; percentage: number; passed: boolean }>(null);
+  const [result, setResult] = useState<{ score: number; totalPoints: number; percentage: number; passed: boolean } | null>(null);
   const [attempts, setAttempts] = useState<Record<string, Attempt>>({});
 
   // Question editor
@@ -128,7 +128,7 @@ const QuizManager = ({ courseId, isTeacher, enrolled, onAttemptSaved }: QuizMana
     setEditQuestions(data as unknown as Question[] || []);
   };
 
-  const startQuiz = async (quiz) => {
+  const startQuiz = async (quiz: Quiz) => {
     const { data, error } = await supabase.rpc("read_quiz_questions", { target_quiz: quiz.id });
     if (error) { toast.error(error.message); return; }
     if (!Array.isArray(data) || !data.length) { toast.error("This quiz has no questions yet"); return; }
@@ -294,20 +294,20 @@ const QuizManager = ({ courseId, isTeacher, enrolled, onAttemptSaved }: QuizMana
             quizzes.map((quiz) => {
               const attempt = attempts[quiz.id];
               return (
-                <div key={quiz.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
-                  <div className="flex items-center gap-3">
+                <div key={quiz.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="rounded-lg bg-primary/10 p-2.5">
                       <CircleDot className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <p className="font-medium">{quiz.title}</p>
+                    <div className="min-w-0">
+                      <p className="break-words font-medium">{quiz.title}</p>
                       <p className="text-sm text-muted-foreground">
                         Pass: {quiz.pass_percentage}%
                         {attempt && ` • Last: ${Math.round((attempt.score / attempt.total_points) * 100)}%`}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {attempt?.passed && <Badge className="bg-success/10 text-success border-success/20 text-xs">Passed</Badge>}
                     {isTeacher && (
                       <Button size="sm" variant="outline" onClick={() => openQuestionEditor(quiz.id)}>

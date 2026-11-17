@@ -212,3 +212,51 @@ test('committed class completion preserves the final private end event without r
  await assert.rejects(() => sql(ids.student, "SELECT send_live_signal('ending-room','join-request','{}')"), /Class has ended/);
  await assert.rejects(() => sql(ids.student, "SELECT send_live_signal('ending-room','teacher-ended','{}')"), /Only the teacher/);
 });
+
+test('community feed ranks before paging, returns aggregates and treats punctuation literally under RLS', async () => {
+  const inserted = [];
+  try {
+    for (let index = 0; index < 14; index++) {
+      const post = (await db.query(`INSERT INTO community_posts(user_id,title,content,category,is_pinned,created_at)
+        VALUES($1,$2,$3,'programming',$4,$5) RETURNING id`,
+      [ids.student, `Feed ${index}`, index === 12 ? "literal %,),title.eq.secret_ marker" : 'post body', false, `2026-11-${String(index+1).padStart(2,'0')}T00:00:00Z`])).rows[0];
+      inserted.push(post.id);
+    }
+    await sql(ids.admin, 'UPDATE community_posts SET is_pinned=true WHERE id=$1', [inserted[0]]);
+    for (const user of [ids.student,ids.teacher,ids.admin]) await sql(user,'INSERT INTO community_upvotes(user_id,post_id) VALUES($1,$2)',[user,inserted[13]]);
+    await sql(ids.teacher,'INSERT INTO community_comments(user_id,post_id,content) VALUES($1,$2,$3)',[ids.teacher,inserted[13],'comment']);
+    const feed = async (user, page=0, search='Feed') => (await sql(user,"SELECT community_feed($1,'programming','popular',$2,10) AS feed",[search,page])).rows[0].feed;
+    const first = await feed(ids.student);
+    assert.equal(first.total,14); assert.equal(first.rows.length,10);
+    assert.equal(first.rows[0].id,inserted[0]); assert.equal(first.rows[1].id,inserted[13]);
+    assert.equal(first.rows[1].upvote_count,3); assert.equal(first.rows[1].comment_count,1); assert.equal(first.rows[1].viewer_upvoted,true);
+    const second = await feed(ids.student,1); assert.equal(second.rows.length,4);
+    assert.equal(new Set([...first.rows,...second.rows].map(p=>p.id)).size,14);
+    const anonymous = await feed(null); assert.equal(anonymous.rows[1].viewer_upvoted,false);
+    assert.equal((await feed(null,0,'%,),title.eq.secret_')).rows[0].id,inserted[12]);
+    assert.equal((await feed(null,99)).rows.length,0);
+    assert.equal((await db.query("SELECT prosecdef FROM pg_proc WHERE proname='community_feed'")).rows[0].prosecdef,false);
+    // A temporary stricter policy proves the RPC does not bypass underlying RLS.
+    await db.exec("CREATE POLICY feed_test_restrict ON community_posts AS RESTRICTIVE FOR SELECT TO anon USING (false)");
+    assert.equal((await feed(null)).total,0);
+    await db.exec('DROP POLICY feed_test_restrict ON community_posts');
+  } finally { await db.query('DELETE FROM community_posts WHERE id=ANY($1::uuid[])',[inserted]); }
+});
+test('community feed rejects unbounded or unsupported query arguments', async () => {
+  for (const [search,topic,sort,page,size] of [['','all','unknown',0,10],['','all','newest',-1,10],['','all','newest',0,51],['','bad','newest',0,10],['x'.repeat(201),'all','newest',0,10]]) {
+    await assert.rejects(() => sql(null,'SELECT community_feed($1,$2,$3,$4,$5)',[search,topic,sort,page,size]), /Invalid community filters/);
+  }
+});
+
+test('endpoint quotas enforce per-user per-endpoint limits, reset windows and hide quota rows', async () => {
+  await assert.rejects(() => sql(null,"SELECT consume_endpoint_quota('assistant')"), /permission denied/);
+  await assert.rejects(() => sql(ids.student,"SELECT consume_endpoint_quota('unbounded')"), /Invalid endpoint/);
+  for (let i=0;i<6;i++) assert.equal((await sql(ids.student,"SELECT consume_endpoint_quota('assistant') AS allowed")).rows[0].allowed,true);
+  assert.equal((await sql(ids.student,"SELECT consume_endpoint_quota('assistant') AS allowed")).rows[0].allowed,false);
+  assert.equal((await sql(ids.teacher,"SELECT consume_endpoint_quota('assistant') AS allowed")).rows[0].allowed,true);
+  assert.equal((await sql(ids.student,"SELECT consume_endpoint_quota('certificate') AS allowed")).rows[0].allowed,true);
+  await assert.rejects(() => sql(ids.student,'SELECT * FROM endpoint_quotas'),/permission denied/);
+  await assert.rejects(() => sql(ids.student,'DELETE FROM endpoint_quotas'),/permission denied/);
+  await db.exec("UPDATE endpoint_quotas SET window_start=window_start-interval '1 minute'");
+  assert.equal((await sql(ids.student,"SELECT consume_endpoint_quota('assistant') AS allowed")).rows[0].allowed,true);
+});

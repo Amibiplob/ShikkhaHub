@@ -1,17 +1,13 @@
+import { classroomIceConfiguration } from "./ice-configuration";
+import { mediaError, type MediaKind } from "./media-errors";
+export type { MediaKind } from "./media-errors";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Json } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  MeetingRecorder,
-  type RecordingState,
-  type MeetingSource,
-} from "./MeetingRecorder";
+import type { MeetingSource } from "./MeetingRecorder";
+import { useMeetingRecording } from "./useMeetingRecording";
 
 export const MAX_STUDENTS = 6;
-const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
-];
 export interface ChatMessage {
   id: string;
   userId: string;
@@ -29,24 +25,6 @@ type Peer = {
   slot: number;
   timer?: ReturnType<typeof setTimeout>;
 };
-export type MediaKind = "audio" | "video";
-export function mediaError(error: unknown) {
-  const name = error instanceof DOMException || error instanceof Error ? error.name : "";
-  if (name === "NotAllowedError")
-    return "Permission denied. Allow the requested device in browser settings and retry.";
-  if (name === "NotFoundError")
-    return "Device unavailable. Connect a microphone or camera and retry.";
-  if (name === "NotReadableError")
-    return "Device is busy or disconnected. Close other apps using it and retry.";
-  if (name === "OverconstrainedError")
-    return "Device settings unavailable. Choose another input or the default device and retry.";
-  if (["SecurityError", "NotSupportedError", "TypeError"].includes(name))
-    return "Device capture is unavailable in this browser. You can still join without devices.";
-  return error instanceof Error
-    ? error.message
-    : "Media unavailable. Check your devices and retry.";
-}
-
 /** Host-originated, fixed transceivers preserve the existing private signaling model.
  * Slots relay each consenting participant once, excluding their own return audio. */
 export function useClassroomMedia(
@@ -70,9 +48,6 @@ export function useClassroomMedia(
     stream: null as MediaStream | null, muted: true, cameraOff: true, consent: false,
   });
   const [deviceErrors, setDeviceErrors] = useState<Partial<Record<MediaKind, string>>>({});
-  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const [recordingWarning, setRecordingWarning] = useState(false);
   const signalFailure = useRef("");
   const [recordingNotice, setRecordingNotice] = useState(false);
   const channel = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -80,7 +55,6 @@ export function useClassroomMedia(
   const roster = useRef<Participant[]>([]);
   const local = useRef<MediaStream | null>(null);
   const presentation = useRef<MediaStream | null>(null);
-  const recorder = useRef<MeetingRecorder | null>(null);
   const starting = useRef(false);
   const mediaBusy = useRef(false);
   const deviceBusy = useRef(new Map<"audio" | "video", symbol>());
@@ -141,6 +115,10 @@ export function useClassroomMedia(
       }),
     [signal, state],
   );
+  const recordingSources = useCallback(() => ({ participants: roster.current, screen: presentation.current }), []);
+  const { recordingState, recordingDuration, recordingWarning, startRecording, stopRecording, abortRecording, resetRecording } = useMeetingRecording({
+    host, active, userId, epochRef: epoch, isRecordingRef: isRecording, signalFailureRef: signalFailure, announce, sources: recordingSources, setError, setRecordingNotice,
+  });
   const replace = useCallback(async () => {
     const tasks: Promise<void>[] = [];
     for (const [id, peer] of peers.current) {
@@ -439,7 +417,7 @@ export function useClassroomMedia(
     deviceBusy.current.clear();
     handTimers.current.forEach((timer) => clearTimeout(timer));
     handTimers.current.clear();
-    recorder.current?.abort();
+    abortRecording();
     isRecording.current = false;
     local.current?.getTracks().forEach((t) => {
       t.onended = null;
@@ -462,21 +440,23 @@ export function useClassroomMedia(
       void supabase.removeChannel(channel.current).catch(() => undefined);
     channel.current = null;
     roster.current = [];
-  }, []);
+  }, [abortRecording]);
   useEffect(() => () => dispose(), [dispose, room, userId]);
   const leave = useCallback(async () => {
     if (channel.current) await signal(host ? "teacher-ended" : "leave");
     dispose();
     setActive(false);
+    setJoining(false);
+    setBusy(false);
     setScreen(null);
     setParticipants([]);
     setHands([]);
     setRecordingNotice(false);
-    setRecordingState((current) => current === "starting" ? "idle" : current);
+    resetRecording();
     setConnection("idle");
     setLocalMedia({ stream: null, muted: true, cameraOff: true, consent: false });
     setDeviceErrors({});
-  }, [host, signal, dispose]);
+  }, [host, signal, dispose, resetRecording]);
 
   const join = useCallback(
     async (consent: boolean) => {
@@ -492,6 +472,8 @@ export function useClassroomMedia(
       const generation = ++epoch.current;
       deviceBusy.current.clear();
       try {
+        const iceConfiguration = await classroomIceConfiguration(room);
+        if (generation !== epoch.current) return;
         own.current = {
           ...own.current,
           consent: host || consent,
@@ -511,7 +493,7 @@ export function useClassroomMedia(
         });
         channel.current = ch;
         ch.on("broadcast", { event: "join-request" }, ({ payload }) => {
-          if (!host || payload.fromId === userId) return;
+          if (generation !== epoch.current || !host || payload.fromId === userId) return;
           const previous = peers.current.get(payload.fromId);
           if (
             previous &&
@@ -533,7 +515,7 @@ export function useClassroomMedia(
               return;
             }
             const id = payload.fromId;
-            const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+            const pc = new RTCPeerConnection(iceConfiguration);
             const peer = { pc, slot };
             peers.current.set(id, peer);
             const p: Participant = {
@@ -568,6 +550,7 @@ export function useClassroomMedia(
               safe(replace);
             };
             await replace();
+            if (generation !== epoch.current || peers.current.get(id)?.pc !== pc) return;
             await pc.setLocalDescription(await pc.createOffer());
             await signal("offer", {
               targetId: id,
@@ -581,7 +564,7 @@ export function useClassroomMedia(
         })
           .on("broadcast", { event: "offer" }, ({ payload }) => {
             if (
-              host ||
+              generation !== epoch.current || host ||
               payload.targetId !== userId ||
               payload.fromId !== hostId
             )
@@ -590,7 +573,7 @@ export function useClassroomMedia(
               removePeer(hostId);
               receiveState(payload.roster);
               setRecordingNotice(payload.recording === true);
-              const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+              const pc = new RTCPeerConnection(iceConfiguration);
               const peer = { pc, slot: -1 };
               peers.current.set(hostId, peer);
               wire(hostId, peer);
@@ -752,6 +735,7 @@ export function useClassroomMedia(
             12_000,
           );
           ch.subscribe((status) => {
+            if (generation !== epoch.current) { clearTimeout(timeout); reject(new Error("Class join cancelled")); return; }
             if (status === "SUBSCRIBED") {
               clearTimeout(timeout);
               setConnection(
@@ -774,17 +758,22 @@ export function useClassroomMedia(
             }
           });
         });
-        setActive(true);
+        if (generation === epoch.current) setActive(true);
       } catch (e) {
+        if (generation !== epoch.current) return;
         dispose();
         setLocalMedia({ stream: null, muted: true, cameraOff: true, consent: false });
         setConnection("idle");
+        setJoining(false);
+        setBusy(false);
         setError(mediaError(e));
         throw e;
       } finally {
-        starting.current = false;
-        setJoining(false);
-        setBusy(false);
+        if (generation === epoch.current) {
+          starting.current = false;
+          setJoining(false);
+          setBusy(false);
+        }
       }
     },
     [
@@ -833,79 +822,6 @@ export function useClassroomMedia(
     },
     [signal],
   );
-  const startRecording = useCallback(
-    async (classId: string, title: string) => {
-      if (
-        !host ||
-        !active ||
-        isRecording.current ||
-        (recorder.current &&
-          !["completed", "failed", "idle"].includes(recorder.current.state))
-      )
-        return;
-      isRecording.current = true;
-      const generation = epoch.current;
-      setRecordingWarning(false);
-      setRecordingDuration(0);
-      setError("");
-      setRecordingState("starting");
-      setRecordingNotice(true);
-      const notified = await announce();
-      // Leaving/unmounting while the RPC is pending must never start a recorder.
-      if (generation !== epoch.current) return;
-      if (!notified) {
-        isRecording.current = false;
-        setRecordingNotice(false);
-        setRecordingState("failed");
-        setError(
-          `Recording did not start because participant notice could not be sent. ${signalFailure.current}`,
-        );
-        return;
-      }
-      const next = new MeetingRecorder(
-        { id: crypto.randomUUID(), userId, classId, title },
-        () => ({ participants: roster.current, screen: presentation.current }),
-        (nextState, seconds, message) => {
-          setRecordingState(nextState);
-          setRecordingDuration(seconds);
-          const recording = [
-            "starting",
-            "recording",
-            "stopping",
-            "processing",
-          ].includes(nextState);
-          if (isRecording.current !== recording) {
-            isRecording.current = recording;
-            setRecordingNotice(recording);
-            void announce();
-          }
-          if (message) setError(message);
-        },
-        () => setRecordingWarning(true),
-      );
-      recorder.current = next;
-      try {
-        await next.start();
-      } catch (e) {
-        setError(mediaError(e));
-      }
-    },
-    [host, active, userId, announce],
-  );
-  const stopRecording = useCallback(async () => {
-    if (!recorder.current) return;
-    await recorder.current.stop();
-  }, []);
-  useEffect(() => {
-    const warn = (e: BeforeUnloadEvent) => {
-      if (isRecording.current) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, []);
   return {
     active,
     connection,

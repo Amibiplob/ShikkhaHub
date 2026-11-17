@@ -27,14 +27,18 @@ Loader2, MessageSquare, Paperclip, Send, Upload, X,
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const AssignmentDetail = () => {
+const AssignmentDetailContent = () => {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [assignment, setAssignment] = useState<Assignment>(null);
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [mySubmission, setMySubmission] = useState<Submission>(null);
+  const [mySubmission, setMySubmission] = useState<Submission | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const submitLock = useRef(false);
+  const reviewLock = useRef(false);
 
   // Submit form
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -54,46 +58,57 @@ const AssignmentDetail = () => {
 
   useEffect(() => {
     if (!assignmentId) return;
+    let active = true;
     const fetchData = async () => {
-      const { data: asgn } = await supabase
+      const { data: asgn, error: assignmentError } = await supabase
         .from("assignments")
         .select("*, courses(title, teacher_id)")
         .eq("id", assignmentId)
         .single();
+      if (assignmentError) throw assignmentError;
+      if (!active) return;
       setAssignment(asgn);
 
       if (asgn && user) {
         const isOwner = asgn.courses?.teacher_id === user.id;
         if (isOwner) {
           // Teacher: fetch all submissions with student profiles
-          const { data: subs } = await supabase
+          const { data: subs, error } = await supabase
             .from("submissions")
             .select("*, profiles!submissions_student_id_fkey(full_name)")
             .eq("assignment_id", assignmentId)
             .order("submitted_at", { ascending: false });
+          if (error) throw error;
+          if (!active) return;
           setSubmissions(subs || []);
         } else {
           // Student: fetch own submission
-          const { data: sub } = await supabase
+          const { data: sub, error } = await supabase
             .from("submissions")
             .select("*")
             .eq("assignment_id", assignmentId)
             .eq("student_id", user.id)
             .maybeSingle();
+          if (error) throw error;
+          if (!active) return;
           setMySubmission(sub);
         }
       }
-      setLoading(false);
+      if (active) { setLoadError(false); setLoading(false); }
     };
-    fetchData();
-  }, [assignmentId, user]);
+    void fetchData().catch(() => { if (active) { setLoadError(true); setLoading(false); } });
+    return () => { active = false; };
+  }, [assignmentId, user, revision]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !assignmentId) return;
     if (subType !== "file" && !/^https:\/\/[^\s]+$/i.test(subContent.trim())) { toast.error("Enter a valid HTTPS URL"); return; }
     if (selectedFile && !allowedDocument(selectedFile)) { toast.error("Use a PDF, TXT, DOC, DOCX or ZIP under 10MB"); return; }
+    if (submitLock.current) return;
+    submitLock.current = true;
     setSubmitting(true);
+    try {
 
     let fileUrl: string | null = null;
     let content = subContent;
@@ -140,13 +155,18 @@ const AssignmentDetail = () => {
       setSubContent("");
       setSelectedFile(null);
     }
-    setSubmitting(false);
+    } catch { toast.error("Could not submit. Check your connection and retry."); }
+    finally { submitLock.current = false; setSubmitting(false); setUploading(false); }
   };
 
   const handleReview = async (submissionId: string) => {
+    if (!assignment || reviewLock.current) return;
+    if (assignment.max_marks === null) { toast.error("The assignment grading limit is unavailable. Update the assignment before grading."); return; }
     const value = Number(marks);
     if (!marks.trim() || !Number.isInteger(value) || value < 0 || value > assignment.max_marks) { toast.error("Enter valid marks within the assignment range"); return; }
+    reviewLock.current = true;
     setReviewing(true);
+    try {
     const { error } = await supabase
       .from("submissions")
       .update({
@@ -170,7 +190,8 @@ const AssignmentDetail = () => {
       setMarks("");
       setFeedback("");
     }
-    setReviewing(false);
+    } catch { toast.error("Could not save the review. Please retry."); }
+    finally { reviewLock.current = false; setReviewing(false); }
   };
 
   if (loading) {
@@ -183,6 +204,8 @@ const AssignmentDetail = () => {
       </div>
     );
   }
+
+  if (loadError) return <div className="min-h-screen"><Header /><main role="alert" className="p-8">Could not load the assignment. <Button variant="outline" onClick={() => setRevision(r => r + 1)}>Retry assignment</Button></main></div>;
 
   if (!assignment) {
     return (
@@ -473,7 +496,7 @@ const AssignmentDetail = () => {
                                 </div>
                                 <div>
                                   <Label htmlFor="assignmentdetail-field-1">Marks (out of {assignment.max_marks})</Label>
-                                  <Input id="assignmentdetail-field-1" type="number" min={0} max={assignment.max_marks} value={marks} onChange={(e) => setMarks(e.target.value)} />
+                                  <Input id="assignmentdetail-field-1" type="number" min={0} max={assignment.max_marks ?? undefined} value={marks} onChange={(e) => setMarks(e.target.value)} />
                                 </div>
                                 <div>
                                   <Label htmlFor="assignmentdetail-field-2">Feedback</Label>
@@ -503,4 +526,7 @@ const AssignmentDetail = () => {
   );
 };
 
-export default AssignmentDetail;
+export default function AssignmentDetail() {
+  const { assignmentId } = useParams();
+  return <AssignmentDetailContent key={assignmentId} />;
+}

@@ -7,34 +7,46 @@ import { Input } from "@/components/ui/input";
 import { BookOpen, FileText, MessageSquare, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+type SearchResults = { courses: Pick<Course, 'id' | 'title' | 'category'>[]; posts: Pick<Post, 'id' | 'title' | 'category'>[]; assignments: Pick<Assignment, 'id' | 'title' | 'course_id'>[] };
+const EMPTY_RESULTS: SearchResults = { courses: [], posts: [], assignments: [] };
+
 const GlobalSearch = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ courses: Pick<Course,'id'|'title'|'category'>[]; posts: Pick<Post,'id'|'title'|'category'>[]; assignments: Pick<Assignment,'id'|'title'|'course_id'>[] }>({ courses: [], posts: [], assignments: [] });
-  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState<{ query: string; results: SearchResults; error: boolean } | null>(null);
+  const [revision, setRevision] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const term = query.trim();
+  const userId = user?.id;
+  const current = response?.query === term ? response : null;
+  const results = current?.results ?? EMPTY_RESULTS;
+  const loading = !!term && !current;
 
   useEffect(() => {
-    if (!query.trim()) return;
+    if (!term) return;
+    const controller = new AbortController();
+    let active = true;
     const timer = setTimeout(async () => {
-      setLoading(true);
-      const [coursesRes, postsRes, assignRes] = await Promise.all([
-        supabase.from("courses").select("id, title, category").eq("is_published", true).ilike("title", `%${query}%`).limit(5),
-        supabase.from("community_posts").select("id, title, category").ilike("title", `%${query}%`).limit(5),
-        user ? supabase.from("assignments").select("id, title, course_id").ilike("title", `%${query}%`).limit(5) : Promise.resolve({data:[]}),
-      ]);
-      setResults({
-        courses: coursesRes.data || [],
-        posts: postsRes.data || [],
-        assignments: assignRes.data || [],
-      });
-      setLoading(false);
+      try {
+        const pattern = `%${term.replace(/[\\%_]/g, "\\$&")}%`;
+        const responses = await Promise.all([
+          supabase.from("courses").select("id, title, category").eq("is_published", true).ilike("title", pattern).limit(5).abortSignal(controller.signal),
+          supabase.from("community_posts").select("id, title, category").ilike("title", pattern).limit(5).abortSignal(controller.signal),
+          userId ? supabase.from("assignments").select("id, title, course_id").ilike("title", pattern).limit(5).abortSignal(controller.signal) : Promise.resolve({ data: [], error: null }),
+        ]);
+        if (!active) return;
+        if (responses.some(result => result.error)) throw new Error("Search failed");
+        const [courses, posts, assignments] = responses;
+        setResponse({ query: term, results: { courses: courses.data ?? [], posts: posts.data ?? [], assignments: assignments.data ?? [] }, error: false });
+      } catch {
+        if (active) setResponse({ query: term, results: EMPTY_RESULTS, error: true });
+      }
     }, 300);
-    return () => clearTimeout(timer);
-  }, [query, user]);
+    return () => { active = false; clearTimeout(timer); controller.abort(); };
+  }, [term, userId, revision]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -60,21 +72,27 @@ const GlobalSearch = () => {
           ref={inputRef}
           placeholder="Search..."
           value={query}
-          onChange={(e) => { setQuery(e.target.value); if (!e.target.value.trim()) setResults({ courses: [], posts: [], assignments: [] }); setOpen(true); }}
+          onChange={(e) => { setQuery(e.target.value); setResponse(null); setOpen(true); }}
+          aria-label="Search courses, community and assignments"
+          onKeyDown={e => { if (e.key === "Escape") setOpen(false); }}
           onFocus={() => setOpen(true)}
           className="h-8 w-48 pl-8 text-sm"
         />
         {query && (
-          <Button type="button" variant="ghost" size="icon" aria-label="Clear search" onClick={() => { setQuery(""); setResults({ courses: [], posts: [], assignments: [] }); setOpen(false); }} className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2">
+          <Button type="button" variant="ghost" size="icon" aria-label="Clear search" onClick={() => { setQuery(""); setResponse(null); setOpen(false); }} className="absolute right-0 top-1/2 h-8 w-8 -translate-y-1/2">
             <X className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         )}
       </div>
 
       {open && query.trim() && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-80 rounded-xl border border-border bg-popover p-2 shadow-lg">
+        <div className="absolute right-0 top-full mt-1 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover p-2 shadow-lg">
           {loading ? (
             <p className="p-3 text-sm text-muted-foreground text-center">Searching...</p>
+          ) : current?.error ? (
+            <div role="alert" className="p-3 text-sm">Search failed. Please try again.
+              <Button variant="ghost" onClick={() => { setResponse(null); setRevision(r => r + 1); }}>Retry search</Button>
+            </div>
           ) : totalResults === 0 ? (
             <p className="p-3 text-sm text-muted-foreground text-center">No results found</p>
           ) : (

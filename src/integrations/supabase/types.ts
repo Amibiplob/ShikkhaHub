@@ -1265,6 +1265,13 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      consume_endpoint_quota: { Args: { endpoint_name: string }; Returns: boolean }
+
+      community_feed: {
+        Args: { search_text?: string; topic?: string; ordering?: string; page_number?: number; page_size?: number }
+        Returns: Json
+      }
+
       admin_content_action: {
         Args: {
           target_id: string;

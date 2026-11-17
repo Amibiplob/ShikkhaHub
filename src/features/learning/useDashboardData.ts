@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/read-all-rows';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Course, LiveSession } from "@/types/models";
@@ -32,6 +33,7 @@ export function useDashboardData(
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     async function load() {
       if (!userId) return;
       const [
@@ -41,38 +43,38 @@ export function useDashboardData(
         liveClasses,
         certificates,
       ] = await Promise.all([
-        supabase
+        readAllRows(supabase
           .from("enrollments")
           .select(
-            "course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))",
+            "course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))", { count: 'exact' },
           )
-          .eq("user_id", userId),
-        supabase
+          .eq("user_id", userId), controller.signal),
+        readAllRows(supabase
           .from("course_bookmarks")
           .select(
-            "course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))",
+            "course_id, courses(*, profiles!courses_teacher_id_profiles_fkey(full_name))", { count: 'exact' },
           )
-          .eq("user_id", userId),
+          .eq("user_id", userId), controller.signal),
         teaching
-          ? supabase
+          ? readAllRows(supabase
               .from("courses")
-              .select("*")
+              .select("*", { count: 'exact' })
               .eq("teacher_id", userId)
-              .order("created_at", { ascending: false })
+              .order("created_at", { ascending: false }), controller.signal)
           : { data: [], error: null },
         teaching
-          ? supabase
+          ? readAllRows(supabase
               .from("live_classes")
-              .select("*, courses(title)")
+              .select("*, courses(title)", { count: 'exact' })
               .eq("teacher_id", userId)
-              .order("scheduled_at")
+              .order("scheduled_at"), controller.signal)
           : { data: [], error: null },
-        supabase
+        readAllRows(supabase
           .from("certificates")
-          .select("course_id")
+          .select("course_id", { count: 'exact' })
           .eq("user_id", userId)
           .not("validated_at", "is", null)
-          .is("revoked_at", null),
+          .is("revoked_at", null), controller.signal),
       ]);
       for (const result of [
         enrollments,
@@ -89,21 +91,21 @@ export function useDashboardData(
       let studentLiveClasses: LiveSession[] = [];
       if (ids.length) {
         const [modules, progress, live] = await Promise.all([
-          supabase
+          readAllRows(supabase
             .from("modules")
-            .select("id, course_id, lessons(id)")
-            .in("course_id", ids),
-          supabase
+            .select("id, course_id, lessons(id)", { count: 'exact' })
+            .in("course_id", ids), controller.signal),
+          readAllRows(supabase
             .from("lesson_progress")
-            .select("lesson_id")
+            .select("lesson_id", { count: 'exact' })
             .eq("user_id", userId)
-            .eq("completed", true),
-          supabase
+            .eq("completed", true), controller.signal),
+          readAllRows(supabase
             .from("live_classes")
-            .select("*, courses(title)")
+            .select("*, courses(title)", { count: 'exact' })
             .in("course_id", ids)
             .in("status", ["scheduled", "live"])
-            .order("scheduled_at"),
+            .order("scheduled_at"), controller.signal),
         ]);
         for (const result of [modules, progress, live])
           if (result.error) throw result.error;
@@ -132,7 +134,7 @@ export function useDashboardData(
           bookmarkedCourses:
             bookmarks.data?.flatMap((b) => (b.courses ? [b.courses] : [])) ||
             [],
-          certifiedCourses: certificates.data?.map((c) => c.course_id) || [],
+          certifiedCourses: certificates.data?.flatMap((c) => c.course_id ? [c.course_id] : []) || [],
         });
         setError(false);
       }
@@ -145,7 +147,7 @@ export function useDashboardData(
         if (active) setLoading(false);
       });
     return () => {
-      active = false;
+      active = false; controller.abort();
     };
   }, [userId, teaching, revision]);
   return {

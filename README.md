@@ -1,8 +1,10 @@
 # ShikkhaHub - An Online Based Educational Platform
 
+Current implementation review: [16–17 November reliability changes and verification](docs/RELIABILITY_REVIEW.md); [database / Edge / TURN rollout](docs/RELIABILITY_ROLLOUT.md). Earlier counts below describe their dated snapshots.
+
 ShikkhaHub is a final-year CSE project at City University, Bangladesh. Students discover courses, learn through structured lessons, complete assessments, discuss course material, and request private tutoring. Teachers manage courses, assessments, tutoring availability, and live broadcasts. Administrators manage roles and moderate the platform.
 
-ShikkhaHub is independently maintained. It uses **React 19.3, TypeScript 6, Vite 8 with Rolldown/Oxc, React Router 7, Tailwind CSS 4, Radix UI, TanStack Query, and Supabase**. The browser SPA keeps authentication, authorization and data storage in Supabase.
+ShikkhaHub is independently maintained. It uses **React 19.3, TypeScript 6, Vite 8 with Rolldown/Oxc, React Router 7, Tailwind CSS 4, Radix UI, and Supabase**. The browser SPA keeps authentication, authorization and data storage in Supabase.
 
 **Staging update, 27 October 2026:** the explicitly approved disposable backend has all **43 migrations applied**, three deployed Edge Functions and **16/16 real hosted acceptance scenarios passed**. See [staging setup and verification](docs/SUPABASE_STAGING_SETUP.md) for identity checks, configuration, corrections and remaining manual gates. Earlier modernization/Phase 3 no-hosted-access statements describe those earlier runs.
 
@@ -139,7 +141,7 @@ See [TESTING.md](TESTING.md) for exact evidence, artifacts, scope and reproducti
 
 Deploy `dist/` to a static host with SPA history fallback to `index.html`. The root `vercel.json` supplies this fallback for Vercel, preserving existing files and reserving API/asset paths. Unknown client paths still show the application 404. See [Vercel SPA guidance](https://vercel.com/docs/frameworks/frontend/vite). Validate direct course, dashboard, admin, certificate-verification and recovery links on the actual deployment after an authorized push; local Vite fallback tests do not prove Vercel delivery. Set the public Vite variables **before building**. Apply reviewed migrations separately to the authorized backend, configure Auth redirects and private-only Realtime, then perform hosted role/storage/media acceptance. This staging setup deployed backend functions only; no frontend deployment, push or production migration was performed.
 
-**Not production-cleared.** The hosted staging subset passes, but real email/OAuth, broader Storage/Realtime acceptance, backup restoration, scheduled expiry and TURN/NAT testing remain open. WebRTC currently has STUN servers and no configured TURN relay. The redesigned classroom uses a canvas/Web Audio/MediaRecorder composition and local IndexedDB drafts. Local encoded-media tests are documented in [Live classroom](docs/LIVE_CLASSROOM.md); hosted migration, native source selection, physical devices, TURN and long recordings remain acceptance gates.
+**Not production-cleared.** The hosted staging subset passes, but real email/OAuth, broader Storage/Realtime acceptance, backup restoration, scheduled expiry and TURN/NAT testing remain open. WebRTC defaults to STUN. Optional authenticated TURN is implemented; relay provisioning and real-network acceptance remain open (see the reliability rollout linked above). The redesigned classroom uses a canvas/Web Audio/MediaRecorder composition and local IndexedDB drafts. Local encoded-media tests are documented in [Live classroom](docs/LIVE_CLASSROOM.md); hosted migration, native source selection, physical devices, TURN and long recordings remain acceptance gates.
 
 ## Verified screenshots
 

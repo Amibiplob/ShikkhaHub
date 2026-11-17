@@ -17,6 +17,8 @@ const Profile = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({ enrolled: 0, completed: 0, certificates: 0, badges: 0 });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -24,22 +26,28 @@ const Profile = () => {
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
     const fetchStats = async () => {
       const [enrollRes, certRes, badgeRes] = await Promise.all([
         supabase.from("enrollments").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("certificates").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("user_badges").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
+      for (const result of [enrollRes, certRes, badgeRes]) if (result.error) throw result.error;
+      if (!active) return;
       setStats({
         enrolled: enrollRes.count || 0,
         completed: 0,
         certificates: certRes.count || 0,
         badges: badgeRes.count || 0,
       });
+      if (!active) return;
+      setLoadError(false);
       setLoading(false);
     };
-    fetchStats();
-  }, [user]);
+    void fetchStats().catch(() => { if (active) { setLoadError(true); setLoading(false); } });
+    return () => { active = false; };
+  }, [user, revision]);
 
   const initials = (profile?.full_name || user?.email || "?")
     .split(" ")
@@ -58,6 +66,8 @@ const Profile = () => {
       </div>
     );
   }
+
+  if (loadError) return <div className="min-h-screen"><Header /><main className="container mx-auto p-8" role="alert">Could not load your data. <button className="underline" onClick={() => setRevision(r => r + 1)}>Retry loading</button></main></div>;
 
   return (
     <div className="min-h-screen flex flex-col">

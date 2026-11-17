@@ -277,6 +277,12 @@ test("dashboard read failure is recoverable and never looks like an empty enroll
   await login(page, backend, "student");
   const pattern = "**/rest/v1/enrollments?**";
   backend.expectedHttp.push({ path: "/enrollments", status: 503 });
+  // The SDK retries idempotent 503 reads three times. Wait for its final
+  // response before checking the error UI, keeping the test's original budget.
+  let failedReads = 0;
+  const retriesExhausted = page.waitForResponse(response =>
+    new URL(response.url()).pathname.endsWith('/enrollments') &&
+    response.status() === 503 && ++failedReads === 4);
   await page.route(pattern, (route) =>
     route.fulfill({
       status: 503,
@@ -285,6 +291,8 @@ test("dashboard read failure is recoverable and never looks like an empty enroll
     }),
   );
   await page.goto("/dashboard");
+  await expect(page.getByRole('status')).toContainText('Loading your workspace');
+  await retriesExhausted;
   await expect(page.getByRole("alert")).toContainText(
     "Could not load your workspace",
   );

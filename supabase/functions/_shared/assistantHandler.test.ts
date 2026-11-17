@@ -73,3 +73,9 @@ describe("independent course assistant", () => {
     expect(await response.text()).not.toContain("sensitive");
   });
 });
+
+it('enforces the application quota before contacting the AI provider', async () => {
+  const { handler, provider } = setup({ consumeQuota: async () => false });
+  expect((await handler(request())).status).toBe(429);
+  expect(provider).not.toHaveBeenCalled();
+});

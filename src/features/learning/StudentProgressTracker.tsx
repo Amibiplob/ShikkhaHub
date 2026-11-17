@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/read-all-rows';
 import type { Tables } from "@/integrations/supabase/types";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,19 +15,23 @@ interface StudentProgressTrackerProps {
 const StudentProgressTracker = ({ courseId, isTeacher }: StudentProgressTrackerProps) => {
   const [students, setStudents] = useState<(Pick<Tables<'profiles'>, 'user_id' | 'full_name' | 'avatar_url'> & { completedLessons: number; totalLessons: number; progressPercent: number })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     if (!isTeacher) return;
 
+    let active = true;
+    const controller = new AbortController();
     const fetchStudentProgress = async () => {
       // Get enrollments
-      const { data: enrollments } = await supabase
+      const { data: enrollments } = await readAllRows(supabase
         .from("enrollments")
-        .select("user_id")
-        .eq("course_id", courseId);
+        .select("user_id", { count: 'exact' })
+        .eq("course_id", courseId), controller.signal);
 
       if (!enrollments || enrollments.length === 0) {
-        setLoading(false);
+        if (active) { setStudents([]); setError(false); setLoading(false); }
         return;
       }
 
@@ -34,8 +39,8 @@ const StudentProgressTracker = ({ courseId, isTeacher }: StudentProgressTrackerP
 
       // Get profiles, modules/lessons, and lesson progress
       const [profilesRes, modulesRes] = await Promise.all([
-        supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
-        supabase.from("modules").select("id, course_id, lessons(id)").eq("course_id", courseId),
+        readAllRows(supabase.from("profiles").select("user_id, full_name, avatar_url", { count: 'exact' }).in("user_id", userIds), controller.signal),
+        readAllRows(supabase.from("modules").select("id, course_id, lessons(id)", { count: 'exact' }).eq("course_id", courseId), controller.signal),
       ]);
 
       const allLessonIds = (modulesRes.data || []).flatMap((m) => m.lessons?.map((l) => l.id) || []);
@@ -43,12 +48,12 @@ const StudentProgressTracker = ({ courseId, isTeacher }: StudentProgressTrackerP
 
       let progressData: Pick<Tables<'lesson_progress'>,'user_id'|'lesson_id'>[] = [];
       if (allLessonIds.length > 0) {
-        const { data } = await supabase
+        const { data } = await readAllRows(supabase
           .from("lesson_progress")
-          .select("user_id, lesson_id")
+          .select("user_id, lesson_id", { count: 'exact' })
           .in("lesson_id", allLessonIds)
           .in("user_id", userIds)
-          .eq("completed", true);
+          .eq("completed", true), controller.signal);
         progressData = data || [];
       }
 
@@ -67,14 +72,18 @@ const StudentProgressTracker = ({ courseId, isTeacher }: StudentProgressTrackerP
 
       // Sort by progress descending
       studentList.sort((a, b) => b.progressPercent - a.progressPercent);
+      if (!active) return;
+      setError(false);
       setStudents(studentList);
       setLoading(false);
     };
 
-    fetchStudentProgress();
-  }, [courseId, isTeacher]);
+    void fetchStudentProgress().catch(() => { if (active) { setError(true); setLoading(false); } });
+    return () => { active = false; controller.abort(); };
+  }, [courseId, isTeacher, revision]);
 
   if (!isTeacher) return null;
+  if (error) return <div role="alert">Could not load student progress. <button className="underline" onClick={() => setRevision(r => r + 1)}>Retry progress</button></div>;
   if (loading) return <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto my-8" />;
 
   return (

@@ -106,3 +106,9 @@ describe("browser environment boundary", () => {
       expect(() => validatePublicEnvironment({ ...base(), [name]: value })).toThrow(`${name} must be a string`);
   });
 });
+
+it('exposes only a validated TURN enable flag and never its server secret', () => {
+  expect(validatePublicEnvironment({ ...base(), VITE_LIVE_TURN_ENABLED: 'true', TURN_SHARED_SECRET: 'synthetic-private-server-value' })).toEqual({ ...base(), VITE_LIVE_TURN_ENABLED: 'true' });
+  expect(() => validatePublicEnvironment({ ...base(), VITE_LIVE_TURN_ENABLED: 'yes' })).toThrow('true or false');
+  expect(() => validatePublicEnvironment({ ...base(), VITE_TURN_SHARED_SECRET: 'synthetic-private-server-value' })).toThrow('Sensitive browser variable');
+});

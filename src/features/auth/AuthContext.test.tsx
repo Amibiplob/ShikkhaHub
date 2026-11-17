@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session } from '@supabase/supabase-js';
@@ -43,4 +43,16 @@ it('keeps a protected media session mounted during same-user SIGNED_IN revalidat
   expect(cleanup).not.toHaveBeenCalled();
   expect(screen.getByText('live media')).toBeInTheDocument();
   await act(async () => resolve({ data: [{ role: 'teacher' }] }));
+});
+
+it('discards descendant state across accounts while preserving same-user session state', async () => {
+  function PrivateState() { const auth = useAuth(); const [draft, setDraft] = useState(''); return <><p>{auth.user?.id ?? 'guest'}</p><input aria-label="Private draft" value={draft} onChange={e => setDraft(e.target.value)} /></>; }
+  render(<AuthProvider><PrivateState /></AuthProvider>);
+  await screen.findByText('guest');
+  await act(async () => fake.listener?.('SIGNED_IN', next('first')));
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'private first account' } });
+  await act(async () => fake.listener?.('SIGNED_IN', next('first')));
+  expect(screen.getByRole('textbox')).toHaveValue('private first account');
+  await act(async () => fake.listener?.('SIGNED_IN', next('second')));
+  expect(screen.getByRole('textbox')).toHaveValue('');
 });

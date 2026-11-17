@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/read-all-rows';
 import type { Tables } from "@/integrations/supabase/types";
 import type { Course, Attempt } from "@/types/models";
 import { useEffect, useState } from "react";
@@ -16,34 +17,42 @@ import { Award, BookOpen, CheckCircle, Clock, Flame, Target, TrendingUp, Loader2
 const StudentAnalytics = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [revision, setRevision] = useState(0);
   const [data, setData] = useState<{
-    enrollments: { course_id: string; courses: Pick<Course,'title'|'category'|'difficulty'> }[];
+    enrollments: { course_id: string; courses: Pick<Course,'title'|'category'|'difficulty'> | null }[];
     progress: Pick<Tables<'lesson_progress'>,'lesson_id'|'completed'|'completed_at'>[];
     quizAttempts: (Pick<Attempt,'quiz_id'|'score'|'total_points'|'passed'|'completed_at'> & { quizzes: {title: string; course_id: string} })[];
     badges: { badge_id: string; earned_at: string; badges: {name: string; icon: string} }[];
     certificates: Pick<Tables<'certificates'>,'id'|'course_id'>[];
     modules: { id: string; course_id: string; lessons: {id:string}[] }[];
-  }>(null);
+  } | null>(null);
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
+    const controller = new AbortController();
     const fetch = async () => {
       const [enrollRes, progressRes, quizRes, badgeRes, certRes] = await Promise.all([
-        supabase.from("enrollments").select("course_id, enrolled_at, courses(title, category, difficulty)").eq("user_id", user.id),
-        supabase.from("lesson_progress").select("lesson_id, completed, completed_at").eq("user_id", user.id).eq("completed", true),
-        supabase.from("quiz_attempts").select("quiz_id, score, total_points, passed, completed_at, quizzes(title, course_id)").eq("user_id", user.id),
-        supabase.from("user_badges").select("badge_id, earned_at, badges(name, icon)").eq("user_id", user.id),
-        supabase.from("certificates").select("id, course_id").eq("user_id", user.id),
+        readAllRows(supabase.from("enrollments").select("course_id, enrolled_at, courses(title, category, difficulty)", { count: 'exact' }).eq("user_id", user.id), controller.signal),
+        readAllRows(supabase.from("lesson_progress").select("lesson_id, completed, completed_at", { count: 'exact' }).eq("user_id", user.id).eq("completed", true), controller.signal),
+        readAllRows(supabase.from("quiz_attempts").select("quiz_id, score, total_points, passed, completed_at, quizzes(title, course_id)", { count: 'exact' }).eq("user_id", user.id), controller.signal),
+        readAllRows(supabase.from("user_badges").select("badge_id, earned_at, badges(name, icon)", { count: 'exact' }).eq("user_id", user.id), controller.signal),
+        readAllRows(supabase.from("certificates").select("id, course_id", { count: 'exact' }).eq("user_id", user.id), controller.signal),
       ]);
 
+      for (const result of [enrollRes, progressRes, quizRes, badgeRes, certRes]) if (result.error) throw result.error;
       // Get total lessons per enrolled course
       const courseIds = (enrollRes.data || []).map(e => e.course_id);
       let modulesData: { id: string; course_id: string; lessons: {id:string}[] }[] = [];
       if (courseIds.length > 0) {
-        const { data: mods } = await supabase.from("modules").select("id, course_id, lessons(id)").in("course_id", courseIds);
+        const { data: mods, error } = await readAllRows(supabase.from("modules").select("id, course_id, lessons(id)", { count: 'exact' }).in("course_id", courseIds), controller.signal);
+        if (error) throw error;
         modulesData = mods || [];
       }
 
+      if (!active) return;
+      setError(false);
       setData({
         enrollments: enrollRes.data || [],
         progress: progressRes.data || [],
@@ -54,10 +63,12 @@ const StudentAnalytics = () => {
       });
       setLoading(false);
     };
-    fetch();
-  }, [user]);
+    void fetch().catch(() => { if (active) { setError(true); setLoading(false); } });
+    return () => { active = false; controller.abort(); };
+  }, [user, revision]);
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (error) return <div role="alert">Could not load learning analytics. <button onClick={() => setRevision(r => r + 1)}>Retry analytics</button></div>;
   if (!data) return null;
 
   const { enrollments, progress, quizAttempts, badges, certificates, modules } = data;
@@ -70,7 +81,8 @@ const StudentAnalytics = () => {
     const completed = progress.filter((p) => lessonIds.has(p.lesson_id)).length;
     const percent = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
     return {
-      name: e.courses?.title?.length > 18 ? e.courses.title.slice(0, 18) + "…" : (e.courses?.title || "Course"),
+      courseId: e.course_id,
+      name: (e.courses?.title?.length ?? 0) > 18 ? e.courses?.title?.slice(0, 18) + "…" : (e.courses?.title || "Course"),
       progress: percent,
       completed,
       total: totalLessons,
@@ -103,11 +115,11 @@ const StudentAnalytics = () => {
   }
 
   // Skills radar (by category)
-  const categories = [...new Set(enrollments.map((e) => e.courses?.category).filter(Boolean))];
+  const categories = [...new Set(enrollments.map((e) => e.courses?.category).filter((category): category is string => !!category))];
   const radarData = categories.map((cat: string) => {
     const catCourses = enrollments.filter((e) => e.courses?.category === cat);
     const catProgress = catCourses.map((e) => {
-      const cp = courseProgress.find((cp) => cp.name.startsWith(e.courses?.title?.slice(0, 18)));
+      const cp = courseProgress.find((cp) => cp.courseId === e.course_id);
       return cp?.progress || 0;
     });
     const avg = catProgress.length > 0 ? Math.round(catProgress.reduce((a: number, b: number) => a + b, 0) / catProgress.length) : 0;
