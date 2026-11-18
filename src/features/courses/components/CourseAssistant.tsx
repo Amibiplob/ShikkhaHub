@@ -37,7 +37,7 @@ const CourseAssistant = ({ courseId, courseTitle }: CourseAssistantProps) => {
   }, [open]);
 
   const send = useCallback(async (text: string) => {
-    if (!text.trim() || isLoading) return;
+    if (import.meta.env.VITE_AI_ASSISTANT_ENABLED !== "true" || !text.trim() || isLoading) return;
     const userMsg: Msg = { role: "user", content: text.trim() };
     const allMessages = [...messages, userMsg].slice(-20);
     setMessages(allMessages);
@@ -116,6 +116,9 @@ const CourseAssistant = ({ courseId, courseTitle }: CourseAssistantProps) => {
       setIsLoading(false);
     }
   }, [messages, isLoading, courseId]);
+
+  if (import.meta.env.VITE_AI_ASSISTANT_ENABLED !== "true")
+    return <p className="fixed bottom-6 right-6 z-40 max-w-64 rounded-lg border bg-card p-3 text-xs text-muted-foreground" role="status">AI assistant unavailable. Course content and assessments remain available.</p>;
 
   return (
     <>

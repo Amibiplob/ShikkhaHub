@@ -18,7 +18,7 @@ export default defineConfig({
     trace: 'off', screenshot: 'off', video: 'off',
   },
   webServer: settings ? {
-    command: 'npm run dev -- --host 127.0.0.1 --port 18081 --strictPort --mode staging-acceptance',
+    command: 'npm run build -- --mode staging-acceptance --outDir artifacts/staging-app && npm run preview -- --host 127.0.0.1 --port 18081 --strictPort --mode staging-acceptance --outDir artifacts/staging-app',
     url: 'http://127.0.0.1:18081',
     reuseExistingServer: false,
     env: { VITE_SUPABASE_URL: settings.url, VITE_SUPABASE_PUBLISHABLE_KEY: settings.key },

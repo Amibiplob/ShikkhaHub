@@ -311,6 +311,7 @@ export class Backend {
           body: JSON.stringify(data),
         });
       if (request.method() === "OPTIONS") return respond({});
+      if (url.pathname === "/auth/v1/settings") return respond({ external: { google: false, email: true } });
       const uid = this.userFrom(request.headers());
       const body = (
         request.postData() &&

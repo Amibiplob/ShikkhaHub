@@ -47,6 +47,31 @@ test('read-only postflight detects missing booking protection, disabled ticket R
   } finally { await db.close(); }
 });
 
+test('read-only postflight detects quota privilege drift and a definer community feed', async () => {
+  const db = await createDatabase();
+  const script = await readFile('tests/staging-postflight.sql', 'utf8');
+  const inspect = async () => (await db.exec(script)).flatMap(result => result.rows || []).flatMap(row => Object.values(row.report).flat());
+  try {
+    const baseline = await inspect();
+    for (const row of baseline.filter(row => 'blockers' in row)) assert.equal(row.blockers, 0, row.check_name);
+    for (const [name, value] of Object.entries(baseline.find(row => 'client_quota_access_must_be_false' in row))) assert.equal(value, false, name);
+    await db.exec(`ALTER TABLE endpoint_quotas DISABLE ROW LEVEL SECURITY;
+      GRANT SELECT ON endpoint_quotas TO authenticated;
+      GRANT EXECUTE ON FUNCTION consume_endpoint_quota(text) TO anon;
+      REVOKE EXECUTE ON FUNCTION consume_endpoint_quota(text) FROM authenticated;
+      ALTER FUNCTION community_feed(text,text,text,integer,integer) SECURITY DEFINER;`);
+    const drift = await inspect();
+    assert.equal(drift.find(row => row.check_name === 'application tables without RLS').blockers, 1);
+    const privileges = drift.find(row => 'client_quota_access_must_be_false' in row);
+    for (const name of ['client_quota_access_must_be_false', 'anonymous_quota_execute_must_be_false', 'missing_client_quota_execute_must_be_false', 'feed_security_definer_must_be_false']) assert.equal(privileges[name], true, name);
+    // Catalog checks must also notice an unapplied new RPC migration.
+    await db.exec('DROP FUNCTION consume_endpoint_quota(text)');
+    // The lifecycle inventory itself tolerates a missing function; the complete
+    // report fails closed in its privilege section until migrations are complete.
+    await assert.rejects(() => inspect(), /does not exist/);
+  } finally { await db.close(); }
+});
+
 async function apply(db, file) {
   // Rehearse one transaction per migration, including fail-closed recovery.
   await db.exec('BEGIN');
@@ -166,5 +191,63 @@ test('43-migration backend rejects recording notice; additive meeting migration 
     await asUser(db,ids.teacher,notice);
     await assert.rejects(() => asUser(db,ids.student,notice), /Only the teacher/);
     await assert.rejects(() => asUser(db,ids.other,notice), /Course access required/);
+  } finally { await db.close(); }
+});
+
+test('Google-style signup gets a profile and only student access even with forged role metadata', async () => {
+  const db = await createDatabase();
+  try {
+    const id = '00000000-0000-4000-8000-000000000091';
+    await db.query('INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES($1,$2,$3)', [id, 'oauth@example.test', JSON.stringify({ full_name: 'Google Learner', avatar_url: 'https://example.test/avatar.png', role: 'admin', roles: ['teacher','admin'], provider: 'google' })]);
+    assert.deepEqual((await db.query('SELECT full_name,avatar_url FROM profiles WHERE user_id=$1', [id])).rows, [{ full_name: 'Google Learner', avatar_url: 'https://example.test/avatar.png' }]);
+    assert.deepEqual((await db.query('SELECT role FROM user_roles WHERE user_id=$1', [id])).rows, [{ role: 'student' }]);
+    assert.equal((await db.query('SELECT count(*)::int AS count FROM teacher_requests WHERE user_id=$1', [id])).rows[0].count, 0);
+  } finally { await db.close(); }
+});
+
+test('expiry changes only old scheduled/live classes and remains idempotent with client execution denied', async () => {
+  const db = await createDatabase();
+  try {
+    await seed(db);
+    await db.exec(`INSERT INTO live_classes(course_id,teacher_id,title,room_name,scheduled_at,duration_minutes,status)
+      SELECT '${ids.course}','${ids.teacher}',name,name,now()+age,60,status FROM (VALUES
+        ('expiry-old-scheduled',interval '-26 hours','scheduled'),
+        ('expiry-old-live',interval '-26 hours','live'),
+        ('expiry-within-grace',interval '-24 hours','scheduled'),
+        ('expiry-future',interval '2 hours','scheduled'),
+        ('expiry-completed',interval '-26 hours','completed')) f(name,age,status);`);
+    await assert.rejects(() => asUser(db, ids.student, 'SELECT expire_old_live_classes()'), /permission denied/);
+    await db.exec('SELECT expire_old_live_classes()');
+    const first = (await db.query("SELECT room_name,status,updated_at FROM live_classes WHERE room_name LIKE 'expiry-%' ORDER BY room_name")).rows;
+    assert.deepEqual(first.map(({room_name,status}) => [room_name,status]), [
+      ['expiry-completed','completed'],['expiry-future','scheduled'],['expiry-old-live','expired'],['expiry-old-scheduled','expired'],['expiry-within-grace','scheduled'],
+    ]);
+    await db.exec('SELECT expire_old_live_classes()');
+    assert.deepEqual((await db.query("SELECT room_name,status,updated_at FROM live_classes WHERE room_name LIKE 'expiry-%' ORDER BY room_name")).rows, first);
+  } finally { await db.close(); }
+});
+
+test('staging schedule install/rollback are idempotent and refuse unapproved or conflicting jobs', async () => {
+  const db = new PGlite();
+  const enable = await readFile('supabase/operations/enable-class-expiry.sql', 'utf8');
+  const disable = await readFile('supabase/operations/disable-class-expiry.sql', 'utf8');
+  try {
+    // pg_cron is a provider extension; exercise operation logic with its SQL interface shim.
+    await db.exec(`CREATE SCHEMA cron; CREATE TABLE cron.job(jobid bigserial PRIMARY KEY, jobname text UNIQUE, schedule text, command text, active boolean DEFAULT true, username text DEFAULT current_user, database text DEFAULT current_database());
+      CREATE FUNCTION cron.schedule(text,text,text) RETURNS bigint LANGUAGE sql AS $$INSERT INTO cron.job(jobname,schedule,command) VALUES($1,$2,$3) RETURNING jobid$$;
+      CREATE FUNCTION cron.unschedule(bigint) RETURNS boolean LANGUAGE sql AS $$DELETE FROM cron.job WHERE jobid=$1 RETURNING true$$;
+      CREATE FUNCTION public.expire_old_live_classes() RETURNS void LANGUAGE sql AS $$SELECT$$;`);
+    await assert.rejects(() => db.exec(enable), /approval required/);
+    await db.exec("SET shikkhahub.expiry_approved='pdgrbfisxjkmqrhrgzrs'");
+    await db.exec(enable); await db.exec(enable);
+    assert.equal((await db.query('SELECT count(*)::int AS count FROM cron.job')).rows[0].count, 1);
+    await db.exec("UPDATE cron.job SET schedule='* * * * *'");
+    await assert.rejects(() => db.exec(enable), /differs/);
+    await assert.rejects(() => db.exec(disable), /differs/);
+    await db.exec("UPDATE cron.job SET schedule='*/15 * * * *'");
+    await db.exec(disable); await db.exec(disable);
+    assert.equal((await db.query('SELECT count(*)::int AS count FROM cron.job')).rows[0].count, 0);
+    await db.exec("INSERT INTO cron.job(jobname,command) VALUES('other-expiry','SELECT public.expire_old_live_classes();')");
+    await assert.rejects(() => db.exec(enable), /Another expiry schedule/);
   } finally { await db.close(); }
 });

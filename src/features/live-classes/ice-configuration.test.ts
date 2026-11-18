@@ -20,6 +20,8 @@ it.each([
   { data: null, error: new Error('offline') },
   { data: { iceServers: [], expiresAt: Date.now() / 1000 + 3600 }, error: null },
   { data: { iceServers: [{}], expiresAt: 1 }, error: null },
+  { data: { iceServers: [{ urls: 'https://not-a-relay.test', username: 'u', credential: 'c' }], expiresAt: Date.now() / 1000 + 3600 }, error: null },
+  { data: { iceServers: [{ urls: 'turn:relay.test', username: 'u' }], expiresAt: Date.now() / 1000 + 3600 }, error: null },
 ])('fails closed for missing or expired relay credentials %#', async response => {
   vi.stubEnv('VITE_LIVE_TURN_ENABLED', 'true'); fake.invoke.mockResolvedValue(response);
   await expect(classroomIceConfiguration('room')).rejects.toThrow('Could not obtain classroom relay access');

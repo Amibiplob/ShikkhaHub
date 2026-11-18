@@ -64,7 +64,7 @@ describe("browser environment boundary", () => {
     expect(() => validatePublicEnvironment({ ...base(), VITE_SUPABASE_PUBLISHABLE_KEY: "isolated-e2e-public-key" })).toThrow();
   });
   it("rejects recognized browser credential names without logging their values", () => {
-    for (const name of ["VITE_SUPABASE_SERVICE_ROLE_KEY", "VITE_SUPABASE_SECRET_KEY", "VITE_DATABASE_URL", "VITE_POSTGRES_PASSWORD", "VITE_JWT_SECRET", "VITE_UNRECOGNIZED_CLIENT_SECRET", "VITE_AI_API_KEY", "VITE_STAGING_ADMIN_PASSWORD", "VITE_VERCEL_SECRET", "VITE_VERCEL_OIDC_TOKEN", "VITE_VERCEL_AUTOMATION_BYPASS_SECRET", "VITE_VERCEL_GIT_TOKEN"])
+    for (const name of ["VITE_SUPABASE_SERVICE_ROLE_KEY", "VITE_SUPABASE_SECRET_KEY", "VITE_DATABASE_URL", "VITE_POSTGRES_PASSWORD", "VITE_JWT_SECRET", "VITE_UNRECOGNIZED_CLIENT_SECRET", "VITE_GOOGLE_CLIENT_SECRET", "VITE_AI_API_KEY", "VITE_STAGING_ADMIN_PASSWORD", "VITE_VERCEL_SECRET", "VITE_VERCEL_OIDC_TOKEN", "VITE_VERCEL_AUTOMATION_BYPASS_SECRET", "VITE_VERCEL_GIT_TOKEN"])
       expect(() => validatePublicEnvironment({ ...base(), [name]: "synthetic-test-only" })).toThrow("Sensitive browser variable");
   });
   it("keeps server variables outside the public boundary", () => {
@@ -111,4 +111,11 @@ it('exposes only a validated TURN enable flag and never its server secret', () =
   expect(validatePublicEnvironment({ ...base(), VITE_LIVE_TURN_ENABLED: 'true', TURN_SHARED_SECRET: 'synthetic-private-server-value' })).toEqual({ ...base(), VITE_LIVE_TURN_ENABLED: 'true' });
   expect(() => validatePublicEnvironment({ ...base(), VITE_LIVE_TURN_ENABLED: 'yes' })).toThrow('true or false');
   expect(() => validatePublicEnvironment({ ...base(), VITE_TURN_SHARED_SECRET: 'synthetic-private-server-value' })).toThrow('Sensitive browser variable');
+});
+
+it('validates the optional AI flag while default builds expose no AI setting', () => {
+  const env = { VITE_SUPABASE_URL: 'http://127.0.0.1:54321', VITE_SUPABASE_PUBLISHABLE_KEY: 'isolated-ci-public-key' };
+  expect(validatePublicEnvironment(env)).not.toHaveProperty('VITE_AI_ASSISTANT_ENABLED');
+  expect(validatePublicEnvironment({ ...env, VITE_AI_ASSISTANT_ENABLED: 'false' }).VITE_AI_ASSISTANT_ENABLED).toBe('false');
+  expect(() => validatePublicEnvironment({ ...env, VITE_AI_ASSISTANT_ENABLED: 'yes' })).toThrow('must be true or false');
 });

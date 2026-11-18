@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import CourseAssistant from "./CourseAssistant";
 import { toast } from "sonner";
 
@@ -7,7 +7,15 @@ const { getSession } = vi.hoisted(() => ({ getSession: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession } } }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
+beforeEach(() => vi.stubEnv('VITE_AI_ASSISTANT_ENABLED', 'true'));
+afterEach(() => vi.unstubAllEnvs());
 describe("CourseAssistant authentication", () => {
+  it("explains disabled AI without accepting prompts or contacting a provider", () => {
+    vi.stubEnv('VITE_AI_ASSISTANT_ENABLED', 'false');
+    render(<CourseAssistant courseId="course-id" courseTitle="Programming" />);
+    expect(screen.getByRole('status')).toHaveTextContent('AI assistant unavailable');
+    expect(screen.queryByRole('button', { name: 'Open AI Assistant' })).toBeNull();
+  });
   it("sends the signed-in JWT, public apikey and bounded conversation to the Edge Function", async () => {
     getSession.mockResolvedValue({ data: { session: { access_token: "synthetic-user-jwt" } } });
     const fetcher = vi.fn().mockResolvedValue(new Response('data: {"choices":[{"delta":{"content":"Loops repeat steps."}}]}\n\ndata: [DONE]\n\n'));

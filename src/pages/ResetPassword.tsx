@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, authRedirect } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GraduationCap, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { clearRedirectUrl } from "@/features/auth/redirect-session";
 import Header from "@/components/layout/Header";
 
 const ResetPassword = () => {
@@ -14,22 +15,26 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [hasRecoveryToken, setHasRecoveryToken] = useState(() => new URLSearchParams(window.location.hash.substring(1)).get("type") === "recovery");
+  const recoveryUser = useSyncExternalStore(authRedirect.subscribe, authRedirect.recoveryUser);
+  const [sessionUser, setSessionUser] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
+  const hasRecoveryToken = !!recoveryUser && recoveryUser === sessionUser;
 
   useEffect(() => {
-
-    // Also listen for auth state change with recovery event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setHasRecoveryToken(true);
-      }
+    let active = true;
+    void authRedirect.ready.then(({ error, session }) => {
+      clearRedirectUrl();
+      if (active) { setSessionUser(error ? null : session?.user.id ?? null); setChecking(false); }
     });
-
-    return () => subscription.unsubscribe();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active) setSessionUser(session?.user.id ?? null);
+    });
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasRecoveryToken) return;
     if (password !== confirmPassword) {
       toast.error("Passwords don't match");
       return;
@@ -70,7 +75,7 @@ const ResetPassword = () => {
                 <p className="font-semibold text-lg">Password Updated!</p>
                 <p className="text-sm text-muted-foreground mt-1">Redirecting to dashboard...</p>
               </div>
-            ) : !hasRecoveryToken ? (
+            ) : checking ? <p role="status">Checking reset link…</p> : !hasRecoveryToken ? (
               <div className="text-center py-6">
                 <p className="text-muted-foreground">
                   Invalid or expired reset link. Please request a new password reset from the{" "}

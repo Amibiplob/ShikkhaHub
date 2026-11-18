@@ -26,6 +26,7 @@ export default defineConfig({
     reuseExistingServer: false,
     env: {
       // Explicit test-only endpoint: the browser fixture fulfills every request.
+      VITE_AI_ASSISTANT_ENABLED: 'true',
       VITE_LIVE_TURN_ENABLED: 'false',
       VITE_SUPABASE_URL: 'http://127.0.0.1:54321',
       VITE_SUPABASE_PUBLISHABLE_KEY: 'isolated-e2e-public-key',

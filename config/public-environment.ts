@@ -56,7 +56,11 @@ export function validatePublicEnvironment(env: Record<string, unknown>) {
   const turn = stringSetting(env, "VITE_LIVE_TURN_ENABLED");
   if (turn !== undefined && turn !== "true" && turn !== "false")
     throw new Error("VITE_LIVE_TURN_ENABLED must be true or false.");
+  const ai = stringSetting(env, "VITE_AI_ASSISTANT_ENABLED");
+  if (ai !== undefined && ai !== "true" && ai !== "false")
+    throw new Error("VITE_AI_ASSISTANT_ENABLED must be true or false.");
   return {
+    ...(ai !== undefined ? { VITE_AI_ASSISTANT_ENABLED: ai } : {}),
     ...(turn !== undefined ? { VITE_LIVE_TURN_ENABLED: turn } : {}),
     VITE_SUPABASE_URL: rawUrl,
     VITE_SUPABASE_PUBLISHABLE_KEY: key,

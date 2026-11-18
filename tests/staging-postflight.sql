@@ -21,7 +21,7 @@ WITH expected(name) AS (VALUES
  ('notifications'),('badges'),('user_badges'),('quizzes'),('quiz_questions'),('quiz_attempts'),
  ('course_bookmarks'),('course_prerequisites'),('class_recordings'),('teacher_requests'),
  ('tutor_slots'),('tutoring_requests'),('lesson_bookmarks'),('application_locks'),
- ('admin_audit_log'),('tutor_profiles'),('support_tickets'),('support_notes'),('support_intake_limits')),
+ ('admin_audit_log'),('tutor_profiles'),('support_tickets'),('support_notes'),('support_intake_limits'),('endpoint_quotas')),
 checks AS (
  SELECT 'missing application tables' AS check_name,count(*) AS blockers FROM expected e
  WHERE to_regclass('public.'||e.name) IS NULL
@@ -37,7 +37,8 @@ checks AS (
  ('certificate_download_record(uuid)'),('verify_certificate(uuid)'),
  ('admin_set_role(uuid,app_role,boolean,text)'),('admin_course_action(uuid,text,text)'),
  ('admin_support_action(uuid,text,text)'),('admin_records(text,text,text,integer,integer)'),
- ('send_live_signal(text,text,jsonb)'),('support_intake(uuid,uuid,text,text,text,text,text,text,text)')) e(signature)
+ ('send_live_signal(text,text,jsonb)'),('support_intake(uuid,uuid,text,text,text,text,text,text,text)'),
+ ('community_feed(text,text,text,integer,integer)'),('consume_endpoint_quota(text)')) e(signature)
  WHERE to_regprocedure('public.'||e.signature) IS NULL
  UNION ALL SELECT 'security definers without fixed search path',count(*) FROM pg_proc p
  WHERE p.pronamespace='public'::regnamespace AND p.prosecdef AND NOT EXISTS(
@@ -63,7 +64,14 @@ SELECT has_table_privilege('authenticated','public.certificates','INSERT') AS ce
  has_table_privilege('authenticated','public.notifications','INSERT') AS notification_insert_must_be_false,
  has_column_privilege('authenticated','public.quiz_questions','correct_answer','SELECT') AS answer_read_must_be_false,
  has_function_privilege('authenticated','public.support_intake(uuid,uuid,text,text,text,text,text,text,text)','EXECUTE') AS client_intake_must_be_false,
- has_function_privilege('anon','public.support_intake(uuid,uuid,text,text,text,text,text,text,text)','EXECUTE') AS anonymous_intake_must_be_false
+ has_function_privilege('anon','public.support_intake(uuid,uuid,text,text,text,text,text,text,text)','EXECUTE') AS anonymous_intake_must_be_false,
+ has_table_privilege('authenticated','public.endpoint_quotas','SELECT,INSERT,UPDATE,DELETE') AS client_quota_access_must_be_false,
+ has_table_privilege('anon','public.endpoint_quotas','SELECT,INSERT,UPDATE,DELETE') AS anonymous_quota_access_must_be_false,
+ has_function_privilege('anon','public.consume_endpoint_quota(text)','EXECUTE') AS anonymous_quota_execute_must_be_false,
+ NOT has_function_privilege('authenticated','public.consume_endpoint_quota(text)','EXECUTE') AS missing_client_quota_execute_must_be_false,
+ NOT has_function_privilege('anon','public.community_feed(text,text,text,integer,integer)','EXECUTE') AS missing_public_feed_execute_must_be_false,
+ NOT has_function_privilege('authenticated','public.community_feed(text,text,text,integer,integer)','EXECUTE') AS missing_client_feed_execute_must_be_false,
+ (SELECT prosecdef FROM pg_proc WHERE oid='public.community_feed(text,text,text,integer,integer)'::regprocedure) AS feed_security_definer_must_be_false
 ) item
 UNION ALL
 SELECT 'constraints' AS section, coalesce(jsonb_agg(to_jsonb(item)), '[]'::jsonb) AS rows

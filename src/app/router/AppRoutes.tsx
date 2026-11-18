@@ -13,6 +13,7 @@ const CertificateVerification = lazy(
   () => import("@/pages/CertificateVerification"),
 );
 const Auth = lazy(() => import("@/pages/Auth"));
+const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Courses = lazy(() => import("@/pages/Courses"));
 const CourseDetail = lazy(() => import("@/pages/CourseDetail"));
@@ -43,6 +44,7 @@ export default function AppRoutes() {
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/contact" element={<Contact />} />

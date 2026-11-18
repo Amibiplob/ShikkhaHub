@@ -52,7 +52,11 @@ async function login(page: Page, role: Role) {
     }, value);
   }
   await page.getByRole("button", { name: "Sign In", exact: true }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(
+    role === "admin"
+      ? "http://127.0.0.1:18081/admin"
+      : "http://127.0.0.1:18081/dashboard",
+  );
   await expect(
     page.getByRole("button", { name: "Account menu" }),
   ).toBeVisible();
